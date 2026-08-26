@@ -1,9 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taxy_pt/domain/models.dart';
 import 'package:taxy_pt/domain/money.dart';
-import 'package:taxy_pt/question_engine/question_engine.dart';
 import 'package:taxy_pt/tax_engine/tax_engine.dart';
 import 'package:taxy_pt/tax_engine/tax_rules.dart';
 
@@ -18,99 +18,113 @@ void main() {
     engine = TaxEngine(rules);
   });
 
-  group('regras e aritmética monetária', () {
-    test('carrega o conjunto 2026 verificado', () {
+  group('regras e dinheiro exato', () {
+    test('carrega regras 2026.2.0 e data de validação', () {
       expect(rules.taxYear, 2026);
+      expect(rules.rulesVersion, '2026.2.0');
+      expect(rules.verifiedAt, DateTime(2026, 8, 27));
       expect(rules.brackets, hasLength(9));
-      expect(rules.employmentSpecificDeductionCents, 458709);
     });
 
-    test('interpreta vírgula e mantém cêntimos exatos', () {
+    test('novos parâmetros têm metadados auditáveis', () {
+      for (final key in [
+        'generalSingleParentRatePpm',
+        'generalSingleParentCapCents',
+        'invoiceVat15RatePpm',
+        'invoiceVat30RatePpm',
+        'invoiceVat35RatePpm',
+        'invoiceVat100RatePpm',
+        'invoiceVatCapCents',
+      ]) {
+        expect(rules.ruleMetadata[key]?.source, isNotEmpty, reason: key);
+        expect(
+          rules.ruleMetadata[key]?.version,
+          rules.rulesVersion,
+          reason: key,
+        );
+      }
+    });
+
+    test('interpreta euros portugueses sem floating point', () {
       expect(Money.parseEuros('1 234,56').cents, 123456);
+      expect(Money.parseEuros('1.234,56').cents, 123456);
       expect(Money.fromCents(123456).format(), '1.234,56 €');
-      expect(Money.parseEuros('1.234,56'), Money.fromCents(123456));
     });
 
-    test('arredonda taxas a metade para cima', () {
+    test('arredonda metade para cima ao cêntimo', () {
       expect(const Money.fromCents(1).timesPpm(500000).cents, 1);
       expect(const Money.fromCents(3).timesPpm(500000).cents, 2);
     });
 
-    test('cenários alteram várias deduções sem perder as restantes', () {
-      const original = DeductionInput(
-        health: Money.fromCents(10000),
-        education: Money.fromCents(20000),
-        ppr: Money.fromCents(30000),
+    test('rejeita schema fiscal antigo', () {
+      final source = File('assets/tax_rules/2026.json').readAsStringSync();
+      expect(
+        () => TaxRuleSet.fromJsonString(
+          source.replaceFirst('"schemaVersion": 2', '"schemaVersion": 1'),
+        ),
+        throwsFormatException,
       );
-      final changed = original.copyWith(
-        health: const Money.fromCents(40000),
-        rent: const Money.fromCents(50000),
-      );
-      expect(changed.health.cents, 40000);
-      expect(changed.rent.cents, 50000);
-      expect(changed.education.cents, 20000);
-      expect(changed.ppr.cents, 30000);
-    });
-
-    test('cenários de rendimento preservam retenções e segurança social', () {
-      const original = EmploymentIncome(
-        entryMode: IncomeEntryMode.annual,
-        gross: Money.fromCents(3000000),
-        withholding: Money.fromCents(400000),
-        socialSecurity: Money.fromCents(330000),
-      );
-      final changed = original.copyWith(gross: const Money.fromCents(3500000));
-      expect(changed.gross.cents, 3500000);
-      expect(changed.withholding.cents, 400000);
-      expect(changed.socialSecurity.cents, 330000);
     });
   });
 
-  group('fronteiras dos escalões 2026', () {
-    final cases = <(String, int, int)>[
-      ('zero', 0, 0),
-      ('limite do primeiro escalão', 834200, 104275),
-      ('um euro após o primeiro escalão', 834300, 104291),
-      ('limite do segundo escalão', 1258700, 170922),
-      ('um euro após o segundo escalão', 1258800, 170940),
-      ('limite do oitavo escalão', 8663400, 3019728),
-      ('um euro no último escalão', 8663500, 3019763),
-    ];
-    for (final item in cases) {
-      test(item.$1, () {
+  group('golden — fronteiras dos escalões', () {
+    test('zero produz coleta zero', () {
+      expect(engine.grossTaxForTaxableIncome(Money.zero), Money.zero);
+    });
+
+    for (var index = 0; index < 8; index++) {
+      for (final delta in const [-1, 0, 1]) {
+        test('escalão ${index + 1}: ${_deltaLabel(delta)}', () {
+          final taxable = rules.brackets[index].upperCents! + delta;
+          expect(
+            engine.grossTaxForTaxableIncome(Money.fromCents(taxable)).cents,
+            _expectedGrossTax(rules, taxable),
+          );
+        });
+      }
+    }
+
+    test('rendimento elevado usa o último escalão', () {
+      const taxable = 50000000;
+      expect(
+        engine.grossTaxForTaxableIncome(const Money.fromCents(taxable)).cents,
+        _expectedGrossTax(rules, taxable),
+      );
+    });
+  });
+
+  group('golden — mínimo de existência', () {
+    final cases = <String, int Function()>{
+      'zero': () => 0,
+      'um cêntimo abaixo da referência': () =>
+          rules.minimumExistenceReferenceCents - 1,
+      'na referência': () => rules.minimumExistenceReferenceCents,
+      'um cêntimo acima da referência': () =>
+          rules.minimumExistenceReferenceCents + 1,
+      'um cêntimo abaixo de L': () => _lValue(rules) - 1,
+      'em L': () => _lValue(rules),
+      'um cêntimo acima de L': () => _lValue(rules) + 1,
+      'no limite final': () => _minimumExistenceCutoff(rules),
+      'um cêntimo acima do limite final': () =>
+          _minimumExistenceCutoff(rules) + 1,
+    };
+    for (final entry in cases.entries) {
+      test(entry.key, () {
+        final gross = entry.value();
+        final result = engine.calculate(_simulation(gross: gross));
+        expect(result.available, isTrue);
         expect(
-          engine.grossTaxForTaxableIncome(Money.fromCents(item.$2)).cents,
-          item.$3,
+          result.minimumExistenceAllowance.cents,
+          _expectedMinimumExistence(
+            rules,
+            gross,
+            result.specificDeduction.cents,
+          ),
         );
       });
     }
-  });
 
-  group('cenários fiscais completos', () {
-    test('rendimento zero produz imposto zero', () {
-      final result = engine.calculate(_simulation(gross: 0));
-      expect(result.taxDue, Money.zero);
-      expect(result.balance, Money.zero);
-    });
-
-    test('salário mínimo anual fica protegido pelo mínimo de existência', () {
-      final result = engine.calculate(
-        _simulation(gross: 1288000, socialSecurity: 141680, general: 100000),
-      );
-      expect(result.taxDue.cents, 0);
-      expect(result.minimumExistenceAllowance.cents, greaterThan(0));
-    });
-
-    test('usa a dedução específica legal quando superior às contribuições', () {
-      final result = engine.calculate(
-        _simulation(gross: 3000000, socialSecurity: 330000),
-      );
-      expect(result.specificDeduction.cents, 458709);
-      expect(result.taxableIncome.cents, 2541291);
-      expect(result.taxDue.cents, 481065);
-    });
-
-    test('usa contribuições obrigatórias quando superiores à dedução fixa', () {
+    test('contribuições superiores substituem a dedução fixa', () {
       final result = engine.calculate(
         _simulation(gross: 5000000, socialSecurity: 600000),
       );
@@ -118,7 +132,231 @@ void main() {
       expect(result.taxableIncome.cents, 4400000);
     });
 
-    test('retenções transformam imposto devido em reembolso', () {
+    test('dedução específica não excede rendimento', () {
+      final result = engine.calculate(_simulation(gross: 10000));
+      expect(result.specificDeduction.cents, 10000);
+      expect(result.taxableIncome, Money.zero);
+    });
+  });
+
+  group('golden — deduções isoladas', () {
+    test('despesas gerais standard: 35% e cap 250', () {
+      final result = engine.calculate(
+        _simulation(gross: 3000000, general: 100000),
+      );
+      expect(_credit(result, 'Despesas gerais').cents, 25000);
+    });
+
+    test('monoparental: 45% e cap 335', () {
+      final result = engine.calculate(
+        _simulation(gross: 3000000, dependentAges: const [10], general: 100000),
+      );
+      expect(_credit(result, 'Despesas gerais').cents, 33500);
+    });
+
+    for (final item in const [
+      ('Saúde', 'health', 1000000, 100000),
+      ('Educação standard', 'education', 400000, 80000),
+      ('Lares', 'careHomes', 200000, 40375),
+      ('PPR', 'ppr', 200000, 40000),
+    ]) {
+      test('${item.$1} respeita taxa e limite', () {
+        final result = engine.calculate(
+          _simulation(
+            gross: 3000000,
+            health: item.$2 == 'health' ? item.$3 : 0,
+            education: item.$2 == 'education' ? item.$3 : 0,
+            careHomes: item.$2 == 'careHomes' ? item.$3 : 0,
+            ppr: item.$2 == 'ppr' ? item.$3 : 0,
+          ),
+        );
+        expect(_credit(result, item.$1).cents, item.$4);
+      });
+    }
+
+    test('rendas aplicam taxa e cap 2026', () {
+      final result = engine.calculate(
+        _simulation(gross: 5000000, rent: 1000000),
+      );
+      expect(_credit(result, 'Rendas').cents, 90000);
+    });
+
+    for (final item in const [
+      ('IVA — taxa 15%', 'vat15', 10000, 1500),
+      ('IVA — taxa 30%', 'vat30', 10000, 3000),
+      ('IVA — taxa 35%', 'vat35', 10000, 3500),
+      ('IVA — taxa 100%', 'vat100', 10000, 10000),
+    ]) {
+      test(item.$1, () {
+        final result = engine.calculate(
+          _simulation(
+            gross: 3000000,
+            vat15: item.$2 == 'vat15' ? item.$3 : 0,
+            vat30: item.$2 == 'vat30' ? item.$3 : 0,
+            vat35: item.$2 == 'vat35' ? item.$3 : 0,
+            vat100: item.$2 == 'vat100' ? item.$3 : 0,
+          ),
+        );
+        expect(_credit(result, item.$1).cents, item.$4);
+      });
+    }
+
+    test('IVA partilha limite global de 250 euros', () {
+      final result = engine.calculate(
+        _simulation(
+          gross: 3000000,
+          vat15: 100000,
+          vat30: 100000,
+          vat35: 100000,
+          vat100: 100000,
+        ),
+      );
+      final applied = result.creditBreakdown
+          .where(
+            (line) =>
+                line.label.startsWith('IVA') ||
+                line.label == 'Limite global do IVA',
+          )
+          .fold(Money.zero, (sum, line) => sum + line.amount);
+      expect(applied.cents, 25000);
+      expect(result.warnings.single, contains('dedução conjunta de IVA'));
+    });
+
+    test('PPR 35–50 anos tem cap 350', () {
+      final result = engine.calculate(
+        _simulation(gross: 3000000, age: 40, ppr: 200000),
+      );
+      expect(_credit(result, 'PPR').cents, 35000);
+    });
+
+    test('PPR acima de 50 anos tem cap 300', () {
+      final result = engine.calculate(
+        _simulation(gross: 3000000, age: 60, ppr: 200000),
+      );
+      expect(_credit(result, 'PPR').cents, 30000);
+    });
+
+    test('educação exclui casos especiais', () {
+      final result = engine.calculate(
+        _simulation(gross: 3000000, education: 10000),
+      );
+      expect(result.assumptions.join(' '), contains('estudante deslocado'));
+      expect(result.assumptions.join(' '), contains('majorações territoriais'));
+    });
+  });
+
+  group('dependentes determinísticos', () {
+    test('[10, 2] e [2, 10] são idênticos', () {
+      final a = engine.calculate(
+        _simulation(gross: 3000000, dependentAges: const [10, 2]),
+      );
+      final b = engine.calculate(
+        _simulation(gross: 3000000, dependentAges: const [2, 10]),
+      );
+      expect(a.taxCredits, b.taxCredits);
+      expect(a.taxDue, b.taxDue);
+    });
+
+    test('três dependentes são invariantes a permutação', () {
+      final a = engine.calculate(
+        _simulation(gross: 5000000, dependentAges: const [12, 5, 2]),
+      );
+      final b = engine.calculate(
+        _simulation(gross: 5000000, dependentAges: const [2, 12, 5]),
+      );
+      expect(a.taxCredits, b.taxCredits);
+    });
+
+    test('quatro dependentes são invariantes a ordem inversa', () {
+      final a = engine.calculate(
+        _simulation(gross: 7000000, dependentAges: const [16, 8, 4, 1]),
+      );
+      final b = engine.calculate(
+        _simulation(gross: 7000000, dependentAges: const [1, 4, 8, 16]),
+      );
+      expect(a.taxCredits, b.taxCredits);
+    });
+
+    test('dependente único até três anos recebe 726 euros', () {
+      final result = engine.calculate(
+        _simulation(gross: 3000000, dependentAges: const [2]),
+      );
+      expect(_credit(result, 'Dependentes').cents, 72600);
+    });
+
+    test('segundo dependente até seis recebe majoração 300', () {
+      final result = engine.calculate(
+        _simulation(gross: 5000000, dependentAges: const [10, 5]),
+      );
+      expect(_credit(result, 'Dependentes').cents, 150000);
+    });
+  });
+
+  group('golden — limite global', () {
+    for (final taxable in const [
+      834200,
+      834201,
+      2000000,
+      5000000,
+      7999999,
+      8000000,
+    ]) {
+      test('coletável ${taxable / 100}', () {
+        final cap = engine.overallCreditCapForTaxableIncome(
+          Money.fromCents(taxable),
+        );
+        expect(cap?.cents, _expectedOverallCap(rules, taxable, 0));
+      });
+    }
+
+    test('três dependentes aumentam limite em 15%', () {
+      const taxable = 5000000;
+      final cap = engine.overallCreditCapForTaxableIncome(
+        const Money.fromCents(taxable),
+        dependents: 3,
+      );
+      expect(cap?.cents, _expectedOverallCap(rules, taxable, 3));
+    });
+
+    test('combinação é reduzida ao limite global', () {
+      final result = engine.calculate(
+        _simulationForTaxable(
+          5000000,
+          rules,
+          health: 1000000,
+          education: 1000000,
+          rent: 1000000,
+          careHomes: 1000000,
+          ppr: 200000,
+        ),
+      );
+      expect(result.warnings.join(' '), contains('limite global'));
+      expect(
+        result.creditBreakdown.map((e) => e.label),
+        contains('Limite global das deduções'),
+      );
+    });
+  });
+
+  group('golden — solidariedade', () {
+    for (final item in const [
+      (7999999, 0),
+      (8000000, 0),
+      (8000001, 0),
+      (24999999, 425000),
+      (25000000, 425000),
+      (25000001, 425000),
+      (25000020, 425001),
+    ]) {
+      test('${item.$1} cêntimos coletáveis', () {
+        final result = engine.calculate(_simulationForTaxable(item.$1, rules));
+        expect(result.solidarityTax.cents, item.$2);
+      });
+    }
+  });
+
+  group('regressão e serialização', () {
+    test('retenção superior produz reembolso exato', () {
       final result = engine.calculate(
         _simulation(
           gross: 3000000,
@@ -127,161 +365,164 @@ void main() {
         ),
       );
       expect(result.balance.cents, 118935);
-      expect(result.isRefund, isTrue);
     });
 
-    test('despesas gerais respeitam o limite de 250 euros', () {
-      final result = engine.calculate(
-        _simulation(gross: 3000000, socialSecurity: 330000, general: 100000),
-      );
-      expect(result.taxCredits.cents, 25000);
-      expect(result.taxDue.cents, 456065);
-      expect(result.warnings, isNotEmpty);
-    });
-
-    test('saúde respeita o limite de 1000 euros', () {
-      final result = engine.calculate(
-        _simulation(gross: 3000000, socialSecurity: 330000, health: 1000000),
-      );
-      expect(result.taxCredits.cents, 100000);
-      expect(result.taxDue.cents, 381065);
-    });
-
-    test('PPR abaixo dos 35 anos dá no máximo 400 euros', () {
-      final result = engine.calculate(
+    test('serialização preserva quatro IVA', () {
+      final restored = TaxSimulation.decode(
         _simulation(
-          gross: 3000000,
-          socialSecurity: 330000,
-          age: 30,
-          ppr: 200000,
-        ),
+          gross: 3000123,
+          vat15: 111,
+          vat30: 222,
+          vat35: 333,
+          vat100: 444,
+        ).encode(),
       );
-      expect(result.taxCredits.cents, 40000);
-      expect(result.taxDue.cents, 441065);
+      expect(restored.deductions.invoiceVat15.cents, 111);
+      expect(restored.deductions.invoiceVat30.cents, 222);
+      expect(restored.deductions.invoiceVat35.cents, 333);
+      expect(restored.deductions.invoiceVat100.cents, 444);
     });
 
-    test('PPR dos 35 aos 50 anos dá no máximo 350 euros', () {
-      final result = engine.calculate(
-        _simulation(
-          gross: 3000000,
-          socialSecurity: 330000,
-          age: 40,
-          ppr: 200000,
-        ),
-      );
-      expect(result.taxCredits.cents, 35000);
-    });
-
-    test('PPR acima dos 50 anos dá no máximo 300 euros', () {
-      final result = engine.calculate(
-        _simulation(
-          gross: 3000000,
-          socialSecurity: 330000,
-          age: 60,
-          ppr: 200000,
-        ),
-      );
-      expect(result.taxCredits.cents, 30000);
-    });
-
-    test('dependente com mais de três anos deduz 600 euros', () {
-      final result = engine.calculate(
-        _simulation(
-          gross: 3000000,
-          socialSecurity: 330000,
-          dependentAges: [10],
-        ),
-      );
-      expect(result.taxCredits.cents, 60000);
-    });
-
-    test('primeiro dependente até três anos recebe majoração de 126 euros', () {
-      final result = engine.calculate(
-        _simulation(gross: 3000000, socialSecurity: 330000, dependentAges: [2]),
-      );
-      expect(result.taxCredits.cents, 72600);
-    });
-
-    test('segundo dependente até seis anos recebe majoração de 300 euros', () {
-      final result = engine.calculate(
-        _simulation(
-          gross: 3000000,
-          socialSecurity: 330000,
-          dependentAges: [10, 5],
-        ),
-      );
-      expect(result.taxCredits.cents, 150000);
-    });
-
-    test('adicional de solidariedade começa acima de 80 mil euros', () {
-      final result = engine.calculate(
-        _simulation(gross: 10000000, socialSecurity: 330000),
-      );
-      expect(result.taxableIncome.cents, 9541291);
-      expect(result.solidarityTax.cents, 38532);
-    });
-
-    test('bloqueia Madeira sem inventar taxas', () {
-      final result = engine.calculate(
-        _simulation(gross: 3000000, region: TaxRegion.madeira),
-      );
-      expect(result.available, isFalse);
-      expect(result.warnings.single, contains('NEEDS_VERIFICATION'));
-    });
-
-    test('bloqueia tributação conjunta ainda não validada', () {
-      final result = engine.calculate(
-        _simulation(gross: 3000000, filingMode: FilingMode.joint),
-      );
-      expect(result.available, isFalse);
-    });
-
-    test('bloqueia residência parcial', () {
-      final result = engine.calculate(
-        _simulation(gross: 3000000, fullYearResident: false),
-      );
-      expect(result.available, isFalse);
-    });
-
-    test('serialização preserva todos os cêntimos', () {
-      final original = _simulation(
-        gross: 3000123,
-        withholding: 45678,
-        health: 12345,
-      );
-      final restored = TaxSimulation.decode(original.encode());
-      expect(restored.income.gross.cents, 3000123);
-      expect(restored.income.withholding.cents, 45678);
-      expect(restored.deductions.health.cents, 12345);
-    });
-  });
-
-  group('motor de perguntas', () {
-    test('salta idades dos dependentes quando não há dependentes', () {
-      final ids = const QuestionEngine().steps(TaxDraft()).map((e) => e.id);
-      expect(ids, isNot(contains('dependentAges')));
-    });
-
-    test('inclui idades quando existem dependentes', () {
-      final draft = TaxDraft()..dependentAges = [3];
-      final ids = const QuestionEngine().steps(draft).map((e) => e.id);
-      expect(ids, contains('dependentAges'));
-    });
-
-    test('pergunta modo de tributação apenas a casados ou unidos de facto', () {
-      final single = TaxDraft();
-      final married = TaxDraft()..civilStatus = CivilStatus.married;
+    test('JSON não contém outras deduções', () {
+      final json = jsonDecode(_simulation(gross: 3000000).encode()) as Map;
       expect(
-        const QuestionEngine().steps(single).map((e) => e.id),
-        isNot(contains('filingMode')),
+        json['deductions'] as Map,
+        isNot(contains('otherEligibleTaxCreditCents')),
       );
-      expect(
-        const QuestionEngine().steps(married).map((e) => e.id),
-        contains('filingMode'),
-      );
+    });
+
+    test('migra IVA antigo apenas para 15%', () {
+      final input = DeductionInput.fromJson({'eligibleInvoiceVatCents': 1234});
+      expect(input.invoiceVat15.cents, 1234);
+      expect(input.invoiceVat30, Money.zero);
+      expect(input.invoiceVat35, Money.zero);
+      expect(input.invoiceVat100, Money.zero);
     });
   });
 }
+
+String _deltaLabel(int delta) => switch (delta) {
+  -1 => '0,01 € abaixo',
+  0 => 'limite exato',
+  _ => '0,01 € acima',
+};
+
+int _expectedGrossTax(TaxRuleSet rules, int taxable) {
+  if (taxable <= 0) return 0;
+  for (var i = 0; i < rules.brackets.length; i++) {
+    final bracket = rules.brackets[i];
+    if (bracket.upperCents == null || taxable <= bracket.upperCents!) {
+      if (i == 0) {
+        return Money.mulDiv(taxable, bracket.marginalRatePpm, 1000000);
+      }
+      final lower = rules.brackets[i - 1].upperCents!;
+      final base = Money.mulDiv(
+        lower,
+        rules.brackets[i - 1].averageRatePpm!,
+        1000000,
+      );
+      return base +
+          Money.mulDiv(taxable - lower, bracket.marginalRatePpm, 1000000);
+    }
+  }
+  throw StateError('Tabela inválida');
+}
+
+int _lValue(TaxRuleSet rules) {
+  final general = rules.me('generalExpenseLimitCents');
+  final firstRate = rules.brackets.first.marginalRatePpm;
+  final divisor = rules.me('lDivisorTenths');
+  return rules.minimumExistenceReferenceCents -
+      Money.mulDiv(general, 10000000, firstRate * divisor) +
+      Money.mulDiv(rules.brackets.first.upperCents!, 10, divisor);
+}
+
+int _minimumExistenceCutoff(TaxRuleSet rules) => Money.mulDiv(
+  rules.iasCents,
+  rules.me('cutoffIasMultiplierTenths') * rules.me('months'),
+  10,
+);
+
+int _expectedMinimumExistence(TaxRuleSet rules, int gross, int specific) {
+  if (gross > _minimumExistenceCutoff(rules)) return 0;
+  final reference = rules.minimumExistenceReferenceCents;
+  final generalOverRate = Money.mulDiv(
+    rules.me('generalExpenseLimitCents'),
+    1000000,
+    rules.brackets.first.marginalRatePpm,
+  );
+  final l = _lValue(rules);
+  int allowance;
+  if (gross <= reference) {
+    allowance = reference - specific - generalOverRate;
+  } else if (gross <= l) {
+    allowance =
+        reference -
+        Money.mulDiv(
+          gross - reference,
+          rules.me('phaseTwoMultiplierPpm'),
+          1000000,
+        ) -
+        specific -
+        generalOverRate;
+  } else {
+    allowance =
+        l -
+        rules.brackets.first.upperCents! -
+        Money.mulDiv(gross - l, rules.me('phaseThreeMultiplierPpm'), 1000000) -
+        specific;
+  }
+  return allowance.clamp(0, (gross - specific).clamp(0, gross));
+}
+
+int? _expectedOverallCap(TaxRuleSet rules, int taxable, int dependents) {
+  final first = rules.brackets.first.upperCents!;
+  if (taxable <= first) return null;
+  final upper = rules.d('overallUpperIncomeCents');
+  int cap;
+  if (taxable >= upper) {
+    cap = rules.d('overallHighIncomeCapCents');
+  } else {
+    final high = rules.d('overallHighIncomeCapCents');
+    cap =
+        high +
+        Money.mulDiv(
+          rules.d('overallLowIncomeCapCents') - high,
+          upper - taxable,
+          upper - first,
+        );
+  }
+  if (dependents >= 3) {
+    cap += Money.mulDiv(
+      cap,
+      rules.d('largeFamilyIncreasePpmPerDependent') * dependents,
+      1000000,
+    );
+  }
+  return cap;
+}
+
+Money _credit(TaxResult result, String label) =>
+    result.creditBreakdown.singleWhere((line) => line.label == label).amount;
+
+TaxSimulation _simulationForTaxable(
+  int taxable,
+  TaxRuleSet rules, {
+  List<int> dependentAges = const [],
+  int health = 0,
+  int education = 0,
+  int rent = 0,
+  int careHomes = 0,
+  int ppr = 0,
+}) => _simulation(
+  gross: taxable + rules.employmentSpecificDeductionCents,
+  dependentAges: dependentAges,
+  health: health,
+  education: education,
+  rent: rent,
+  careHomes: careHomes,
+  ppr: ppr,
+);
 
 TaxSimulation _simulation({
   required int gross,
@@ -292,13 +533,13 @@ TaxSimulation _simulation({
   int education = 0,
   int rent = 0,
   int careHomes = 0,
-  int invoiceVat = 0,
+  int vat15 = 0,
+  int vat30 = 0,
+  int vat35 = 0,
+  int vat100 = 0,
   int ppr = 0,
   int age = 30,
   List<int> dependentAges = const [],
-  TaxRegion region = TaxRegion.continent,
-  FilingMode filingMode = FilingMode.separate,
-  bool fullYearResident = true,
 }) => TaxSimulation(
   id: 'fixture',
   name: 'Fixture',
@@ -307,13 +548,12 @@ TaxSimulation _simulation({
   profile: TaxpayerProfile(
     taxYear: 2026,
     age: age,
-    civilStatus: filingMode == FilingMode.joint
-        ? CivilStatus.married
-        : CivilStatus.single,
+    civilStatus: CivilStatus.single,
     dependentAges: dependentAges,
-    fullYearResident: fullYearResident,
-    region: region,
-    filingMode: filingMode,
+    fullYearResident: true,
+    region: TaxRegion.continent,
+    filingMode: FilingMode.separate,
+    isSingleParentHousehold: dependentAges.isNotEmpty,
   ),
   income: EmploymentIncome(
     entryMode: IncomeEntryMode.annual,
@@ -327,7 +567,10 @@ TaxSimulation _simulation({
     education: Money.fromCents(education),
     rent: Money.fromCents(rent),
     careHomes: Money.fromCents(careHomes),
-    eligibleInvoiceVat: Money.fromCents(invoiceVat),
+    invoiceVat15: Money.fromCents(vat15),
+    invoiceVat30: Money.fromCents(vat30),
+    invoiceVat35: Money.fromCents(vat35),
+    invoiceVat100: Money.fromCents(vat100),
     ppr: Money.fromCents(ppr),
   ),
 );

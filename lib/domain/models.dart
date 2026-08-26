@@ -19,6 +19,7 @@ final class TaxpayerProfile {
     required this.fullYearResident,
     required this.region,
     required this.filingMode,
+    this.isSingleParentHousehold = false,
   });
 
   final int taxYear;
@@ -28,6 +29,7 @@ final class TaxpayerProfile {
   final bool fullYearResident;
   final TaxRegion region;
   final FilingMode filingMode;
+  final bool isSingleParentHousehold;
 
   int get dependents => dependentAges.length;
 
@@ -39,6 +41,7 @@ final class TaxpayerProfile {
     bool? fullYearResident,
     TaxRegion? region,
     FilingMode? filingMode,
+    bool? isSingleParentHousehold,
   }) => TaxpayerProfile(
     taxYear: taxYear ?? this.taxYear,
     age: age ?? this.age,
@@ -47,6 +50,8 @@ final class TaxpayerProfile {
     fullYearResident: fullYearResident ?? this.fullYearResident,
     region: region ?? this.region,
     filingMode: filingMode ?? this.filingMode,
+    isSingleParentHousehold:
+        isSingleParentHousehold ?? this.isSingleParentHousehold,
   );
 
   Map<String, Object?> toJson() => {
@@ -57,6 +62,7 @@ final class TaxpayerProfile {
     'fullYearResident': fullYearResident,
     'region': region.name,
     'filingMode': filingMode.name,
+    'isSingleParentHousehold': isSingleParentHousehold,
   };
 
   factory TaxpayerProfile.fromJson(Map<String, Object?> json) =>
@@ -68,6 +74,67 @@ final class TaxpayerProfile {
         fullYearResident: json['fullYearResident'] as bool,
         region: TaxRegion.values.byName(json['region'] as String),
         filingMode: FilingMode.values.byName(json['filingMode'] as String),
+        isSingleParentHousehold:
+            json['isSingleParentHousehold'] as bool? ?? false,
+      );
+}
+
+/// Flags explícitas para situações que alteram materialmente a liquidação.
+/// O motor 0.2 recusa qualquer flag ativa até existir um módulo validado.
+final class TaxSituationFlags {
+  const TaxSituationFlags({
+    this.irsJovem = false,
+    this.categoryB = false,
+    this.pensions = false,
+    this.foreignIncome = false,
+    this.capitalIncome = false,
+    this.propertyIncome = false,
+    this.capitalGains = false,
+    this.disability = false,
+    this.displacedStudent = false,
+    this.sharedCustody = false,
+    this.otherSpecialSituation = false,
+  });
+
+  final bool irsJovem;
+  final bool categoryB;
+  final bool pensions;
+  final bool foreignIncome;
+  final bool capitalIncome;
+  final bool propertyIncome;
+  final bool capitalGains;
+  final bool disability;
+  final bool displacedStudent;
+  final bool sharedCustody;
+  final bool otherSpecialSituation;
+
+  Map<String, Object?> toJson() => {
+    'irsJovem': irsJovem,
+    'categoryB': categoryB,
+    'pensions': pensions,
+    'foreignIncome': foreignIncome,
+    'capitalIncome': capitalIncome,
+    'propertyIncome': propertyIncome,
+    'capitalGains': capitalGains,
+    'disability': disability,
+    'displacedStudent': displacedStudent,
+    'sharedCustody': sharedCustody,
+    'otherSpecialSituation': otherSpecialSituation,
+  };
+
+  factory TaxSituationFlags.fromJson(Map<String, Object?> json) =>
+      TaxSituationFlags(
+        irsJovem: json['irsJovem'] as bool? ?? false,
+        categoryB: json['categoryB'] as bool? ?? false,
+        pensions: json['pensions'] as bool? ?? false,
+        foreignIncome: json['foreignIncome'] as bool? ?? false,
+        capitalIncome: json['capitalIncome'] as bool? ?? false,
+        propertyIncome: json['propertyIncome'] as bool? ?? false,
+        capitalGains: json['capitalGains'] as bool? ?? false,
+        disability: json['disability'] as bool? ?? false,
+        displacedStudent: json['displacedStudent'] as bool? ?? false,
+        sharedCustody: json['sharedCustody'] as bool? ?? false,
+        otherSpecialSituation: json['otherSpecialSituation'] as bool? ?? false,
       );
 }
 
@@ -131,9 +198,11 @@ final class DeductionInput {
     this.education = Money.zero,
     this.rent = Money.zero,
     this.careHomes = Money.zero,
-    this.eligibleInvoiceVat = Money.zero,
+    this.invoiceVat15 = Money.zero,
+    this.invoiceVat30 = Money.zero,
+    this.invoiceVat35 = Money.zero,
+    this.invoiceVat100 = Money.zero,
     this.ppr = Money.zero,
-    this.otherEligibleTaxCredit = Money.zero,
   });
 
   final Money general;
@@ -141,9 +210,11 @@ final class DeductionInput {
   final Money education;
   final Money rent;
   final Money careHomes;
-  final Money eligibleInvoiceVat;
+  final Money invoiceVat15;
+  final Money invoiceVat30;
+  final Money invoiceVat35;
+  final Money invoiceVat100;
   final Money ppr;
-  final Money otherEligibleTaxCredit;
 
   DeductionInput copyWith({
     Money? general,
@@ -151,19 +222,22 @@ final class DeductionInput {
     Money? education,
     Money? rent,
     Money? careHomes,
-    Money? eligibleInvoiceVat,
+    Money? invoiceVat15,
+    Money? invoiceVat30,
+    Money? invoiceVat35,
+    Money? invoiceVat100,
     Money? ppr,
-    Money? otherEligibleTaxCredit,
   }) => DeductionInput(
     general: general ?? this.general,
     health: health ?? this.health,
     education: education ?? this.education,
     rent: rent ?? this.rent,
     careHomes: careHomes ?? this.careHomes,
-    eligibleInvoiceVat: eligibleInvoiceVat ?? this.eligibleInvoiceVat,
+    invoiceVat15: invoiceVat15 ?? this.invoiceVat15,
+    invoiceVat30: invoiceVat30 ?? this.invoiceVat30,
+    invoiceVat35: invoiceVat35 ?? this.invoiceVat35,
+    invoiceVat100: invoiceVat100 ?? this.invoiceVat100,
     ppr: ppr ?? this.ppr,
-    otherEligibleTaxCredit:
-        otherEligibleTaxCredit ?? this.otherEligibleTaxCredit,
   );
 
   Map<String, Object?> toJson() => {
@@ -172,9 +246,11 @@ final class DeductionInput {
     'educationCents': education.cents,
     'rentCents': rent.cents,
     'careHomesCents': careHomes.cents,
-    'eligibleInvoiceVatCents': eligibleInvoiceVat.cents,
+    'invoiceVat15Cents': invoiceVat15.cents,
+    'invoiceVat30Cents': invoiceVat30.cents,
+    'invoiceVat35Cents': invoiceVat35.cents,
+    'invoiceVat100Cents': invoiceVat100.cents,
     'pprCents': ppr.cents,
-    'otherEligibleTaxCreditCents': otherEligibleTaxCredit.cents,
   };
 
   factory DeductionInput.fromJson(Map<String, Object?> json) => DeductionInput(
@@ -183,13 +259,17 @@ final class DeductionInput {
     education: Money.fromCents(json['educationCents'] as int? ?? 0),
     rent: Money.fromCents(json['rentCents'] as int? ?? 0),
     careHomes: Money.fromCents(json['careHomesCents'] as int? ?? 0),
-    eligibleInvoiceVat: Money.fromCents(
-      json['eligibleInvoiceVatCents'] as int? ?? 0,
+    // Migração fail-safe: o antigo campo genérico só pode representar a
+    // categoria de 15%, que era a única taxa então apresentada pela UI.
+    invoiceVat15: Money.fromCents(
+      json['invoiceVat15Cents'] as int? ??
+          json['eligibleInvoiceVatCents'] as int? ??
+          0,
     ),
+    invoiceVat30: Money.fromCents(json['invoiceVat30Cents'] as int? ?? 0),
+    invoiceVat35: Money.fromCents(json['invoiceVat35Cents'] as int? ?? 0),
+    invoiceVat100: Money.fromCents(json['invoiceVat100Cents'] as int? ?? 0),
     ppr: Money.fromCents(json['pprCents'] as int? ?? 0),
-    otherEligibleTaxCredit: Money.fromCents(
-      json['otherEligibleTaxCreditCents'] as int? ?? 0,
-    ),
   );
 }
 
@@ -202,6 +282,7 @@ final class TaxSimulation {
     required this.profile,
     required this.income,
     required this.deductions,
+    this.situations = const TaxSituationFlags(),
   });
 
   final String id;
@@ -211,6 +292,7 @@ final class TaxSimulation {
   final TaxpayerProfile profile;
   final EmploymentIncome income;
   final DeductionInput deductions;
+  final TaxSituationFlags situations;
 
   TaxSimulation copyWith({
     String? id,
@@ -219,6 +301,7 @@ final class TaxSimulation {
     TaxpayerProfile? profile,
     EmploymentIncome? income,
     DeductionInput? deductions,
+    TaxSituationFlags? situations,
   }) => TaxSimulation(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -227,6 +310,7 @@ final class TaxSimulation {
     profile: profile ?? this.profile,
     income: income ?? this.income,
     deductions: deductions ?? this.deductions,
+    situations: situations ?? this.situations,
   );
 
   Map<String, Object?> toJson() => {
@@ -237,6 +321,7 @@ final class TaxSimulation {
     'profile': profile.toJson(),
     'income': income.toJson(),
     'deductions': deductions.toJson(),
+    'situations': situations.toJson(),
   };
 
   String encode() => jsonEncode(toJson());
@@ -255,6 +340,11 @@ final class TaxSimulation {
     deductions: DeductionInput.fromJson(
       (json['deductions'] as Map).cast<String, Object?>(),
     ),
+    situations: json['situations'] == null
+        ? const TaxSituationFlags()
+        : TaxSituationFlags.fromJson(
+            (json['situations'] as Map).cast<String, Object?>(),
+          ),
   );
 
   factory TaxSimulation.decode(String value) => TaxSimulation.fromJson(
@@ -285,6 +375,11 @@ final class TaxResult {
     required this.breakdown,
     required this.warnings,
     required this.assumptions,
+    required this.creditBreakdown,
+    required this.bracketBaseTax,
+    required this.bracketExcess,
+    required this.marginalRatePpm,
+    required this.overallDeductionsCap,
   });
 
   final bool available;
@@ -303,6 +398,11 @@ final class TaxResult {
   final List<TaxBreakdown> breakdown;
   final List<String> warnings;
   final List<String> assumptions;
+  final List<TaxBreakdown> creditBreakdown;
+  final Money bracketBaseTax;
+  final Money bracketExcess;
+  final int marginalRatePpm;
+  final Money? overallDeductionsCap;
 
   bool get isRefund => balance.cents >= 0;
 }

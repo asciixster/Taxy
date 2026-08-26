@@ -20,6 +20,7 @@ final class TaxDraft {
     age = source.profile.age;
     civilStatus = source.profile.civilStatus;
     dependentAges = [...source.profile.dependentAges];
+    isSingleParentHousehold = source.profile.isSingleParentHousehold;
     fullYearResident = source.profile.fullYearResident;
     region = source.profile.region;
     filingMode = source.profile.filingMode;
@@ -34,9 +35,11 @@ final class TaxDraft {
     education = _raw(source.deductions.education);
     rent = _raw(source.deductions.rent);
     careHomes = _raw(source.deductions.careHomes);
-    invoiceVat = _raw(source.deductions.eligibleInvoiceVat);
+    invoiceVat15 = _raw(source.deductions.invoiceVat15);
+    invoiceVat30 = _raw(source.deductions.invoiceVat30);
+    invoiceVat35 = _raw(source.deductions.invoiceVat35);
+    invoiceVat100 = _raw(source.deductions.invoiceVat100);
     ppr = _raw(source.deductions.ppr);
-    other = _raw(source.deductions.otherEligibleTaxCredit);
   }
 
   static String _raw(Money money) =>
@@ -48,6 +51,7 @@ final class TaxDraft {
   int age = 30;
   CivilStatus civilStatus = CivilStatus.single;
   List<int> dependentAges = [];
+  bool isSingleParentHousehold = false;
   bool fullYearResident = true;
   TaxRegion region = TaxRegion.continent;
   FilingMode filingMode = FilingMode.separate;
@@ -62,61 +66,159 @@ final class TaxDraft {
   String education = '';
   String rent = '';
   String careHomes = '';
-  String invoiceVat = '';
+  String invoiceVat15 = '';
+  String invoiceVat30 = '';
+  String invoiceVat35 = '';
+  String invoiceVat100 = '';
   String ppr = '';
-  String other = '';
 }
 
 final class QuestionEngine {
   const QuestionEngine();
 
   List<QuestionStep> steps(TaxDraft draft) => [
-    const QuestionStep('taxYear', QuestionSection.profile, 'Que ano queres simular?',
-      'As regras fiscais mudam todos os anos.'),
-    const QuestionStep('age', QuestionSection.profile, 'Qual é a tua idade?',
-      'A idade pode alterar benefícios como a dedução do PPR.'),
-    const QuestionStep('civilStatus', QuestionSection.profile, 'Qual é o teu estado civil?',
-      'Usamos esta informação para preparar o agregado familiar.'),
-    if (draft.civilStatus != CivilStatus.single)
-      const QuestionStep('filingMode', QuestionSection.profile, 'Como queres simular a tributação?',
-        'A tributação conjunta ficará disponível após validação específica.'),
-    const QuestionStep('residency', QuestionSection.profile, 'Viveste fiscalmente em Portugal todo o ano?',
-      'A residência parcial segue regras diferentes.'),
-    const QuestionStep('region', QuestionSection.profile, 'Onde tens residência fiscal?',
-      'Continente, Madeira e Açores podem ter tabelas diferentes.'),
-    const QuestionStep('dependents', QuestionSection.profile, 'Tens filhos ou outros dependentes?',
-      'Indica quantos fazem parte do teu agregado.'),
+    const QuestionStep(
+      'taxYear',
+      QuestionSection.profile,
+      'Que ano queres simular?',
+      'As regras fiscais mudam todos os anos.',
+    ),
+    const QuestionStep(
+      'age',
+      QuestionSection.profile,
+      'Qual é a tua idade?',
+      'A idade pode alterar benefícios como a dedução do PPR.',
+    ),
+    const QuestionStep(
+      'civilStatus',
+      QuestionSection.profile,
+      'Qual é o teu estado civil?',
+      'Usamos esta informação para preparar o agregado familiar.',
+    ),
+    const QuestionStep(
+      'residency',
+      QuestionSection.profile,
+      'Viveste fiscalmente em Portugal todo o ano?',
+      'A residência parcial segue regras diferentes.',
+    ),
+    const QuestionStep(
+      'region',
+      QuestionSection.profile,
+      'Onde tens residência fiscal?',
+      'Continente, Madeira e Açores podem ter tabelas diferentes.',
+    ),
+    const QuestionStep(
+      'dependents',
+      QuestionSection.profile,
+      'Tens filhos ou outros dependentes?',
+      'Indica quantos fazem parte do teu agregado.',
+    ),
     if (draft.dependentAges.isNotEmpty)
-      const QuestionStep('dependentAges', QuestionSection.profile, 'Que idade têm os dependentes?',
-        'A idade em 31 de dezembro pode aumentar a dedução.'),
-    const QuestionStep('incomeMode', QuestionSection.income, 'Como preferes indicar o rendimento?',
-      'Podes usar o total anual ou um valor mensal.'),
-    QuestionStep('gross', QuestionSection.income,
+      const QuestionStep(
+        'dependentAges',
+        QuestionSection.profile,
+        'Que idade têm os dependentes?',
+        'A idade em 31 de dezembro pode aumentar a dedução.',
+      ),
+    if (draft.dependentAges.isNotEmpty &&
+        draft.civilStatus == CivilStatus.single)
+      const QuestionStep(
+        'singleParent',
+        QuestionSection.profile,
+        'O teu agregado é uma família monoparental?',
+        'Confirma apenas um agregado monoparental standard. Residência alternada ou responsabilidades partilhadas ainda não são suportadas.',
+      ),
+    const QuestionStep(
+      'incomeMode',
+      QuestionSection.income,
+      'Como preferes indicar o rendimento?',
+      'Podes usar o total anual ou um valor mensal.',
+    ),
+    QuestionStep(
+      'gross',
+      QuestionSection.income,
       draft.incomeEntryMode == IncomeEntryMode.annual
           ? 'Qual foi o teu rendimento bruto anual?'
           : 'Qual foi o rendimento bruto mensal?',
-      'Usa valores antes de IRS e Segurança Social.'),
-    const QuestionStep('withholding', QuestionSection.income, 'Quanto foi retido em IRS?',
-      'É o total anual que aparece nos recibos ou declaração da entidade patronal.'),
-    const QuestionStep('socialSecurity', QuestionSection.income, 'Quanto descontaste para a Segurança Social?',
-      'Indica apenas contribuições obrigatórias do trabalhador.'),
-    const QuestionStep('general', QuestionSection.deductions, 'Despesas gerais familiares',
-      'Compras e serviços elegíveis no e-Fatura, sem contar saúde, educação ou rendas.'),
-    const QuestionStep('health', QuestionSection.deductions, 'Quanto tiveste em despesas de saúde?',
-      'Indica despesas elegíveis e não reembolsadas.'),
-    const QuestionStep('education', QuestionSection.deductions, 'E em educação e formação?',
-      'Inclui apenas despesas que cumprem os requisitos fiscais.'),
-    const QuestionStep('rent', QuestionSection.deductions, 'Pagaste renda de habitação permanente?',
-      'Indica o total anual de rendas comunicadas à AT.'),
-    const QuestionStep('careHomes', QuestionSection.deductions, 'Tiveste encargos com lares?',
-      'Pode incluir apoio domiciliário e instituições elegíveis.'),
-    const QuestionStep('invoiceVat', QuestionSection.deductions, 'IVA de faturas elegíveis',
-      'Indica o IVA, não o total da despesa, dos setores abrangidos.'),
-    const QuestionStep('ppr', QuestionSection.deductions, 'Quanto aplicaste num PPR?',
-      'O benefício depende da idade e das condições legais de manutenção.'),
-    const QuestionStep('other', QuestionSection.deductions, 'Outras deduções já apuradas',
-      'Opcional: introduz apenas o crédito fiscal elegível, não a despesa.'),
-    const QuestionStep('review', QuestionSection.review, 'Está tudo pronto para calcular',
-      'Revê os principais valores antes de guardar a simulação.'),
+      'Usa valores antes de IRS e Segurança Social.',
+    ),
+    const QuestionStep(
+      'withholding',
+      QuestionSection.income,
+      'Quanto foi retido em IRS?',
+      'É o total anual que aparece nos recibos ou declaração da entidade patronal.',
+    ),
+    const QuestionStep(
+      'socialSecurity',
+      QuestionSection.income,
+      'Quanto descontaste para a Segurança Social?',
+      'Indica apenas contribuições obrigatórias do trabalhador.',
+    ),
+    const QuestionStep(
+      'general',
+      QuestionSection.deductions,
+      'Despesas gerais familiares',
+      'Compras e serviços elegíveis no e-Fatura, sem contar saúde, educação ou rendas.',
+    ),
+    const QuestionStep(
+      'health',
+      QuestionSection.deductions,
+      'Quanto tiveste em despesas de saúde?',
+      'Indica despesas elegíveis e não reembolsadas.',
+    ),
+    const QuestionStep(
+      'education',
+      QuestionSection.deductions,
+      'E em educação e formação?',
+      'Inclui apenas educação standard. Estudante deslocado e majorações territoriais não são suportados.',
+    ),
+    const QuestionStep(
+      'rent',
+      QuestionSection.deductions,
+      'Pagaste renda de habitação permanente?',
+      'Indica o total anual de rendas comunicadas à AT.',
+    ),
+    const QuestionStep(
+      'careHomes',
+      QuestionSection.deductions,
+      'Tiveste encargos com lares?',
+      'Pode incluir apoio domiciliário e instituições elegíveis.',
+    ),
+    const QuestionStep(
+      'invoiceVat15',
+      QuestionSection.deductions,
+      'IVA com dedução de 15%',
+      'Indica o IVA, não o total da despesa, dos setores standard elegíveis.',
+    ),
+    const QuestionStep(
+      'invoiceVat30',
+      QuestionSection.deductions,
+      'IVA com dedução de 30%',
+      'Indica o IVA de ensino desportivo, clubes e ginásios elegíveis.',
+    ),
+    const QuestionStep(
+      'invoiceVat35',
+      QuestionSection.deductions,
+      'IVA com dedução de 35%',
+      'Indica apenas IVA de medicamentos de uso veterinário elegíveis.',
+    ),
+    const QuestionStep(
+      'invoiceVat100',
+      QuestionSection.deductions,
+      'IVA com dedução de 100%',
+      'Indica o IVA de transportes públicos e assinaturas de periódicos elegíveis.',
+    ),
+    const QuestionStep(
+      'ppr',
+      QuestionSection.deductions,
+      'Quanto aplicaste num PPR?',
+      'O benefício depende da idade e das condições legais de manutenção.',
+    ),
+    const QuestionStep(
+      'review',
+      QuestionSection.review,
+      'Está tudo pronto para calcular',
+      'Revê os principais valores antes de guardar a simulação.',
+    ),
   ];
 }
