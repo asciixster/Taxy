@@ -29,6 +29,15 @@ test/               limites, regressões, questionário e arranque da UI
 
 O `TaxEngine` recebe `TaxSimulation` e devolve `TaxResult`, incluindo rendimento coletável, coleta, deduções, retenções, saldo, explicações, avisos e pressupostos. A UI não contém fórmulas fiscais.
 
+## Funcionalidades do produto
+
+- Questionário conversacional com perguntas condicionais.
+- Dashboard, histórico e detalhe explicável do cálculo.
+- Laboratório de cenários para PPR, saúde, educação, rendas e despesas gerais.
+- Cenários recalculados pelo mesmo motor e guardáveis como novas simulações.
+- Oportunidades fiscais determinísticas através de simulações contrafactuais.
+- Renomear, duplicar, editar e apagar simulações no dispositivo.
+
 ## Stack
 
 - Flutter / Dart e Material 3.

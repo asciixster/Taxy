@@ -12,7 +12,9 @@ void main() {
   late TaxEngine engine;
 
   setUpAll(() {
-    rules = TaxRuleSet.fromJsonString(File('assets/tax_rules/2026.json').readAsStringSync());
+    rules = TaxRuleSet.fromJsonString(
+      File('assets/tax_rules/2026.json').readAsStringSync(),
+    );
     engine = TaxEngine(rules);
   });
 
@@ -33,6 +35,35 @@ void main() {
       expect(const Money.fromCents(1).timesPpm(500000).cents, 1);
       expect(const Money.fromCents(3).timesPpm(500000).cents, 2);
     });
+
+    test('cenários alteram várias deduções sem perder as restantes', () {
+      const original = DeductionInput(
+        health: Money.fromCents(10000),
+        education: Money.fromCents(20000),
+        ppr: Money.fromCents(30000),
+      );
+      final changed = original.copyWith(
+        health: const Money.fromCents(40000),
+        rent: const Money.fromCents(50000),
+      );
+      expect(changed.health.cents, 40000);
+      expect(changed.rent.cents, 50000);
+      expect(changed.education.cents, 20000);
+      expect(changed.ppr.cents, 30000);
+    });
+
+    test('cenários de rendimento preservam retenções e segurança social', () {
+      const original = EmploymentIncome(
+        entryMode: IncomeEntryMode.annual,
+        gross: Money.fromCents(3000000),
+        withholding: Money.fromCents(400000),
+        socialSecurity: Money.fromCents(330000),
+      );
+      final changed = original.copyWith(gross: const Money.fromCents(3500000));
+      expect(changed.gross.cents, 3500000);
+      expect(changed.withholding.cents, 400000);
+      expect(changed.socialSecurity.cents, 330000);
+    });
   });
 
   group('fronteiras dos escalões 2026', () {
@@ -47,7 +78,10 @@ void main() {
     ];
     for (final item in cases) {
       test(item.$1, () {
-        expect(engine.grossTaxForTaxableIncome(Money.fromCents(item.$2)).cents, item.$3);
+        expect(
+          engine.grossTaxForTaxableIncome(Money.fromCents(item.$2)).cents,
+          item.$3,
+        );
       });
     }
   });
@@ -60,118 +94,161 @@ void main() {
     });
 
     test('salário mínimo anual fica protegido pelo mínimo de existência', () {
-      final result = engine.calculate(_simulation(
-        gross: 1288000, socialSecurity: 141680, general: 100000,
-      ));
+      final result = engine.calculate(
+        _simulation(gross: 1288000, socialSecurity: 141680, general: 100000),
+      );
       expect(result.taxDue.cents, 0);
       expect(result.minimumExistenceAllowance.cents, greaterThan(0));
     });
 
     test('usa a dedução específica legal quando superior às contribuições', () {
-      final result = engine.calculate(_simulation(gross: 3000000, socialSecurity: 330000));
+      final result = engine.calculate(
+        _simulation(gross: 3000000, socialSecurity: 330000),
+      );
       expect(result.specificDeduction.cents, 458709);
       expect(result.taxableIncome.cents, 2541291);
       expect(result.taxDue.cents, 481065);
     });
 
     test('usa contribuições obrigatórias quando superiores à dedução fixa', () {
-      final result = engine.calculate(_simulation(gross: 5000000, socialSecurity: 600000));
+      final result = engine.calculate(
+        _simulation(gross: 5000000, socialSecurity: 600000),
+      );
       expect(result.specificDeduction.cents, 600000);
       expect(result.taxableIncome.cents, 4400000);
     });
 
     test('retenções transformam imposto devido em reembolso', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, withholding: 600000,
-      ));
+      final result = engine.calculate(
+        _simulation(
+          gross: 3000000,
+          socialSecurity: 330000,
+          withholding: 600000,
+        ),
+      );
       expect(result.balance.cents, 118935);
       expect(result.isRefund, isTrue);
     });
 
     test('despesas gerais respeitam o limite de 250 euros', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, general: 100000,
-      ));
+      final result = engine.calculate(
+        _simulation(gross: 3000000, socialSecurity: 330000, general: 100000),
+      );
       expect(result.taxCredits.cents, 25000);
       expect(result.taxDue.cents, 456065);
       expect(result.warnings, isNotEmpty);
     });
 
     test('saúde respeita o limite de 1000 euros', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, health: 1000000,
-      ));
+      final result = engine.calculate(
+        _simulation(gross: 3000000, socialSecurity: 330000, health: 1000000),
+      );
       expect(result.taxCredits.cents, 100000);
       expect(result.taxDue.cents, 381065);
     });
 
     test('PPR abaixo dos 35 anos dá no máximo 400 euros', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, age: 30, ppr: 200000,
-      ));
+      final result = engine.calculate(
+        _simulation(
+          gross: 3000000,
+          socialSecurity: 330000,
+          age: 30,
+          ppr: 200000,
+        ),
+      );
       expect(result.taxCredits.cents, 40000);
       expect(result.taxDue.cents, 441065);
     });
 
     test('PPR dos 35 aos 50 anos dá no máximo 350 euros', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, age: 40, ppr: 200000,
-      ));
+      final result = engine.calculate(
+        _simulation(
+          gross: 3000000,
+          socialSecurity: 330000,
+          age: 40,
+          ppr: 200000,
+        ),
+      );
       expect(result.taxCredits.cents, 35000);
     });
 
     test('PPR acima dos 50 anos dá no máximo 300 euros', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, age: 60, ppr: 200000,
-      ));
+      final result = engine.calculate(
+        _simulation(
+          gross: 3000000,
+          socialSecurity: 330000,
+          age: 60,
+          ppr: 200000,
+        ),
+      );
       expect(result.taxCredits.cents, 30000);
     });
 
     test('dependente com mais de três anos deduz 600 euros', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, dependentAges: [10],
-      ));
+      final result = engine.calculate(
+        _simulation(
+          gross: 3000000,
+          socialSecurity: 330000,
+          dependentAges: [10],
+        ),
+      );
       expect(result.taxCredits.cents, 60000);
     });
 
     test('primeiro dependente até três anos recebe majoração de 126 euros', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, dependentAges: [2],
-      ));
+      final result = engine.calculate(
+        _simulation(gross: 3000000, socialSecurity: 330000, dependentAges: [2]),
+      );
       expect(result.taxCredits.cents, 72600);
     });
 
     test('segundo dependente até seis anos recebe majoração de 300 euros', () {
-      final result = engine.calculate(_simulation(
-        gross: 3000000, socialSecurity: 330000, dependentAges: [10, 5],
-      ));
+      final result = engine.calculate(
+        _simulation(
+          gross: 3000000,
+          socialSecurity: 330000,
+          dependentAges: [10, 5],
+        ),
+      );
       expect(result.taxCredits.cents, 150000);
     });
 
     test('adicional de solidariedade começa acima de 80 mil euros', () {
-      final result = engine.calculate(_simulation(gross: 10000000, socialSecurity: 330000));
+      final result = engine.calculate(
+        _simulation(gross: 10000000, socialSecurity: 330000),
+      );
       expect(result.taxableIncome.cents, 9541291);
       expect(result.solidarityTax.cents, 38532);
     });
 
     test('bloqueia Madeira sem inventar taxas', () {
-      final result = engine.calculate(_simulation(gross: 3000000, region: TaxRegion.madeira));
+      final result = engine.calculate(
+        _simulation(gross: 3000000, region: TaxRegion.madeira),
+      );
       expect(result.available, isFalse);
       expect(result.warnings.single, contains('NEEDS_VERIFICATION'));
     });
 
     test('bloqueia tributação conjunta ainda não validada', () {
-      final result = engine.calculate(_simulation(gross: 3000000, filingMode: FilingMode.joint));
+      final result = engine.calculate(
+        _simulation(gross: 3000000, filingMode: FilingMode.joint),
+      );
       expect(result.available, isFalse);
     });
 
     test('bloqueia residência parcial', () {
-      final result = engine.calculate(_simulation(gross: 3000000, fullYearResident: false));
+      final result = engine.calculate(
+        _simulation(gross: 3000000, fullYearResident: false),
+      );
       expect(result.available, isFalse);
     });
 
     test('serialização preserva todos os cêntimos', () {
-      final original = _simulation(gross: 3000123, withholding: 45678, health: 12345);
+      final original = _simulation(
+        gross: 3000123,
+        withholding: 45678,
+        health: 12345,
+      );
       final restored = TaxSimulation.decode(original.encode());
       expect(restored.income.gross.cents, 3000123);
       expect(restored.income.withholding.cents, 45678);
@@ -194,8 +271,14 @@ void main() {
     test('pergunta modo de tributação apenas a casados ou unidos de facto', () {
       final single = TaxDraft();
       final married = TaxDraft()..civilStatus = CivilStatus.married;
-      expect(const QuestionEngine().steps(single).map((e) => e.id), isNot(contains('filingMode')));
-      expect(const QuestionEngine().steps(married).map((e) => e.id), contains('filingMode'));
+      expect(
+        const QuestionEngine().steps(single).map((e) => e.id),
+        isNot(contains('filingMode')),
+      );
+      expect(
+        const QuestionEngine().steps(married).map((e) => e.id),
+        contains('filingMode'),
+      );
     });
   });
 }
@@ -224,7 +307,9 @@ TaxSimulation _simulation({
   profile: TaxpayerProfile(
     taxYear: 2026,
     age: age,
-    civilStatus: filingMode == FilingMode.joint ? CivilStatus.married : CivilStatus.single,
+    civilStatus: filingMode == FilingMode.joint
+        ? CivilStatus.married
+        : CivilStatus.single,
     dependentAges: dependentAges,
     fullYearResident: fullYearResident,
     region: region,

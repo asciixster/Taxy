@@ -3,8 +3,11 @@ import 'dart:convert';
 import 'money.dart';
 
 enum TaxRegion { continent, madeira, azores }
+
 enum CivilStatus { single, married, deFacto }
+
 enum FilingMode { separate, joint }
+
 enum IncomeEntryMode { annual, monthly }
 
 final class TaxpayerProfile {
@@ -56,15 +59,16 @@ final class TaxpayerProfile {
     'filingMode': filingMode.name,
   };
 
-  factory TaxpayerProfile.fromJson(Map<String, Object?> json) => TaxpayerProfile(
-    taxYear: json['taxYear'] as int,
-    age: json['age'] as int,
-    civilStatus: CivilStatus.values.byName(json['civilStatus'] as String),
-    dependentAges: (json['dependentAges'] as List).cast<int>(),
-    fullYearResident: json['fullYearResident'] as bool,
-    region: TaxRegion.values.byName(json['region'] as String),
-    filingMode: FilingMode.values.byName(json['filingMode'] as String),
-  );
+  factory TaxpayerProfile.fromJson(Map<String, Object?> json) =>
+      TaxpayerProfile(
+        taxYear: json['taxYear'] as int,
+        age: json['age'] as int,
+        civilStatus: CivilStatus.values.byName(json['civilStatus'] as String),
+        dependentAges: (json['dependentAges'] as List).cast<int>(),
+        fullYearResident: json['fullYearResident'] as bool,
+        region: TaxRegion.values.byName(json['region'] as String),
+        filingMode: FilingMode.values.byName(json['filingMode'] as String),
+      );
 }
 
 final class EmploymentIncome {
@@ -84,6 +88,22 @@ final class EmploymentIncome {
   final Money monthlyAmount;
   final int months;
 
+  EmploymentIncome copyWith({
+    IncomeEntryMode? entryMode,
+    Money? gross,
+    Money? withholding,
+    Money? socialSecurity,
+    Money? monthlyAmount,
+    int? months,
+  }) => EmploymentIncome(
+    entryMode: entryMode ?? this.entryMode,
+    gross: gross ?? this.gross,
+    withholding: withholding ?? this.withholding,
+    socialSecurity: socialSecurity ?? this.socialSecurity,
+    monthlyAmount: monthlyAmount ?? this.monthlyAmount,
+    months: months ?? this.months,
+  );
+
   Map<String, Object?> toJson() => {
     'entryMode': entryMode.name,
     'grossCents': gross.cents,
@@ -93,14 +113,15 @@ final class EmploymentIncome {
     'months': months,
   };
 
-  factory EmploymentIncome.fromJson(Map<String, Object?> json) => EmploymentIncome(
-    entryMode: IncomeEntryMode.values.byName(json['entryMode'] as String),
-    gross: Money.fromCents(json['grossCents'] as int),
-    withholding: Money.fromCents(json['withholdingCents'] as int),
-    socialSecurity: Money.fromCents(json['socialSecurityCents'] as int),
-    monthlyAmount: Money.fromCents(json['monthlyAmountCents'] as int? ?? 0),
-    months: json['months'] as int? ?? 14,
-  );
+  factory EmploymentIncome.fromJson(Map<String, Object?> json) =>
+      EmploymentIncome(
+        entryMode: IncomeEntryMode.values.byName(json['entryMode'] as String),
+        gross: Money.fromCents(json['grossCents'] as int),
+        withholding: Money.fromCents(json['withholdingCents'] as int),
+        socialSecurity: Money.fromCents(json['socialSecurityCents'] as int),
+        monthlyAmount: Money.fromCents(json['monthlyAmountCents'] as int? ?? 0),
+        months: json['months'] as int? ?? 14,
+      );
 }
 
 final class DeductionInput {
@@ -124,15 +145,25 @@ final class DeductionInput {
   final Money ppr;
   final Money otherEligibleTaxCredit;
 
-  DeductionInput copyWith({Money? ppr}) => DeductionInput(
-    general: general,
-    health: health,
-    education: education,
-    rent: rent,
-    careHomes: careHomes,
-    eligibleInvoiceVat: eligibleInvoiceVat,
+  DeductionInput copyWith({
+    Money? general,
+    Money? health,
+    Money? education,
+    Money? rent,
+    Money? careHomes,
+    Money? eligibleInvoiceVat,
+    Money? ppr,
+    Money? otherEligibleTaxCredit,
+  }) => DeductionInput(
+    general: general ?? this.general,
+    health: health ?? this.health,
+    education: education ?? this.education,
+    rent: rent ?? this.rent,
+    careHomes: careHomes ?? this.careHomes,
+    eligibleInvoiceVat: eligibleInvoiceVat ?? this.eligibleInvoiceVat,
     ppr: ppr ?? this.ppr,
-    otherEligibleTaxCredit: otherEligibleTaxCredit,
+    otherEligibleTaxCredit:
+        otherEligibleTaxCredit ?? this.otherEligibleTaxCredit,
   );
 
   Map<String, Object?> toJson() => {
@@ -152,9 +183,13 @@ final class DeductionInput {
     education: Money.fromCents(json['educationCents'] as int? ?? 0),
     rent: Money.fromCents(json['rentCents'] as int? ?? 0),
     careHomes: Money.fromCents(json['careHomesCents'] as int? ?? 0),
-    eligibleInvoiceVat: Money.fromCents(json['eligibleInvoiceVatCents'] as int? ?? 0),
+    eligibleInvoiceVat: Money.fromCents(
+      json['eligibleInvoiceVatCents'] as int? ?? 0,
+    ),
     ppr: Money.fromCents(json['pprCents'] as int? ?? 0),
-    otherEligibleTaxCredit: Money.fromCents(json['otherEligibleTaxCreditCents'] as int? ?? 0),
+    otherEligibleTaxCredit: Money.fromCents(
+      json['otherEligibleTaxCreditCents'] as int? ?? 0,
+    ),
   );
 }
 
@@ -177,17 +212,22 @@ final class TaxSimulation {
   final EmploymentIncome income;
   final DeductionInput deductions;
 
-  TaxSimulation copyWith({String? id, String? name, DateTime? updatedAt,
-    TaxpayerProfile? profile, EmploymentIncome? income, DeductionInput? deductions}) =>
-      TaxSimulation(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        createdAt: createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        profile: profile ?? this.profile,
-        income: income ?? this.income,
-        deductions: deductions ?? this.deductions,
-      );
+  TaxSimulation copyWith({
+    String? id,
+    String? name,
+    DateTime? updatedAt,
+    TaxpayerProfile? profile,
+    EmploymentIncome? income,
+    DeductionInput? deductions,
+  }) => TaxSimulation(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    profile: profile ?? this.profile,
+    income: income ?? this.income,
+    deductions: deductions ?? this.deductions,
+  );
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -206,13 +246,20 @@ final class TaxSimulation {
     name: json['name'] as String,
     createdAt: DateTime.parse(json['createdAt'] as String),
     updatedAt: DateTime.parse(json['updatedAt'] as String),
-    profile: TaxpayerProfile.fromJson((json['profile'] as Map).cast<String, Object?>()),
-    income: EmploymentIncome.fromJson((json['income'] as Map).cast<String, Object?>()),
-    deductions: DeductionInput.fromJson((json['deductions'] as Map).cast<String, Object?>()),
+    profile: TaxpayerProfile.fromJson(
+      (json['profile'] as Map).cast<String, Object?>(),
+    ),
+    income: EmploymentIncome.fromJson(
+      (json['income'] as Map).cast<String, Object?>(),
+    ),
+    deductions: DeductionInput.fromJson(
+      (json['deductions'] as Map).cast<String, Object?>(),
+    ),
   );
 
-  factory TaxSimulation.decode(String value) =>
-      TaxSimulation.fromJson((jsonDecode(value) as Map).cast<String, Object?>());
+  factory TaxSimulation.decode(String value) => TaxSimulation.fromJson(
+    (jsonDecode(value) as Map).cast<String, Object?>(),
+  );
 }
 
 final class TaxBreakdown {
@@ -250,6 +297,7 @@ final class TaxResult {
   final Money solidarityTax;
   final Money taxDue;
   final Money withholding;
+
   /// Positivo = reembolso; negativo = imposto adicional a pagar.
   final Money balance;
   final List<TaxBreakdown> breakdown;

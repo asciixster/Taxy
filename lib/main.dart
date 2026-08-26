@@ -249,13 +249,13 @@ final class _Welcome extends StatelessWidget {
   );
 }
 
-final class _Dashboard extends StatelessWidget {
+final class _Dashboard extends ConsumerWidget {
   const _Dashboard({required this.rules, required this.simulations});
   final TaxRuleSet rules;
   final List<TaxSimulation> simulations;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final latest = simulations.first;
     final result = TaxEngine(rules).calculate(latest);
     return CustomScrollView(
@@ -368,6 +368,20 @@ final class _Dashboard extends StatelessWidget {
                 if (result.available) ...[
                   const SizedBox(height: 22),
                   _InsightCard(result: result),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OpportunitiesScreen(
+                          simulation: latest,
+                          rules: rules,
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(Icons.auto_awesome_outlined),
+                    label: const Text('Explorar oportunidades fiscais'),
+                  ),
                 ],
                 const SizedBox(height: 32),
                 Row(
@@ -441,7 +455,41 @@ final class _Dashboard extends StatelessWidget {
                               : 'A pagar ${(-itemResult.balance).format()}')
                         : 'Cálculo indisponível',
                   ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
+                  trailing: PopupMenuButton<String>(
+                    tooltip: 'Opções',
+                    onSelected: (action) => _manage(context, ref, item, action),
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'rename',
+                        child: ListTile(
+                          leading: Icon(Icons.drive_file_rename_outline),
+                          title: Text('Renomear'),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'duplicate',
+                        child: ListTile(
+                          leading: Icon(Icons.copy_rounded),
+                          title: Text('Duplicar'),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: ListTile(
+                          leading: Icon(Icons.tune_rounded),
+                          title: Text('Alterar dados'),
+                        ),
+                      ),
+                      PopupMenuDivider(),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: ListTile(
+                          leading: Icon(Icons.delete_outline_rounded),
+                          title: Text('Apagar'),
+                        ),
+                      ),
+                    ],
+                  ),
                   onTap: () => _openResult(context, item, rules),
                 ),
               );
@@ -450,6 +498,89 @@ final class _Dashboard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _manage(
+    BuildContext context,
+    WidgetRef ref,
+    TaxSimulation simulation,
+    String action,
+  ) async {
+    final repository = ref.read(repositoryProvider);
+    if (action == 'edit') {
+      await _openWizard(context, rules, source: simulation);
+      return;
+    }
+    if (action == 'duplicate') {
+      final now = DateTime.now();
+      await repository.save(
+        simulation.copyWith(
+          id: now.microsecondsSinceEpoch.toString(),
+          name: '${simulation.name} — cópia',
+          updatedAt: now,
+        ),
+      );
+      ref.invalidate(simulationsProvider);
+      return;
+    }
+    if (action == 'rename') {
+      final controller = TextEditingController(text: simulation.name);
+      final name = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Renomear simulação'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Nome'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      );
+      controller.dispose();
+      if (name != null && name.isNotEmpty) {
+        await repository.save(
+          simulation.copyWith(name: name, updatedAt: DateTime.now()),
+        );
+        ref.invalidate(simulationsProvider);
+      }
+      return;
+    }
+    if (action == 'delete') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.delete_outline_rounded),
+          title: const Text('Apagar esta simulação?'),
+          content: Text(
+            '“${simulation.name}” será removida apenas deste dispositivo.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Apagar'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true) {
+        await repository.delete(simulation.id);
+        ref.invalidate(simulationsProvider);
+      }
+    }
   }
 }
 
@@ -947,6 +1078,18 @@ final class ResultScreen extends StatelessWidget {
               icon: const Icon(Icons.compare_arrows_rounded),
               label: const Text('Comparar cenário'),
             ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      OpportunitiesScreen(simulation: simulation, rules: rules),
+                ),
+              ),
+              icon: const Icon(Icons.auto_awesome_outlined),
+              label: const Text('Ver oportunidades'),
+            ),
             const SizedBox(height: 28),
             Text(
               'Como chegámos aqui',
@@ -1026,7 +1169,7 @@ final class ResultScreen extends StatelessWidget {
   }
 }
 
-final class CompareScreen extends StatefulWidget {
+final class CompareScreen extends ConsumerStatefulWidget {
   const CompareScreen({
     super.key,
     required this.simulation,
@@ -1036,53 +1179,85 @@ final class CompareScreen extends StatefulWidget {
   final TaxRuleSet rules;
 
   @override
-  State<CompareScreen> createState() => _CompareScreenState();
+  ConsumerState<CompareScreen> createState() => _CompareScreenState();
 }
 
-final class _CompareScreenState extends State<CompareScreen> {
+final class _CompareScreenState extends ConsumerState<CompareScreen> {
   late int pprCents = widget.simulation.deductions.ppr.cents;
+  late int healthCents = widget.simulation.deductions.health.cents;
+  late int educationCents = widget.simulation.deductions.education.cents;
+  late int rentCents = widget.simulation.deductions.rent.cents;
+  late int generalCents = widget.simulation.deductions.general.cents;
+
+  TaxSimulation get changedSimulation => widget.simulation.copyWith(
+    deductions: widget.simulation.deductions.copyWith(
+      ppr: Money.fromCents(pprCents),
+      health: Money.fromCents(healthCents),
+      education: Money.fromCents(educationCents),
+      rent: Money.fromCents(rentCents),
+      general: Money.fromCents(generalCents),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     final engine = TaxEngine(widget.rules);
     final original = engine.calculate(widget.simulation);
-    final changedSimulation = widget.simulation.copyWith(
-      deductions: widget.simulation.deductions.copyWith(
-        ppr: Money.fromCents(pprCents),
-      ),
-    );
     final changed = engine.calculate(changedSimulation);
     final difference = changed.balance - original.balance;
     return Scaffold(
-      appBar: AppBar(title: const Text('Comparar cenário')),
+      appBar: AppBar(title: const Text('Laboratório de cenários')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         children: [
           Text(
-            'E se alterares o PPR?',
+            'Experimenta sem risco.',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            'O mesmo motor fiscal recalcula apenas a variável escolhida.',
+            'Altera despesas e PPR. O resultado é recalculado instantaneamente pelo mesmo motor fiscal.',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            Money.fromCents(pprCents).format(),
-            style: Theme.of(context).textTheme.displaySmall,
+          const SizedBox(height: 22),
+          _ScenarioSlider(
+            label: 'PPR',
+            helper: 'Valor aplicado durante o ano',
+            cents: pprCents,
+            maxCents: 500000,
+            onChanged: (v) => setState(() => pprCents = v),
           ),
-          Slider(
-            value: pprCents.toDouble(),
-            min: 0,
-            max: 500000,
-            divisions: 50,
-            label: Money.fromCents(pprCents).format(),
-            onChanged: (v) => setState(() => pprCents = (v ~/ 10000) * 10000),
+          _ScenarioSlider(
+            label: 'Saúde',
+            helper: 'Despesas elegíveis',
+            cents: healthCents,
+            maxCents: 800000,
+            onChanged: (v) => setState(() => healthCents = v),
           ),
-          const SizedBox(height: 18),
+          _ScenarioSlider(
+            label: 'Educação',
+            helper: 'Despesas elegíveis',
+            cents: educationCents,
+            maxCents: 500000,
+            onChanged: (v) => setState(() => educationCents = v),
+          ),
+          _ScenarioSlider(
+            label: 'Rendas',
+            helper: 'Rendas elegíveis',
+            cents: rentCents,
+            maxCents: 1500000,
+            onChanged: (v) => setState(() => rentCents = v),
+          ),
+          _ScenarioSlider(
+            label: 'Despesas gerais',
+            helper: 'Com NIF na fatura',
+            cents: generalCents,
+            maxCents: 300000,
+            onChanged: (v) => setState(() => generalCents = v),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -1104,7 +1279,9 @@ final class _CompareScreenState extends State<CompareScreen> {
           ),
           const SizedBox(height: 14),
           Card(
-            color: Theme.of(context).colorScheme.primaryContainer,
+            color: difference.cents >= 0
+                ? _taxyMint.withValues(alpha: .18)
+                : Theme.of(context).colorScheme.errorContainer,
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -1126,6 +1303,12 @@ final class _CompareScreenState extends State<CompareScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: difference.cents == 0 ? null : _saveScenario,
+            icon: const Icon(Icons.bookmark_add_outlined),
+            label: const Text('Guardar como nova simulação'),
+          ),
           const SizedBox(height: 18),
           Text(
             'A vantagem fiscal de um PPR está sujeita a condições de elegibilidade e manutenção. Esta comparação não avalia custos, risco ou rentabilidade do produto.',
@@ -1133,6 +1316,253 @@ final class _CompareScreenState extends State<CompareScreen> {
                 ?.copyWith(height: 1.45),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _saveScenario() async {
+    final now = DateTime.now();
+    final saved = changedSimulation.copyWith(
+      id: now.microsecondsSinceEpoch.toString(),
+      name: '${widget.simulation.name} — cenário',
+      updatedAt: now,
+    );
+    await ref.read(repositoryProvider).save(saved);
+    ref.invalidate(simulationsProvider);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Cenário guardado no dispositivo.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+final class OpportunitiesScreen extends StatelessWidget {
+  const OpportunitiesScreen({
+    super.key,
+    required this.simulation,
+    required this.rules,
+  });
+  final TaxSimulation simulation;
+  final TaxRuleSet rules;
+
+  @override
+  Widget build(BuildContext context) {
+    final engine = TaxEngine(rules);
+    final baseline = engine.calculate(simulation);
+    final d = simulation.deductions;
+    Money target(String cap, String rate) =>
+        Money.fromCents(Money.mulDiv(rules.d(cap), 1000000, rules.d(rate)));
+    final pprTarget = Money.fromCents(
+      simulation.profile.age < 35
+          ? 200000
+          : simulation.profile.age <= 50
+          ? 175000
+          : 150000,
+    );
+    final candidates = <_OpportunityCandidate>[
+      _OpportunityCandidate(
+        'PPR',
+        'Benefício fiscal sujeito às condições legais do produto.',
+        Icons.savings_outlined,
+        d.ppr,
+        pprTarget,
+        (x, value) => x.copyWith(ppr: value),
+      ),
+      _OpportunityCandidate(
+        'Despesas gerais',
+        'Faturas elegíveis associadas ao teu NIF.',
+        Icons.receipt_long_outlined,
+        d.general,
+        target('generalCapPerTaxpayerCents', 'generalRatePpm'),
+        (x, value) => x.copyWith(general: value),
+      ),
+      _OpportunityCandidate(
+        'Saúde',
+        'Apenas despesas reais, elegíveis e não reembolsadas.',
+        Icons.health_and_safety_outlined,
+        d.health,
+        target('healthCapCents', 'healthRatePpm'),
+        (x, value) => x.copyWith(health: value),
+      ),
+      _OpportunityCandidate(
+        'Educação',
+        'Propinas e outras despesas elegíveis comprovadas.',
+        Icons.school_outlined,
+        d.education,
+        target('educationCapCents', 'educationRatePpm'),
+        (x, value) => x.copyWith(education: value),
+      ),
+      _OpportunityCandidate(
+        'Rendas',
+        'Rendas de habitação permanente fiscalmente elegíveis.',
+        Icons.home_outlined,
+        d.rent,
+        target('rent2026FloorCapCents', 'rentRatePpm'),
+        (x, value) => x.copyWith(rent: value),
+      ),
+      _OpportunityCandidate(
+        'Lares',
+        'Encargos elegíveis com apoio residencial.',
+        Icons.elderly_outlined,
+        d.careHomes,
+        target('careHomeCapCents', 'careHomeRatePpm'),
+        (x, value) => x.copyWith(careHomes: value),
+      ),
+    ];
+    final opportunities = <_OpportunityResult>[];
+    for (final candidate in candidates) {
+      if (candidate.current.cents >= candidate.target.cents) {
+        continue;
+      }
+      final changed = simulation.copyWith(
+        deductions: candidate.apply(d, candidate.target),
+      );
+      final delta = engine.calculate(changed).balance - baseline.balance;
+      if (delta.cents > 0) {
+        opportunities.add(_OpportunityResult(candidate, delta));
+      }
+    }
+    opportunities.sort((a, b) => b.delta.compareTo(a.delta));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Oportunidades')),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 36),
+        children: [
+          Text(
+            'Onde pode existir margem?',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Simulamos cada categoria isoladamente até ao respetivo limite. Não assumimos que tiveste despesas que não declaraste.',
+            style: TextStyle(
+              height: 1.45,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 22),
+          if (opportunities.isEmpty)
+            const _Notice(
+              title: 'Sem oportunidades adicionais nesta simulação',
+              messages: [
+                'Os limites podem já estar atingidos ou não existir imposto suficiente para deduzir.',
+              ],
+              icon: Icons.task_alt_rounded,
+            )
+          else
+            for (final opportunity in opportunities) ...[
+              _OpportunityCard(result: opportunity),
+              const SizedBox(height: 12),
+            ],
+          const SizedBox(height: 10),
+          const _Notice(
+            title: 'Importante',
+            icon: Icons.info_outline_rounded,
+            messages: [
+              '“Até” não é uma promessa de reembolso: depende do conjunto da simulação.',
+              'Não gastes apenas para obter uma dedução fiscal.',
+              'Introduz somente despesas reais, elegíveis e documentadas.',
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+typedef _ApplyDeduction = DeductionInput Function(DeductionInput, Money);
+
+final class _OpportunityCandidate {
+  const _OpportunityCandidate(
+    this.label,
+    this.helper,
+    this.icon,
+    this.current,
+    this.target,
+    this.apply,
+  );
+  final String label;
+  final String helper;
+  final IconData icon;
+  final Money current;
+  final Money target;
+  final _ApplyDeduction apply;
+}
+
+final class _OpportunityResult {
+  const _OpportunityResult(this.candidate, this.delta);
+  final _OpportunityCandidate candidate;
+  final Money delta;
+}
+
+final class _OpportunityCard extends StatelessWidget {
+  const _OpportunityCard({required this.result});
+  final _OpportunityResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final missing = result.candidate.target - result.candidate.current;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: _taxyViolet.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(
+                result.candidate.icon,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          result.candidate.label,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                      Text(
+                        'até +${result.delta.format()}',
+                        style: const TextStyle(
+                          color: Color(0xFF137253),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    result.candidate.helper,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Margem de despesas introduzidas: ${missing.format()}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1484,6 +1914,71 @@ final class _ReviewRow extends StatelessWidget {
       ],
     ),
   );
+}
+
+final class _ScenarioSlider extends StatelessWidget {
+  const _ScenarioSlider({
+    required this.label,
+    required this.helper,
+    required this.cents,
+    required this.maxCents,
+    required this.onChanged,
+  });
+  final String label;
+  final String helper;
+  final int cents;
+  final int maxCents;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeMax = maxCents < cents ? cents : maxCents;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 12, 12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      Text(
+                        helper,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  Money.fromCents(cents).format(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            Slider(
+              value: cents.toDouble().clamp(0, safeMax.toDouble()),
+              min: 0,
+              max: safeMax.toDouble(),
+              divisions: safeMax == 0 ? null : 50,
+              label: Money.fromCents(cents).format(),
+              onChanged: safeMax == 0
+                  ? null
+                  : (value) => onChanged((value ~/ 10000) * 10000),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 final class _ScenarioCard extends StatelessWidget {
