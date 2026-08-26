@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "taxYear": 2026,
+  "rulesVersion": "2026.1.0",
+  "verifiedAt": "2026-08-26",
+  "status": "VERIFIED_FOR_MVP_SCOPE",
+  "supportedScope": {
+    "jurisdiction": "CONTINENT",
+    "residency": "FULL_YEAR_PORTUGAL",
+    "incomeCategories": ["A"],
+    "filingModes": ["SINGLE_TAXPAYER"]
+  },
+  "unsupported": {
+    "MADEIRA": "NEEDS_VERIFICATION",
+    "AZORES": "NEEDS_VERIFICATION",
+    "JOINT_FILING": "NEEDS_VERIFICATION",
+    "IRS_JOVEM": "NEEDS_VERIFICATION"
+  },
+  "iasCents": 53713,
+  "employmentSpecificDeductionCents": 458709,
+  "minimumExistenceReferenceCents": 1288000,
+  "minimumExistence": {
+    "generalExpenseLimitCents": 25000,
+    "phaseTwoMultiplierPpm": 2600000,
+    "phaseThreeMultiplierPpm": 1350000,
+    "cutoffIasMultiplierTenths": 22,
+    "months": 14,
+    "lDivisorTenths": 36
+  },
+  "brackets": [
+    {"upperCents": 834200, "marginalRatePpm": 125000, "averageRatePpm": 125000},
+    {"upperCents": 1258700, "marginalRatePpm": 157000, "averageRatePpm": 135790},
+    {"upperCents": 1783800, "marginalRatePpm": 212000, "averageRatePpm": 158230},
+    {"upperCents": 2308900, "marginalRatePpm": 241000, "averageRatePpm": 177050},
+    {"upperCents": 2939700, "marginalRatePpm": 311000, "averageRatePpm": 205790},
+    {"upperCents": 4309000, "marginalRatePpm": 349000, "averageRatePpm": 251300},
+    {"upperCents": 4656600, "marginalRatePpm": 431000, "averageRatePpm": 264720},
+    {"upperCents": 8663400, "marginalRatePpm": 446000, "averageRatePpm": 348560},
+    {"upperCents": null, "marginalRatePpm": 480000, "averageRatePpm": null}
+  ],
+  "solidarity": {
+    "firstThresholdCents": 8000000,
+    "secondThresholdCents": 25000000,
+    "firstRatePpm": 25000,
+    "secondRatePpm": 50000
+  },
+  "deductions": {
+    "dependentBaseCents": 60000,
+    "dependentUnderThreeExtraCents": 12600,
+    "secondAndLaterUnderSixExtraCents": 30000,
+    "generalRatePpm": 350000,
+    "generalCapPerTaxpayerCents": 25000,
+    "healthRatePpm": 150000,
+    "healthCapCents": 100000,
+    "educationRatePpm": 300000,
+    "educationCapCents": 80000,
+    "careHomeRatePpm": 250000,
+    "careHomeCapCents": 40375,
+    "invoiceVatRatePpm": 150000,
+    "invoiceVatCapCents": 25000,
+    "pprRatePpm": 200000,
+    "pprUnder35CapCents": 40000,
+    "ppr35To50CapCents": 35000,
+    "pprOver50CapCents": 30000,
+    "rentRatePpm": 150000,
+    "rent2026FloorCapCents": 90000,
+    "rentTransitionLowCapCents": 102500,
+    "rentTransitionBaseCapCents": 72550,
+    "rentTransitionUpperIncomeCents": 3000000,
+    "overallLowIncomeCapCents": 250000,
+    "overallHighIncomeCapCents": 100000,
+    "overallUpperIncomeCents": 8000000,
+    "largeFamilyIncreasePpmPerDependent": 50000
+  },
+  "sources": [
+    {"rule": "brackets", "legalReference": "CIRS artigo 68.º, Lei n.º 73-A/2025", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx"},
+    {"rule": "specificDeduction", "legalReference": "CIRS artigo 25.º; IAS 2026", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs25.aspx"},
+    {"rule": "minimumExistence", "legalReference": "CIRS artigo 70.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx"},
+    {"rule": "deductions", "legalReference": "CIRS artigos 78.º a 84.º; EBF artigo 21.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/pages/codigo-do-irs-indice.aspx"}
+  ]
+}
