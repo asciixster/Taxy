@@ -69,6 +69,8 @@ flutter build appbundle --release
 
 O APK fica em `build/app/outputs/flutter-apk/app-release.apk`. Para publicação é ainda necessário trocar a assinatura de desenvolvimento por uma chave privada de produção, preencher a ficha da Play Store, política de privacidade e cumprir o processo de testes aplicável à conta.
 
+Nota Android: este MVP não usa plugins Android auto-registados; o acesso ao diretório privado é feito por um `MethodChannel` em `MainActivity.kt`. Por isso, a compilação do registrant Java vazio está desativada. Ao acrescentar futuramente um plugin Android, remover esse bloco no fim de `android/app/build.gradle.kts`.
+
 ## Regras fiscais e novo ano
 
 As regras estão em `assets/tax_rules/2026.json`, validadas ao carregar. Para adicionar 2027:
