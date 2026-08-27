@@ -1,0 +1,21 @@
+{
+  "fixtureSchemaVersion": 1,
+  "id": "REPLACE_WITH_ANONYMOUS_ID",
+  "taxRulesVersion": "2026.2.0",
+  "source": "OFFICIAL_AT_ASSESSMENT",
+  "inputs": {
+    "profile": "REPLACE_WITH_TaxpayerProfile_JSON",
+    "income": "REPLACE_WITH_EmploymentIncome_JSON",
+    "deductions": "REPLACE_WITH_DeductionInput_JSON"
+  },
+  "expectedOfficialResultCents": {
+    "taxableIncome": "REPLACE_WITH_INTEGER",
+    "grossTax": "REPLACE_WITH_INTEGER",
+    "taxCredits": "REPLACE_WITH_INTEGER",
+    "solidarityTax": "REPLACE_WITH_INTEGER",
+    "taxDue": "REPLACE_WITH_INTEGER",
+    "withholding": "REPLACE_WITH_INTEGER",
+    "balance": "REPLACE_WITH_INTEGER"
+  },
+  "notes": "REPLACE_WITH_ANONYMISED_CONTEXT_AND_REVIEW_NOTES"
+}

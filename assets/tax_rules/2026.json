@@ -1,20 +1,35 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "taxYear": 2026,
-  "rulesVersion": "2026.1.0",
-  "verifiedAt": "2026-08-26",
+  "rulesVersion": "2026.2.0",
+  "verifiedAt": "2026-08-27",
   "status": "VERIFIED_FOR_MVP_SCOPE",
   "supportedScope": {
     "jurisdiction": "CONTINENT",
     "residency": "FULL_YEAR_PORTUGAL",
     "incomeCategories": ["A"],
-    "filingModes": ["SINGLE_TAXPAYER"]
+    "civilStatus": ["SINGLE"],
+    "filingModes": ["SEPARATE_SINGLE_TAXPAYER"],
+    "householdsWithDependents": ["DECLARED_SINGLE_PARENT_STANDARD"]
   },
   "unsupported": {
     "MADEIRA": "NEEDS_VERIFICATION",
     "AZORES": "NEEDS_VERIFICATION",
+    "MARRIED": "NEEDS_VERIFICATION",
+    "DE_FACTO": "NEEDS_VERIFICATION",
     "JOINT_FILING": "NEEDS_VERIFICATION",
-    "IRS_JOVEM": "NEEDS_VERIFICATION"
+    "PARTIAL_RESIDENCE": "NEEDS_VERIFICATION",
+    "IRS_JOVEM": "NEEDS_VERIFICATION",
+    "CATEGORY_B": "NEEDS_VERIFICATION",
+    "PENSIONS": "NEEDS_VERIFICATION",
+    "FOREIGN_INCOME": "NEEDS_VERIFICATION",
+    "CAPITAL_INCOME": "NEEDS_VERIFICATION",
+    "PROPERTY_INCOME": "NEEDS_VERIFICATION",
+    "CAPITAL_GAINS": "NEEDS_VERIFICATION",
+    "DISABILITY": "NEEDS_VERIFICATION",
+    "DISPLACED_STUDENT": "NEEDS_VERIFICATION",
+    "SHARED_CUSTODY": "NEEDS_VERIFICATION",
+    "OTHER_SPECIAL_SITUATIONS": "NEEDS_VERIFICATION"
   },
   "iasCents": 53713,
   "employmentSpecificDeductionCents": 458709,
@@ -50,13 +65,18 @@
     "secondAndLaterUnderSixExtraCents": 30000,
     "generalRatePpm": 350000,
     "generalCapPerTaxpayerCents": 25000,
+    "generalSingleParentRatePpm": 450000,
+    "generalSingleParentCapCents": 33500,
     "healthRatePpm": 150000,
     "healthCapCents": 100000,
     "educationRatePpm": 300000,
     "educationCapCents": 80000,
     "careHomeRatePpm": 250000,
     "careHomeCapCents": 40375,
-    "invoiceVatRatePpm": 150000,
+    "invoiceVat15RatePpm": 150000,
+    "invoiceVat30RatePpm": 300000,
+    "invoiceVat35RatePpm": 350000,
+    "invoiceVat100RatePpm": 1000000,
     "invoiceVatCapCents": 25000,
     "pprRatePpm": 200000,
     "pprUnder35CapCents": 40000,
@@ -72,10 +92,63 @@
     "overallUpperIncomeCents": 8000000,
     "largeFamilyIncreasePpmPerDependent": 50000
   },
+  "ruleMetadata": {
+    "generalSingleParentRatePpm": {
+      "name": "Taxa de despesas gerais para família monoparental",
+      "unit": "parts_per_million",
+      "source": "CIRS artigo 78.º-B, n.º 9",
+      "comment": "Aplicável apenas após declaração explícita de agregado monoparental standard.",
+      "version": "2026.2.0"
+    },
+    "generalSingleParentCapCents": {
+      "name": "Limite de despesas gerais para família monoparental",
+      "unit": "euro_cents",
+      "source": "CIRS artigo 78.º-B, n.º 9",
+      "comment": "Limite global de 335 euros.",
+      "version": "2026.2.0"
+    },
+    "invoiceVat15RatePpm": {
+      "name": "Taxa standard da dedução por exigência de fatura",
+      "unit": "parts_per_million",
+      "source": "CIRS artigo 78.º-F, n.º 1",
+      "comment": "Setores expressamente enumerados no n.º 1.",
+      "version": "2026.2.0"
+    },
+    "invoiceVat30RatePpm": {
+      "name": "Taxa da dedução de IVA para atividades desportivas",
+      "unit": "parts_per_million",
+      "source": "CIRS artigo 78.º-F, n.º 8",
+      "comment": "Ensino desportivo/recreativo, clubes desportivos e ginásios elegíveis.",
+      "version": "2026.2.0"
+    },
+    "invoiceVat35RatePpm": {
+      "name": "Taxa da dedução de IVA de medicamentos veterinários",
+      "unit": "parts_per_million",
+      "source": "CIRS artigo 78.º-F, n.º 6",
+      "comment": "Exclusivamente medicamentos de uso veterinário elegíveis.",
+      "version": "2026.2.0"
+    },
+    "invoiceVat100RatePpm": {
+      "name": "Taxa integral da dedução de IVA",
+      "unit": "parts_per_million",
+      "source": "CIRS artigo 78.º-F, n.os 3 e 7",
+      "comment": "Transportes públicos coletivos e assinaturas elegíveis de periódicos.",
+      "version": "2026.2.0"
+    },
+    "invoiceVatCapCents": {
+      "name": "Limite global da dedução por exigência de fatura",
+      "unit": "euro_cents",
+      "source": "CIRS artigo 78.º-F, n.º 1",
+      "comment": "Partilhado pelas categorias de 15%, 30%, 35% e 100%.",
+      "version": "2026.2.0"
+    }
+  },
   "sources": [
     {"rule": "brackets", "legalReference": "CIRS artigo 68.º, Lei n.º 73-A/2025", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx"},
     {"rule": "specificDeduction", "legalReference": "CIRS artigo 25.º; IAS 2026", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs25.aspx"},
     {"rule": "minimumExistence", "legalReference": "CIRS artigo 70.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx"},
-    {"rule": "deductions", "legalReference": "CIRS artigos 78.º a 84.º; EBF artigo 21.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/pages/codigo-do-irs-indice.aspx"}
+    {"rule": "deductions", "legalReference": "CIRS artigos 78.º a 84.º; EBF artigo 21.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/pages/codigo-do-irs-indice.aspx"},
+    {"rule": "singleParentGeneralExpenses", "legalReference": "CIRS artigo 78.º-B, n.º 9", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78b.aspx"},
+    {"rule": "invoiceVatCategories", "legalReference": "CIRS artigo 78.º-F", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78f.aspx"}
   ]
 }

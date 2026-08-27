@@ -2,28 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'data/simulation_repository.dart';
+export 'state/providers.dart';
+
 import 'domain/models.dart';
 import 'domain/money.dart';
+import 'navigation/app_navigation.dart';
 import 'question_engine/question_engine.dart';
+import 'screens/how_we_calculate_screen.dart';
+import 'state/providers.dart';
 import 'tax_engine/tax_engine.dart';
 import 'tax_engine/tax_rules.dart';
+import 'widgets/notice_card.dart';
 
 const _taxyViolet = Color(0xFF6557E8);
 const _taxyInk = Color(0xFF17172B);
 const _taxyMint = Color(0xFF69E0B4);
 const _taxyCream = Color(0xFFF6F5FA);
-
-final repositoryProvider = Provider<SimulationRepository>(
-  (ref) => LocalSimulationRepository(),
-);
-final rulesProvider = FutureProvider<TaxRuleSet>((ref) async {
-  final source = await rootBundle.loadString('assets/tax_rules/2026.json');
-  return TaxRuleSet.fromJsonString(source);
-});
-final simulationsProvider = FutureProvider<List<TaxSimulation>>(
-  (ref) => ref.watch(repositoryProvider).list(),
-);
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -757,36 +751,22 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
     'civilStatus' => _ChoiceGroup<CivilStatus>(
       value: draft.civilStatus,
       options: const [
-        (CivilStatus.single, 'Solteiro/a', 'Uma pessoa titular'),
-        (CivilStatus.married, 'Casado/a', 'Agregado com dois titulares'),
-        (CivilStatus.deFacto, 'União de facto', 'Agregado com dois titulares'),
+        (
+          CivilStatus.single,
+          'Não casado/a nem unido/a de facto',
+          'Único âmbito validado na Taxy 0.2',
+        ),
       ],
       onChanged: (v) => setState(() {
         draft.civilStatus = v;
         if (v == CivilStatus.single) draft.filingMode = FilingMode.separate;
       }),
     ),
-    'filingMode' => _ChoiceGroup<FilingMode>(
-      value: draft.filingMode,
-      options: const [
-        (
-          FilingMode.separate,
-          'Separada',
-          'Disponível: simula apenas este titular',
-        ),
-        (
-          FilingMode.joint,
-          'Conjunta',
-          'Em validação — o cálculo será bloqueado',
-        ),
-      ],
-      onChanged: (v) => setState(() => draft.filingMode = v),
-    ),
     'residency' => _ChoiceGroup<bool>(
       value: draft.fullYearResident,
       options: const [
         (true, 'Sim', 'Residente todo o ano'),
-        (false, 'Não', 'Exige regras adicionais ainda em validação'),
+        (false, 'Não', 'Não suportado — não será possível continuar'),
       ],
       onChanged: (v) => setState(() => draft.fullYearResident = v),
     ),
@@ -794,8 +774,8 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       value: draft.region,
       options: const [
         (TaxRegion.continent, 'Continente', 'Cálculo disponível'),
-        (TaxRegion.madeira, 'Madeira', 'Tabelas em validação'),
-        (TaxRegion.azores, 'Açores', 'Tabelas em validação'),
+        (TaxRegion.madeira, 'Madeira', 'Não suportado nesta versão'),
+        (TaxRegion.azores, 'Açores', 'Não suportado nesta versão'),
       ],
       onChanged: (v) => setState(() => draft.region = v),
     ),
@@ -810,7 +790,20 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
         while (draft.dependentAges.length > v) {
           draft.dependentAges.removeLast();
         }
+        if (v == 0) draft.isSingleParentHousehold = false;
       }),
+    ),
+    'singleParent' => _ChoiceGroup<bool>(
+      value: draft.isSingleParentHousehold,
+      options: const [
+        (true, 'Sim', 'Agregado monoparental standard'),
+        (
+          false,
+          'Não / não tenho a certeza',
+          'O cálculo será bloqueado por segurança',
+        ),
+      ],
+      onChanged: (v) => setState(() => draft.isSingleParentHousehold = v),
     ),
     'dependentAges' => Column(
       children: [
@@ -907,7 +900,8 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
     ),
     'education' => _MoneyField(
       value: draft.education,
-      label: 'Total de educação',
+      label: 'Educação standard elegível',
+      hint: 'Não inclui estudante deslocado ou majorações territoriais',
       onChanged: (v) => draft.education = v,
     ),
     'rent' => _MoneyField(
@@ -920,20 +914,30 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       label: 'Encargos anuais',
       onChanged: (v) => draft.careHomes = v,
     ),
-    'invoiceVat' => _MoneyField(
-      value: draft.invoiceVat,
-      label: 'IVA elegível',
-      onChanged: (v) => draft.invoiceVat = v,
+    'invoiceVat15' => _MoneyField(
+      value: draft.invoiceVat15,
+      label: 'IVA elegível à taxa de 15%',
+      onChanged: (v) => draft.invoiceVat15 = v,
+    ),
+    'invoiceVat30' => _MoneyField(
+      value: draft.invoiceVat30,
+      label: 'IVA elegível à taxa de 30%',
+      onChanged: (v) => draft.invoiceVat30 = v,
+    ),
+    'invoiceVat35' => _MoneyField(
+      value: draft.invoiceVat35,
+      label: 'IVA elegível à taxa de 35%',
+      onChanged: (v) => draft.invoiceVat35 = v,
+    ),
+    'invoiceVat100' => _MoneyField(
+      value: draft.invoiceVat100,
+      label: 'IVA elegível à taxa de 100%',
+      onChanged: (v) => draft.invoiceVat100 = v,
     ),
     'ppr' => _MoneyField(
       value: draft.ppr,
       label: 'Aplicações anuais em PPR',
       onChanged: (v) => draft.ppr = v,
-    ),
-    'other' => _MoneyField(
-      value: draft.other,
-      label: 'Crédito fiscal elegível',
-      onChanged: (v) => draft.other = v,
     ),
     'review' => _ReviewCard(draft: draft),
     _ => const SizedBox.shrink(),
@@ -957,6 +961,18 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   String? _validate(String id) {
+    if (id == 'civilStatus' && draft.civilStatus != CivilStatus.single) {
+      return 'Casados e unidos de facto ainda não estão validados na Taxy 0.2.';
+    }
+    if (id == 'residency' && !draft.fullYearResident) {
+      return 'Residência parcial ainda não está validada.';
+    }
+    if (id == 'region' && draft.region != TaxRegion.continent) {
+      return 'Madeira e Açores ainda não estão validados nesta versão.';
+    }
+    if (id == 'singleParent' && !draft.isSingleParentHousehold) {
+      return 'Com dependentes, só está validado o agregado monoparental standard.';
+    }
     if (id == 'gross') {
       final value = draft.incomeEntryMode == IncomeEntryMode.annual
           ? draft.gross
@@ -994,6 +1010,7 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
         fullYearResident: draft.fullYearResident,
         region: draft.region,
         filingMode: draft.filingMode,
+        isSingleParentHousehold: draft.isSingleParentHousehold,
       ),
       income: EmploymentIncome(
         entryMode: draft.incomeEntryMode,
@@ -1009,20 +1026,19 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
         education: _money(draft.education),
         rent: _money(draft.rent),
         careHomes: _money(draft.careHomes),
-        eligibleInvoiceVat: _money(draft.invoiceVat),
+        invoiceVat15: _money(draft.invoiceVat15),
+        invoiceVat30: _money(draft.invoiceVat30),
+        invoiceVat35: _money(draft.invoiceVat35),
+        invoiceVat100: _money(draft.invoiceVat100),
         ppr: _money(draft.ppr),
-        otherEligibleTaxCredit: _money(draft.other),
       ),
     );
     await ref.read(repositoryProvider).save(simulation);
     ref.invalidate(simulationsProvider);
     if (!mounted) return;
-    await Navigator.pushReplacement(
+    await AppNavigation.replace(
       context,
-      MaterialPageRoute(
-        builder: (_) =>
-            ResultScreen(simulation: simulation, rules: widget.rules),
-      ),
+      ResultScreen(simulation: simulation, rules: widget.rules),
     );
   }
 }
@@ -1141,7 +1157,7 @@ final class ResultScreen extends StatelessWidget {
           ],
           if (result.warnings.isNotEmpty) ...[
             const SizedBox(height: 20),
-            _Notice(
+            NoticeCard(
               title: result.available
                   ? 'Atenção aos limites'
                   : 'Cálculo não disponível',
@@ -1150,7 +1166,7 @@ final class ResultScreen extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 20),
-          _Notice(
+          NoticeCard(
             title: 'Pressupostos da simulação',
             messages: result.assumptions,
             icon: Icons.fact_check_outlined,
@@ -1162,6 +1178,11 @@ final class ResultScreen extends StatelessWidget {
               height: 1.45,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Regras fiscais ${rules.taxYear} — versão ${rules.rulesVersion} · validadas em ${rules.verifiedAt.day.toString().padLeft(2, '0')}/${rules.verifiedAt.month.toString().padLeft(2, '0')}/${rules.verifiedAt.year}',
+            style: Theme.of(context).textTheme.labelSmall,
           ),
         ],
       ),
@@ -1376,7 +1397,12 @@ final class OpportunitiesScreen extends StatelessWidget {
         'Faturas elegíveis associadas ao teu NIF.',
         Icons.receipt_long_outlined,
         d.general,
-        target('generalCapPerTaxpayerCents', 'generalRatePpm'),
+        simulation.profile.isSingleParentHousehold
+            ? target(
+                'generalSingleParentCapCents',
+                'generalSingleParentRatePpm',
+              )
+            : target('generalCapPerTaxpayerCents', 'generalRatePpm'),
         (x, value) => x.copyWith(general: value),
       ),
       _OpportunityCandidate(
@@ -1445,7 +1471,7 @@ final class OpportunitiesScreen extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           if (opportunities.isEmpty)
-            const _Notice(
+            const NoticeCard(
               title: 'Sem oportunidades adicionais nesta simulação',
               messages: [
                 'Os limites podem já estar atingidos ou não existir imposto suficiente para deduzir.',
@@ -1458,7 +1484,7 @@ final class OpportunitiesScreen extends StatelessWidget {
               const SizedBox(height: 12),
             ],
           const SizedBox(height: 10),
-          const _Notice(
+          const NoticeCard(
             title: 'Importante',
             icon: Icons.info_outline_rounded,
             messages: [
@@ -1566,73 +1592,6 @@ final class _OpportunityCard extends StatelessWidget {
       ),
     );
   }
-}
-
-final class HowWeCalculateScreen extends StatelessWidget {
-  const HowWeCalculateScreen({super.key, required this.rules});
-  final TaxRuleSet rules;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Como calculamos')),
-    body: ListView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
-      children: [
-        Text(
-          'Transparência primeiro',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'O cálculo é determinístico e não usa inteligência artificial. Valores monetários são tratados em cêntimos inteiros, com arredondamento explícito.',
-        ),
-        const SizedBox(height: 24),
-        const _MethodStep(
-          number: '1',
-          title: 'Rendimento líquido da categoria',
-          text: 'Ao rendimento bruto subtraímos a dedução específica aplicável ao trabalho dependente.',
-        ),
-        const _MethodStep(
-          number: '2',
-          title: 'Mínimo de existência',
-          text: 'Quando aplicável, calculamos o abatimento previsto no artigo 70.º do Código do IRS.',
-        ),
-        _MethodStep(
-          number: '3',
-          title: 'Escalões progressivos',
-          text:
-              'Aplicamos as taxas gerais de ${rules.taxYear} ao rendimento coletável.',
-        ),
-        const _MethodStep(
-          number: '4',
-          title: 'Deduções e retenções',
-          text: 'Aplicamos limites por categoria e o limite conjunto. Por fim, descontamos o IRS já retido.',
-        ),
-        const SizedBox(height: 24),
-        _Notice(
-          title: 'Âmbito validado',
-          icon: Icons.verified_outlined,
-          messages: [
-            'Residente durante todo o ano no Continente.',
-            'Rendimentos exclusivamente da Categoria A.',
-            'Simulação de um titular com tributação separada.',
-            'Regras ${rules.rulesVersion}, verificadas em 26/08/2026.',
-          ],
-        ),
-        const SizedBox(height: 18),
-        const _Notice(
-          title: 'Ainda não calculamos',
-          icon: Icons.schedule_rounded,
-          messages: [
-            'Madeira e Açores.',
-            'Tributação conjunta.',
-            'IRS Jovem.',
-            'Trabalho independente e outros tipos de rendimento.',
-          ],
-        ),
-      ],
-    ),
-  );
 }
 
 final class _ResultHero extends StatelessWidget {
@@ -2013,87 +1972,6 @@ final class _ScenarioCard extends StatelessWidget {
           ),
         ],
       ),
-    ),
-  );
-}
-
-final class _Notice extends StatelessWidget {
-  const _Notice({
-    required this.title,
-    required this.messages,
-    required this.icon,
-  });
-  final String title;
-  final List<String> messages;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    color: Theme.of(context).colorScheme.surfaceContainerHigh,
-    child: Padding(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          for (final message in messages)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 7),
-              child: Text('• $message', style: const TextStyle(height: 1.35)),
-            ),
-        ],
-      ),
-    ),
-  );
-}
-
-final class _MethodStep extends StatelessWidget {
-  const _MethodStep({
-    required this.number,
-    required this.title,
-    required this.text,
-  });
-  final String number;
-  final String title;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 18),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CircleAvatar(radius: 18, child: Text(number)),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 5),
-              Text(
-                text,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     ),
   );
 }

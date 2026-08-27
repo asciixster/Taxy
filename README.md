@@ -1,98 +1,82 @@
-# taxy.pt
+# taxy.pt — 0.2 Fiscal Hardening
 
-MVP Android-first de simulação guiada de IRS português. Os dados ficam no dispositivo e o cálculo é determinístico: nenhuma IA decide valores fiscais.
+Simulador Android-first de IRS português. A Taxy transforma um conjunto
+estritamente limitado de dados fiscais num cálculo determinístico e explicado.
+Não submete declarações, não acede ao Portal das Finanças e mantém as simulações
+no dispositivo.
 
-## Âmbito fiscal validado
+> Esta é uma simulação. Não substitui a liquidação oficial da Autoridade
+> Tributária nem aconselhamento fiscal profissional.
 
-- Ano fiscal 2026.
-- Residente em Portugal durante todo o ano.
-- Continente.
-- Um sujeito passivo, tributação separada.
-- Rendimentos de trabalho dependente (Categoria A).
-- Deduções agregadas introduzidas manualmente.
+## Âmbito da release 0.2
 
-Madeira, Açores, tributação conjunta, IRS Jovem e residência parcial são recusados explicitamente pelo motor com `NEEDS_VERIFICATION`; não são usados valores inventados.
+A Taxy calcula apenas um sujeito passivo não casado e não unido de facto,
+residente fiscal durante todo o ano no Continente, com rendimentos exclusivos de
+Categoria A e situações standard. Com dependentes, exige confirmação explícita
+de agregado monoparental standard. Consulte [SUPPORTED_SCOPE.md](SUPPORTED_SCOPE.md).
+
+Qualquer cenário fora deste contrato devolve `available: false`. Não existem
+aproximações silenciosas.
 
 ## Arquitetura
 
-```text
-lib/
-  core/             feature flags e entitlements
-  data/             persistência local tipada
-  domain/           modelos tipados e dinheiro exato em cêntimos
-  question_engine/  ordem e condições do questionário
-  tax_engine/       cálculo determinístico e carregamento de regras
-  main.dart         UI Material 3 e composição da aplicação
-assets/tax_rules/   parâmetros fiscais versionados por ano
-test/               limites, regressões, questionário e arranque da UI
-```
+- `lib/domain/`: modelos tipados, serialização e `Money` em cêntimos inteiros.
+- `lib/tax_engine/`: motor determinístico, regras e validação central de scope.
+- `lib/question_engine/`: fluxo condicional independente da UI.
+- `lib/state/`: providers Riverpod.
+- `lib/navigation/`: navegação partilhada.
+- `lib/screens/`: ecrãs extraídos e Tax Validation Lab.
+- `lib/widgets/`: componentes reutilizáveis.
+- `lib/data/`: persistência JSON atómica no diretório privado Android.
+- `assets/tax_rules/2026.json`: única fonte de parâmetros fiscais.
 
-O `TaxEngine` recebe `TaxSimulation` e devolve `TaxResult`, incluindo rendimento coletável, coleta, deduções, retenções, saldo, explicações, avisos e pressupostos. A UI não contém fórmulas fiscais.
-
-## Funcionalidades do produto
-
-- Questionário conversacional com perguntas condicionais.
-- Dashboard, histórico e detalhe explicável do cálculo.
-- Laboratório de cenários para PPR, saúde, educação, rendas e despesas gerais.
-- Cenários recalculados pelo mesmo motor e guardáveis como novas simulações.
-- Oportunidades fiscais determinísticas através de simulações contrafactuais.
-- Renomear, duplicar, editar e apagar simulações no dispositivo.
-
-## Stack
-
-- Flutter / Dart e Material 3.
-- Riverpod para composição e estado assíncrono.
-- JSON local com escrita atómica no diretório privado da aplicação Android.
-- Valores monetários como cêntimos inteiros (`Money`); taxas em partes por milhão, com arredondamento half-up explícito.
-- Sem backend, login, analytics ou serviços externos.
+O `TaxEngine` não contém valores fiscais novos hardcoded. As regras 2026 usam
+versão `2026.2.0`, data de validação e metadados de fonte/unidade/comentário.
 
 ## Executar
 
-```powershell
+Pré-requisitos: Flutter stable compatível com Dart `^3.13.1`.
+
+```text
 flutter pub get
 flutter run
 ```
 
-## Verificar e testar
+## Verificar
 
-```powershell
+```text
 flutter analyze
 flutter test
 ```
 
-A suite contém mais de 15 cenários, fronteiras antes/depois de escalões, zero, rendimentos elevados, dependentes, limites de deduções, PPR, mínimo de existência, serialização e fluxo condicional.
+A CI executa exatamente estes dois controlos em cada push e Pull Request. Não
+gera APK nem AAB.
 
-## Gerar Android
+## Tax Validation Lab
 
-APK instalável para testes:
+Em modo debug, abra `Como calculamos` e escolha `Abrir Tax Validation Lab`. O
+laboratório permite introduzir todos os inputs suportados e auditar rendimento,
+dedução específica, mínimo de existência, escalão, coleta, cada dedução, limites,
+solidariedade, retenção e saldo em euros/cêntimos. A entrada é protegida por
+`kDebugMode` e não aparece numa build normal de produção.
 
-```powershell
-flutter build apk --release
-```
+## Regras e novo ano fiscal
 
-Bundle para a Play Store (depois de configurar uma chave de assinatura de produção):
+1. Copiar `assets/tax_rules/2026.json` para o novo ano.
+2. Atualizar todos os valores apenas com fonte oficial.
+3. Atualizar `taxYear`, `rulesVersion`, `verifiedAt`, metadados e scope.
+4. Fazer o parser rejeitar schemas incompletos.
+5. Criar testes de fronteira e regressão antes de disponibilizar o ano na UI.
 
-```powershell
-flutter build appbundle --release
-```
+Valores não confirmados devem permanecer fora do scope com
+`NEEDS_VERIFICATION`; nunca devem ser estimados.
 
-O APK fica em `build/app/outputs/flutter-apk/app-release.apk`. Para publicação é ainda necessário trocar a assinatura de desenvolvimento por uma chave privada de produção, preencher a ficha da Play Store, política de privacidade e cumprir o processo de testes aplicável à conta.
+## Fixtures oficiais futuras
 
-Nota Android: este MVP não usa plugins Android auto-registados; o acesso ao diretório privado é feito por um `MethodChannel` em `MainActivity.kt`. Por isso, a compilação do registrant Java vazio está desativada. Ao acrescentar futuramente um plugin Android, remover esse bloco no fim de `android/app/build.gradle.kts`.
+`test/fixtures/official_assessments/` contém o esquema e o processo para receber
+liquidações reais anonimizadas. Não existem liquidações oficiais fictícias.
 
-## Regras fiscais e novo ano
+## Distribuição
 
-As regras estão em `assets/tax_rules/2026.json`, validadas ao carregar. Para adicionar 2027:
-
-1. Copiar o ficheiro para `assets/tax_rules/2027.json`.
-2. Atualizar apenas valores confirmados e respetivas fontes.
-3. Alterar `taxYear`, `rulesVersion`, `verifiedAt` e estado.
-4. Registar o asset no `pubspec.yaml`.
-5. Acrescentar fixtures de fronteira e regressão.
-6. Só disponibilizar o ano na UI depois de todos os testes passarem.
-
-Ver [TAX_RULES.md](TAX_RULES.md) e [TAX_ENGINE_TEST_CASES.md](TAX_ENGINE_TEST_CASES.md).
-
-## Privacidade e limitações
-
-As simulações são guardadas apenas no armazenamento privado da app e são eliminadas ao remover a aplicação. O repositório está isolado, permitindo migrar para SQLite/Drift sem alterar UI ou motor. O resultado é uma estimativa baseada nos dados introduzidos e nas regras configuradas; não substitui a liquidação oficial da Autoridade Tributária nem constitui aconselhamento fiscal.
+Esta tarefa deliberadamente não gera APK/AAB. Os comandos de distribuição ficam
+fora do procedimento de hardening fiscal 0.2.
