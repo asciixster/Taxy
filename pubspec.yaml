@@ -1,5 +1,5 @@
 name: taxy_pt
-description: "taxy.pt — simulador guiado de IRS para Portugal, privado e Android-first."
+description: "taxy.pt — simuladores fiscais e financeiros pessoais para Portugal."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.2.0+4
+version: 0.3.0+5
 
 environment:
   sdk: ^3.13.1
@@ -58,6 +58,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/tax_rules/2026.json
+    - assets/tax_rules/2025/continent.json
+    - assets/tax_rules/2026/continent.json
+    - assets/tax_rules/2026/madeira.json
+    - assets/tax_rules/2026/azores.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

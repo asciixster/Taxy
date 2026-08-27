@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 export 'state/providers.dart';
 
+import 'app/home/module_section.dart';
 import 'domain/models.dart';
 import 'domain/money.dart';
 import 'navigation/app_navigation.dart';
@@ -11,6 +12,7 @@ import 'question_engine/question_engine.dart';
 import 'screens/how_we_calculate_screen.dart';
 import 'state/providers.dart';
 import 'tax_engine/tax_engine.dart';
+import 'tax_engine/household_tax_engine.dart';
 import 'tax_engine/tax_rules.dart';
 import 'widgets/notice_card.dart';
 
@@ -18,6 +20,17 @@ const _taxyViolet = Color(0xFF6557E8);
 const _taxyInk = Color(0xFF17172B);
 const _taxyMint = Color(0xFF69E0B4);
 const _taxyCream = Color(0xFFF6F5FA);
+
+TaxResult _calculateSimulation(TaxSimulation simulation, TaxRuleSet rules) {
+  if (simulation.profile.civilStatus == CivilStatus.single) {
+    return TaxEngine(rules).calculate(simulation);
+  }
+  final comparison = HouseholdTaxEngine(rules).compare(simulation);
+  if (!comparison.available) return TaxEngine(rules).calculate(simulation);
+  return simulation.profile.filingMode == FilingMode.joint
+      ? comparison.joint!
+      : comparison.separate!;
+}
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -138,10 +151,31 @@ final class HomeScreen extends ConsumerWidget {
             ),
             data: (items) => items.isEmpty
                 ? _Welcome(rules: ruleSet)
-                : _Dashboard(rules: ruleSet, simulations: items),
+                : _DashboardRuleLoader(simulations: items),
           ),
         ),
       ),
+    );
+  }
+}
+
+final class _DashboardRuleLoader extends ConsumerWidget {
+  const _DashboardRuleLoader({required this.simulations});
+
+  final List<TaxSimulation> simulations;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = simulations.first.profile;
+    final rules = ref.watch(
+      rulesForProvider((year: profile.taxYear, region: profile.region)),
+    );
+    return rules.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _FatalError(
+        message: 'Não foi possível validar as regras da simulação: $error',
+      ),
+      data: (value) => _Dashboard(rules: value, simulations: simulations),
     );
   }
 }
@@ -218,6 +252,8 @@ final class _Welcome extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 26),
+                ModuleSection(onOpenIrs: () => _openWizard(context, rules)),
+                const SizedBox(height: 26),
                 FilledButton.icon(
                   onPressed: () => _openWizard(context, rules),
                   icon: const Icon(Icons.arrow_forward_rounded),
@@ -251,7 +287,7 @@ final class _Dashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final latest = simulations.first;
-    final result = TaxEngine(rules).calculate(latest);
+    final result = _calculateSimulation(latest, rules);
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -414,7 +450,7 @@ final class _Dashboard extends ConsumerWidget {
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final item = simulations[index];
-              final itemResult = TaxEngine(rules).calculate(item);
+              final itemResult = _calculateSimulation(item, rules);
               return Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
@@ -730,6 +766,7 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   String _sectionLabel(QuestionSection section) => switch (section) {
+    QuestionSection.eligibility => 'Âmbito',
     QuestionSection.profile => 'Perfil',
     QuestionSection.income => 'Rendimentos',
     QuestionSection.deductions => 'Despesas',
@@ -739,7 +776,10 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
   Widget _question(String id) => switch (id) {
     'taxYear' => _ChoiceGroup<int>(
       value: draft.taxYear,
-      options: const [(2026, '2026', 'Regras validadas para o MVP')],
+      options: const [
+        (2025, '2025', 'Declaração entregue em 2026'),
+        (2026, '2026', 'Ano corrente'),
+      ],
       onChanged: (v) => setState(() => draft.taxYear = v),
     ),
     'age' => _NumberPicker(
@@ -754,8 +794,10 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
         (
           CivilStatus.single,
           'Não casado/a nem unido/a de facto',
-          'Único âmbito validado na Taxy 0.2',
+          'Liquidação individual',
         ),
+        (CivilStatus.married, 'Casado/a', 'Compara conjunta e separada'),
+        (CivilStatus.deFacto, 'União de facto', 'Compara conjunta e separada'),
       ],
       onChanged: (v) => setState(() {
         draft.civilStatus = v;
@@ -774,10 +816,60 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       value: draft.region,
       options: const [
         (TaxRegion.continent, 'Continente', 'Cálculo disponível'),
-        (TaxRegion.madeira, 'Madeira', 'Não suportado nesta versão'),
-        (TaxRegion.azores, 'Açores', 'Não suportado nesta versão'),
+        (TaxRegion.madeira, 'Madeira', 'Disponível para 2026'),
+        (TaxRegion.azores, 'Açores', 'Disponível para 2026'),
       ],
       onChanged: (v) => setState(() => draft.region = v),
+    ),
+    'incomeTypes' => Column(
+      children: [
+        for (final type in IncomeType.values)
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            value: draft.incomeTypes.contains(type),
+            title: Text(_incomeTypeLabel(type)),
+            subtitle: type == IncomeType.employment
+                ? const Text('Categoria A · disponível')
+                : const Text('Ainda não disponível'),
+            onChanged: (selected) => setState(() {
+              if (selected ?? false) {
+                draft.incomeTypes.add(type);
+              } else {
+                draft.incomeTypes.remove(type);
+              }
+            }),
+          ),
+      ],
+    ),
+    'specialSituations' => _ChoiceGroup<bool>(
+      value: draft.hasSpecialSituation,
+      options: const [
+        (false, 'Não', 'Caso standard'),
+        (
+          true,
+          'Sim / não tenho a certeza',
+          'O cálculo será bloqueado por segurança',
+        ),
+      ],
+      onChanged: (value) => setState(() => draft.hasSpecialSituation = value),
+    ),
+    'secondaryAge' => _NumberPicker(
+      value: draft.secondaryAge,
+      min: 18,
+      max: 99,
+      onChanged: (value) => setState(() => draft.secondaryAge = value),
+    ),
+    'filingMode' => _ChoiceGroup<FilingMode>(
+      value: draft.filingMode,
+      options: const [
+        (
+          FilingMode.separate,
+          'Separada',
+          'Mostra primeiro as duas liquidações',
+        ),
+        (FilingMode.joint, 'Conjunta', 'Aplica quociente conjugal 2'),
+      ],
+      onChanged: (value) => setState(() => draft.filingMode = value),
     ),
     'dependents' => _NumberPicker(
       value: draft.dependentAges.length,
@@ -887,6 +979,21 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       label: 'Contribuições anuais',
       onChanged: (v) => draft.socialSecurity = v,
     ),
+    'secondaryGross' => _MoneyField(
+      value: draft.secondaryGross,
+      label: 'Rendimento anual do titular B',
+      onChanged: (value) => draft.secondaryGross = value,
+    ),
+    'secondaryWithholding' => _MoneyField(
+      value: draft.secondaryWithholding,
+      label: 'Retenção anual do titular B',
+      onChanged: (value) => draft.secondaryWithholding = value,
+    ),
+    'secondarySocialSecurity' => _MoneyField(
+      value: draft.secondarySocialSecurity,
+      label: 'Contribuições anuais do titular B',
+      onChanged: (value) => draft.secondarySocialSecurity = value,
+    ),
     'general' => _MoneyField(
       value: draft.general,
       label: 'Total de despesas gerais',
@@ -939,6 +1046,45 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       label: 'Aplicações anuais em PPR',
       onChanged: (v) => draft.ppr = v,
     ),
+    'secondaryDeductions' => Column(
+      children: [
+        _MoneyField(
+          value: draft.secondaryGeneral,
+          label: 'Despesas gerais · titular B',
+          onChanged: (v) => draft.secondaryGeneral = v,
+        ),
+        const SizedBox(height: 10),
+        _MoneyField(
+          value: draft.secondaryHealth,
+          label: 'Saúde · titular B',
+          onChanged: (v) => draft.secondaryHealth = v,
+        ),
+        const SizedBox(height: 10),
+        _MoneyField(
+          value: draft.secondaryEducation,
+          label: 'Educação standard · titular B',
+          onChanged: (v) => draft.secondaryEducation = v,
+        ),
+        const SizedBox(height: 10),
+        _MoneyField(
+          value: draft.secondaryRent,
+          label: 'Rendas · titular B',
+          onChanged: (v) => draft.secondaryRent = v,
+        ),
+        const SizedBox(height: 10),
+        _MoneyField(
+          value: draft.secondaryCareHomes,
+          label: 'Lares · titular B',
+          onChanged: (v) => draft.secondaryCareHomes = v,
+        ),
+        const SizedBox(height: 10),
+        _MoneyField(
+          value: draft.secondaryPpr,
+          label: 'PPR · titular B',
+          onChanged: (v) => draft.secondaryPpr = v,
+        ),
+      ],
+    ),
     'review' => _ReviewCard(draft: draft),
     _ => const SizedBox.shrink(),
   };
@@ -961,14 +1107,21 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   String? _validate(String id) {
-    if (id == 'civilStatus' && draft.civilStatus != CivilStatus.single) {
-      return 'Casados e unidos de facto ainda não estão validados na Taxy 0.2.';
-    }
     if (id == 'residency' && !draft.fullYearResident) {
       return 'Residência parcial ainda não está validada.';
     }
-    if (id == 'region' && draft.region != TaxRegion.continent) {
-      return 'Madeira e Açores ainda não estão validados nesta versão.';
+    if (id == 'region' &&
+        draft.taxYear == 2025 &&
+        draft.region != TaxRegion.continent) {
+      return 'Para 2025, Madeira e Açores permanecem NEEDS_VERIFICATION.';
+    }
+    if (id == 'incomeTypes' &&
+        (draft.incomeTypes.isEmpty ||
+            draft.incomeTypes.any((type) => type != IncomeType.employment))) {
+      return 'Neste momento só conseguimos calcular quando existe exclusivamente trabalho dependente.';
+    }
+    if (id == 'specialSituations' && draft.hasSpecialSituation) {
+      return 'Este caso exige validação adicional e não será aproximado.';
     }
     if (id == 'singleParent' && !draft.isSingleParentHousehold) {
       return 'Com dependentes, só está validado o agregado monoparental standard.';
@@ -980,6 +1133,9 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       if (_money(value).cents <= 0) {
         return 'Indica um rendimento superior a zero.';
       }
+    }
+    if (id == 'secondaryGross' && _money(draft.secondaryGross).cents < 0) {
+      return 'O rendimento do segundo titular não pode ser negativo.';
     }
     return null;
   }
@@ -997,6 +1153,9 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
     final gross = draft.incomeEntryMode == IncomeEntryMode.annual
         ? _money(draft.gross)
         : Money.fromCents(_money(draft.monthly).cents * draft.months);
+    final selectedRules = await ref
+        .read(taxRuleRepositoryProvider)
+        .load(draft.taxYear, draft.region.name);
     final simulation = TaxSimulation(
       id: widget.source?.id ?? now.microsecondsSinceEpoch.toString(),
       name: widget.source?.name ?? 'IRS ${draft.taxYear}',
@@ -1032,15 +1191,59 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
         invoiceVat100: _money(draft.invoiceVat100),
         ppr: _money(draft.ppr),
       ),
+      secondaryTaxpayer: draft.civilStatus == CivilStatus.single
+          ? null
+          : TaxpayerInput(
+              id: 'B',
+              age: draft.secondaryAge,
+              income: EmploymentIncome(
+                entryMode: IncomeEntryMode.annual,
+                gross: _money(draft.secondaryGross),
+                withholding: _money(draft.secondaryWithholding),
+                socialSecurity: _money(draft.secondarySocialSecurity),
+              ),
+              deductions: DeductionInput(
+                general: _money(draft.secondaryGeneral),
+                health: _money(draft.secondaryHealth),
+                education: _money(draft.secondaryEducation),
+                rent: _money(draft.secondaryRent),
+                careHomes: _money(draft.secondaryCareHomes),
+                ppr: _money(draft.secondaryPpr),
+                invoiceVat15: _money(draft.secondaryVat15),
+                invoiceVat30: _money(draft.secondaryVat30),
+                invoiceVat35: _money(draft.secondaryVat35),
+                invoiceVat100: _money(draft.secondaryVat100),
+              ),
+            ),
+      dependents: [
+        for (var i = 0; i < draft.dependentAges.length; i++)
+          Dependent(id: 'dependent-$i', ageAtYearEnd: draft.dependentAges[i]),
+      ],
+      incomeTypes: {...draft.incomeTypes},
+      situations: TaxSituationFlags(
+        otherSpecialSituation: draft.hasSpecialSituation,
+      ),
     );
     await ref.read(repositoryProvider).save(simulation);
     ref.invalidate(simulationsProvider);
     if (!mounted) return;
     await AppNavigation.replace(
       context,
-      ResultScreen(simulation: simulation, rules: widget.rules),
+      ResultScreen(simulation: simulation, rules: selectedRules),
     );
   }
+
+  String _incomeTypeLabel(IncomeType type) => switch (type) {
+    IncomeType.employment => 'Trabalho dependente',
+    IncomeType.selfEmployment => 'Trabalho independente',
+    IncomeType.pensions => 'Pensões',
+    IncomeType.property => 'Rendas',
+    IncomeType.capital => 'Juros ou dividendos',
+    IncomeType.securities => 'Ações ou ETFs',
+    IncomeType.crypto => 'Criptoativos',
+    IncomeType.foreign => 'Rendimentos estrangeiros',
+    IncomeType.other => 'Outros rendimentos',
+  };
 }
 
 final class ResultScreen extends StatelessWidget {
@@ -1054,13 +1257,62 @@ final class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final result = TaxEngine(rules).calculate(simulation);
+    final result = _calculateSimulation(simulation, rules);
+    final household = simulation.profile.civilStatus == CivilStatus.single
+        ? null
+        : HouseholdTaxEngine(rules).compare(simulation);
     return Scaffold(
       appBar: AppBar(title: const Text('A tua estimativa')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 14, 24, 36),
         children: [
           _ResultHero(result: result, year: simulation.profile.taxYear),
+          if (household?.available ?? false) ...[
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Melhor opção estimada',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      household!.recommendedMode == FilingMode.joint
+                          ? 'Tributação conjunta'
+                          : 'Tributação separada',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
+                    ),
+                    Text(
+                      'Diferença estimada: ${household.difference.format()}',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              Chip(label: Text('IRS ${simulation.profile.taxYear}')),
+              Chip(label: Text(rules.jurisdiction)),
+              const Chip(label: Text('Categoria A')),
+              Chip(
+                label: Text(
+                  simulation.profile.civilStatus == CivilStatus.single
+                      ? 'Titular individual'
+                      : '${simulation.profile.civilStatus.name} · ${simulation.profile.filingMode.name}',
+                ),
+              ),
+              Chip(label: Text('Regras ${rules.rulesVersion}')),
+            ],
+          ),
           const SizedBox(height: 16),
           if (result.available) ...[
             Row(
@@ -1222,9 +1474,8 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final engine = TaxEngine(widget.rules);
-    final original = engine.calculate(widget.simulation);
-    final changed = engine.calculate(changedSimulation);
+    final original = _calculateSimulation(widget.simulation, widget.rules);
+    final changed = _calculateSimulation(changedSimulation, widget.rules);
     final difference = changed.balance - original.balance;
     return Scaffold(
       appBar: AppBar(title: const Text('Laboratório de cenários')),
@@ -1371,8 +1622,7 @@ final class OpportunitiesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final engine = TaxEngine(rules);
-    final baseline = engine.calculate(simulation);
+    final baseline = _calculateSimulation(simulation, rules);
     final d = simulation.deductions;
     Money target(String cap, String rate) =>
         Money.fromCents(Money.mulDiv(rules.d(cap), 1000000, rules.d(rate)));
@@ -1446,7 +1696,8 @@ final class OpportunitiesScreen extends StatelessWidget {
       final changed = simulation.copyWith(
         deductions: candidate.apply(d, candidate.target),
       );
-      final delta = engine.calculate(changed).balance - baseline.balance;
+      final delta =
+          _calculateSimulation(changed, rules).balance - baseline.balance;
       if (delta.cents > 0) {
         opportunities.add(_OpportunityResult(candidate, delta));
       }

@@ -33,7 +33,10 @@ final class LocalSimulationRepository implements SimulationRepository {
     if (source.trim().isEmpty) return [];
     final values = jsonDecode(source) as List<Object?>;
     return values
-        .map((value) => TaxSimulation.fromJson((value as Map).cast<String, Object?>()))
+        .map(
+          (value) =>
+              TaxSimulation.fromJson((value as Map).cast<String, Object?>()),
+        )
         .toList();
   }
 
@@ -85,5 +88,6 @@ final class MemorySimulationRepository implements SimulationRepository {
   }
 
   @override
-  Future<void> save(TaxSimulation simulation) async => _items[simulation.id] = simulation;
+  Future<void> save(TaxSimulation simulation) async =>
+      _items[simulation.id] = simulation;
 }

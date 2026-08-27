@@ -6,7 +6,7 @@ final class ScopeValidationIssue {
   final String message;
 }
 
-/// Única porta de entrada para o âmbito fiscal suportado pela Taxy 0.2.
+/// Única porta de entrada para o âmbito fiscal suportado pela Taxy 0.3.
 /// Qualquer situação não explicitamente validada falha de forma fechada.
 final class SupportedScopeValidator {
   const SupportedScopeValidator(this.taxYear);
@@ -26,20 +26,21 @@ final class SupportedScopeValidator {
       'TAX_YEAR',
       'As regras de ${p.taxYear} ainda não estão validadas (NEEDS_VERIFICATION).',
     );
+    final isCouple = p.civilStatus != CivilStatus.single;
     reject(
-      p.civilStatus == CivilStatus.married,
-      'MARRIED',
-      'Casados ainda não estão validados nesta versão (NEEDS_VERIFICATION).',
+      isCouple && simulation.secondaryTaxpayer == null,
+      'SECOND_TAXPAYER_REQUIRED',
+      'Casados e unidos de facto exigem dados completos dos dois titulares.',
     );
     reject(
-      p.civilStatus == CivilStatus.deFacto,
-      'DE_FACTO',
-      'Unidos de facto ainda não estão validados nesta versão (NEEDS_VERIFICATION).',
+      !isCouple && simulation.secondaryTaxpayer != null,
+      'UNEXPECTED_SECOND_TAXPAYER',
+      'Um segundo titular só é permitido num casal ou união de facto.',
     );
     reject(
-      p.filingMode == FilingMode.joint,
-      'JOINT_FILING',
-      'Tributação conjunta ainda não está validada (NEEDS_VERIFICATION).',
+      !isCouple && p.filingMode == FilingMode.joint,
+      'JOINT_REQUIRES_COUPLE',
+      'A tributação conjunta exige casamento ou união de facto.',
     );
     reject(
       !p.fullYearResident,
@@ -47,17 +48,14 @@ final class SupportedScopeValidator {
       'Residência fiscal parcial ainda não está validada (NEEDS_VERIFICATION).',
     );
     reject(
-      p.region == TaxRegion.madeira,
-      'MADEIRA',
-      'Madeira aguarda regras regionais validadas (NEEDS_VERIFICATION).',
+      p.taxYear == 2025 && p.region != TaxRegion.continent,
+      'REGION_YEAR',
+      'Em 2025 apenas o Continente está validado (NEEDS_VERIFICATION).',
     );
     reject(
-      p.region == TaxRegion.azores,
-      'AZORES',
-      'Açores aguardam regras regionais validadas (NEEDS_VERIFICATION).',
-    );
-    reject(
-      p.dependents > 0 && !p.isSingleParentHousehold,
+      p.dependents > 0 &&
+          p.civilStatus == CivilStatus.single &&
+          !p.isSingleParentHousehold,
       'DEPENDENTS_HOUSEHOLD_STATUS',
       'Agregados com dependentes só são calculados após confirmação de família monoparental standard (NEEDS_VERIFICATION).',
     );
@@ -65,6 +63,31 @@ final class SupportedScopeValidator {
       p.dependents == 0 && p.isSingleParentHousehold,
       'INVALID_SINGLE_PARENT',
       'Uma família monoparental deve incluir pelo menos um dependente.',
+    );
+    reject(
+      isCouple && p.isSingleParentHousehold,
+      'INVALID_SINGLE_PARENT_COUPLE',
+      'Um casal não pode ser tratado como família monoparental.',
+    );
+    reject(
+      simulation.dependents.any(
+        (dependent) =>
+            dependent.sharedCustody || dependent.alternatingResidence,
+      ),
+      'SHARED_CUSTODY',
+      'Guarda partilhada ou residência alternada permanece NEEDS_VERIFICATION.',
+    );
+    reject(
+      simulation.dependents.any(
+        (dependent) => dependent.allocation != DependentAllocation.household,
+      ),
+      'DEPENDENT_ALLOCATION',
+      'Alocação especial de dependentes a um titular permanece NEEDS_VERIFICATION.',
+    );
+    reject(
+      simulation.incomeTypes.any((type) => type != IncomeType.employment),
+      'UNSUPPORTED_INCOME_TYPE',
+      'A simulação inclui tipos de rendimento ainda não suportados.',
     );
     reject(
       p.dependentAges.any((age) => age < 0 || age > 25),
@@ -142,6 +165,13 @@ final class SupportedScopeValidator {
       simulation.deductions.invoiceVat35.cents,
       simulation.deductions.invoiceVat100.cents,
       simulation.deductions.ppr.cents,
+      if (simulation.secondaryTaxpayer case final secondary?) ...[
+        secondary.income.gross.cents,
+        secondary.income.withholding.cents,
+        secondary.income.socialSecurity.cents,
+        ..._deductionCents(secondary.deductions),
+      ],
+      ..._deductionCents(simulation.dependentDeductions),
     ];
     reject(
       monetary.any((value) => value < 0),
@@ -150,4 +180,17 @@ final class SupportedScopeValidator {
     );
     return issues;
   }
+
+  static List<int> _deductionCents(DeductionInput input) => [
+    input.general.cents,
+    input.health.cents,
+    input.education.cents,
+    input.rent.cents,
+    input.careHomes.cents,
+    input.invoiceVat15.cents,
+    input.invoiceVat30.cents,
+    input.invoiceVat35.cents,
+    input.invoiceVat100.cents,
+    input.ppr.cents,
+  ];
 }

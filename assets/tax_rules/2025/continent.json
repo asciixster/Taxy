@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 3,
+  "taxYear": 2025,
+  "jurisdiction": "CONTINENT",
+  "rulesVersion": "2025.3.0",
+  "verifiedAt": "2026-08-27",
+  "status": "VERIFIED",
+  "baseAsset": "assets/tax_rules/2026.json",
+  "brackets": [
+    {"upperCents": 805900, "marginalRatePpm": 125000, "averageRatePpm": 125000},
+    {"upperCents": 1216000, "marginalRatePpm": 160000, "averageRatePpm": 136800},
+    {"upperCents": 1723300, "marginalRatePpm": 215000, "averageRatePpm": 159820},
+    {"upperCents": 2230600, "marginalRatePpm": 244000, "averageRatePpm": 178970},
+    {"upperCents": 2840000, "marginalRatePpm": 314000, "averageRatePpm": 207940},
+    {"upperCents": 4162900, "marginalRatePpm": 349000, "averageRatePpm": 252770},
+    {"upperCents": 4498700, "marginalRatePpm": 431000, "averageRatePpm": 266070},
+    {"upperCents": 8369600, "marginalRatePpm": 446000, "averageRatePpm": 349290},
+    {"upperCents": null, "marginalRatePpm": 480000, "averageRatePpm": null}
+  ],
+  "overrides": {
+    "iasCents": 52250,
+    "employmentSpecificDeductionCents": 446215,
+    "minimumExistenceReferenceCents": 1218000,
+    "deductions": {
+      "rent2026FloorCapCents": 70000,
+      "rentTransitionLowCapCents": 100000,
+      "rentTransitionBaseCapCents": 70000
+    }
+  },
+  "sources": [
+    "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Folhetos_informativos/Documents/IRS_deducoes_2025.pdf"
+  ]
+}

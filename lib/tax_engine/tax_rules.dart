@@ -44,6 +44,7 @@ final class TaxRuleMetadata {
 
 final class TaxRuleSet {
   const TaxRuleSet({
+    required this.jurisdiction,
     required this.taxYear,
     required this.rulesVersion,
     required this.verifiedAt,
@@ -53,10 +54,13 @@ final class TaxRuleSet {
     required this.minimumExistence,
     required this.brackets,
     required this.solidarity,
+    required this.household,
+    required this.irsJovem,
     required this.deductions,
     required this.ruleMetadata,
   });
 
+  final String jurisdiction;
   final int taxYear;
   final String rulesVersion;
   final DateTime verifiedAt;
@@ -66,6 +70,8 @@ final class TaxRuleSet {
   final Map<String, int> minimumExistence;
   final List<TaxBracket> brackets;
   final Map<String, int> solidarity;
+  final Map<String, int> household;
+  final Map<String, int> irsJovem;
   final Map<String, int> deductions;
   final Map<String, TaxRuleMetadata> ruleMetadata;
 
@@ -75,6 +81,45 @@ final class TaxRuleSet {
       minimumExistence[key] ?? (throw StateError('Regra $key em falta'));
   int s(String key) =>
       solidarity[key] ?? (throw StateError('Regra $key em falta'));
+  int h(String key) =>
+      household[key] ?? (throw StateError('Regra conjugal $key em falta'));
+  int jovem(String key) =>
+      irsJovem[key] ?? (throw StateError('Regra IRS Jovem $key em falta'));
+
+  TaxRuleSet copyWith({
+    String? jurisdiction,
+    int? taxYear,
+    String? rulesVersion,
+    DateTime? verifiedAt,
+    int? iasCents,
+    int? employmentSpecificDeductionCents,
+    int? minimumExistenceReferenceCents,
+    Map<String, int>? minimumExistence,
+    List<TaxBracket>? brackets,
+    Map<String, int>? solidarity,
+    Map<String, int>? household,
+    Map<String, int>? irsJovem,
+    Map<String, int>? deductions,
+    Map<String, TaxRuleMetadata>? ruleMetadata,
+  }) => TaxRuleSet(
+    jurisdiction: jurisdiction ?? this.jurisdiction,
+    taxYear: taxYear ?? this.taxYear,
+    rulesVersion: rulesVersion ?? this.rulesVersion,
+    verifiedAt: verifiedAt ?? this.verifiedAt,
+    iasCents: iasCents ?? this.iasCents,
+    employmentSpecificDeductionCents:
+        employmentSpecificDeductionCents ??
+        this.employmentSpecificDeductionCents,
+    minimumExistenceReferenceCents:
+        minimumExistenceReferenceCents ?? this.minimumExistenceReferenceCents,
+    minimumExistence: minimumExistence ?? this.minimumExistence,
+    brackets: brackets ?? this.brackets,
+    solidarity: solidarity ?? this.solidarity,
+    household: household ?? this.household,
+    irsJovem: irsJovem ?? this.irsJovem,
+    deductions: deductions ?? this.deductions,
+    ruleMetadata: ruleMetadata ?? this.ruleMetadata,
+  );
 
   factory TaxRuleSet.fromJsonString(String source) {
     final json = (jsonDecode(source) as Map).cast<String, Object?>();
@@ -104,11 +149,18 @@ final class TaxRuleSet {
       'invoiceVat35RatePpm',
       'invoiceVat100RatePpm',
       'invoiceVatCapCents',
+      'jointDivisor',
+      'separateDependentExpenseSharePpm',
+      'familyLimitDivisor',
+      'irsJovemRates',
     };
     if (!metadata.keys.toSet().containsAll(requiredMetadata)) {
       throw const FormatException('Metadados obrigatórios das regras em falta');
     }
     return TaxRuleSet(
+      jurisdiction:
+          ((json['supportedScope'] as Map?)?['jurisdiction'] as String?) ??
+          (json['jurisdiction'] as String? ?? 'CONTINENT'),
       taxYear: json['taxYear'] as int,
       rulesVersion: json['rulesVersion'] as String,
       verifiedAt: DateTime.parse(json['verifiedAt'] as String),
@@ -120,8 +172,66 @@ final class TaxRuleSet {
       minimumExistence: (json['minimumExistence'] as Map).cast<String, int>(),
       brackets: brackets,
       solidarity: (json['solidarity'] as Map).cast<String, int>(),
+      household: (json['household'] as Map).cast<String, int>(),
+      irsJovem: (json['irsJovem'] as Map).cast<String, int>(),
       deductions: (json['deductions'] as Map).cast<String, int>(),
       ruleMetadata: metadata,
+    );
+  }
+}
+
+typedef TaxAssetLoader = Future<String> Function(String assetPath);
+
+/// Resolve regras exclusivamente por ano + jurisdição. Os descritores v3
+/// versionados aplicam apenas overrides declarativos sobre uma base validada.
+final class TaxRuleRepository {
+  const TaxRuleRepository(this.loadAsset);
+
+  final TaxAssetLoader loadAsset;
+
+  static String descriptorPath(int year, String jurisdiction) =>
+      'assets/tax_rules/$year/${jurisdiction.toLowerCase()}.json';
+
+  Future<TaxRuleSet> load(int year, String jurisdiction) async {
+    final path = descriptorPath(year, jurisdiction);
+    final descriptor = (jsonDecode(await loadAsset(path)) as Map)
+        .cast<String, Object?>();
+    if (descriptor['schemaVersion'] != 3 ||
+        descriptor['status'] != 'VERIFIED') {
+      throw FormatException('Descritor fiscal não verificado: $path');
+    }
+    final basePath = descriptor['baseAsset'] as String;
+    final base = TaxRuleSet.fromJsonString(await loadAsset(basePath));
+    final overrides = (descriptor['overrides'] as Map? ?? const {})
+        .cast<String, Object?>();
+    final bracketValues = descriptor['brackets'] as List?;
+    final deductionOverrides = (overrides['deductions'] as Map? ?? const {})
+        .cast<String, int>();
+    final minimumOverrides = (overrides['minimumExistence'] as Map? ?? const {})
+        .cast<String, int>();
+    return base.copyWith(
+      jurisdiction: descriptor['jurisdiction'] as String,
+      taxYear: descriptor['taxYear'] as int,
+      rulesVersion: descriptor['rulesVersion'] as String,
+      verifiedAt: DateTime.parse(descriptor['verifiedAt'] as String),
+      iasCents: overrides['iasCents'] as int? ?? base.iasCents,
+      employmentSpecificDeductionCents:
+          overrides['employmentSpecificDeductionCents'] as int? ??
+          base.employmentSpecificDeductionCents,
+      minimumExistenceReferenceCents:
+          overrides['minimumExistenceReferenceCents'] as int? ??
+          base.minimumExistenceReferenceCents,
+      minimumExistence: {...base.minimumExistence, ...minimumOverrides},
+      brackets: bracketValues == null
+          ? base.brackets
+          : bracketValues
+                .map(
+                  (value) => TaxBracket.fromJson(
+                    (value as Map).cast<String, Object?>(),
+                  ),
+                )
+                .toList(growable: false),
+      deductions: {...base.deductions, ...deductionOverrides},
     );
   }
 }

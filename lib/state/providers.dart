@@ -9,10 +9,22 @@ final repositoryProvider = Provider<SimulationRepository>(
   (ref) => LocalSimulationRepository(),
 );
 
-final rulesProvider = FutureProvider<TaxRuleSet>((ref) async {
-  final source = await rootBundle.loadString('assets/tax_rules/2026.json');
-  return TaxRuleSet.fromJsonString(source);
-});
+final taxRuleRepositoryProvider = Provider<TaxRuleRepository>(
+  (ref) => TaxRuleRepository(rootBundle.loadString),
+);
+
+final rulesForProvider =
+    FutureProvider.family<TaxRuleSet, ({int year, TaxRegion region})>(
+      (ref, selection) => ref
+          .watch(taxRuleRepositoryProvider)
+          .load(selection.year, selection.region.name),
+    );
+
+/// Compatibilidade do shell atual enquanto a seleção inicial é migrada.
+final rulesProvider = FutureProvider<TaxRuleSet>(
+  (ref) =>
+      ref.watch(taxRuleRepositoryProvider).load(2026, TaxRegion.continent.name),
+);
 
 final simulationsProvider = FutureProvider<List<TaxSimulation>>(
   (ref) => ref.watch(repositoryProvider).list(),

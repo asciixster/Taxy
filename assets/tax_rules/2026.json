@@ -1,23 +1,18 @@
 {
   "schemaVersion": 2,
   "taxYear": 2026,
-  "rulesVersion": "2026.2.0",
+  "rulesVersion": "2026.3.0-base",
   "verifiedAt": "2026-08-27",
   "status": "VERIFIED_FOR_MVP_SCOPE",
   "supportedScope": {
     "jurisdiction": "CONTINENT",
     "residency": "FULL_YEAR_PORTUGAL",
     "incomeCategories": ["A"],
-    "civilStatus": ["SINGLE"],
-    "filingModes": ["SEPARATE_SINGLE_TAXPAYER"],
+    "civilStatus": ["SINGLE", "MARRIED", "DE_FACTO"],
+    "filingModes": ["SEPARATE", "JOINT"],
     "householdsWithDependents": ["DECLARED_SINGLE_PARENT_STANDARD"]
   },
   "unsupported": {
-    "MADEIRA": "NEEDS_VERIFICATION",
-    "AZORES": "NEEDS_VERIFICATION",
-    "MARRIED": "NEEDS_VERIFICATION",
-    "DE_FACTO": "NEEDS_VERIFICATION",
-    "JOINT_FILING": "NEEDS_VERIFICATION",
     "PARTIAL_RESIDENCE": "NEEDS_VERIFICATION",
     "IRS_JOVEM": "NEEDS_VERIFICATION",
     "CATEGORY_B": "NEEDS_VERIFICATION",
@@ -59,6 +54,20 @@
     "firstRatePpm": 25000,
     "secondRatePpm": 50000
   },
+  "household": {
+    "jointDivisor": 2,
+    "separateDependentExpenseSharePpm": 500000,
+    "familyLimitDivisor": 2
+  },
+  "irsJovem": {
+    "maximumAge": 35,
+    "maximumYears": 10,
+    "exemptionLimitIasMultiplier": 55,
+    "year1RatePpm": 1000000,
+    "years2To4RatePpm": 750000,
+    "years5To7RatePpm": 500000,
+    "years8To10RatePpm": 250000
+  },
   "deductions": {
     "dependentBaseCents": 60000,
     "dependentUnderThreeExtraCents": 12600,
@@ -99,6 +108,34 @@
       "source": "CIRS artigo 78.º-B, n.º 9",
       "comment": "Aplicável apenas após declaração explícita de agregado monoparental standard.",
       "version": "2026.2.0"
+    },
+    "jointDivisor": {
+      "name": "Quociente conjugal",
+      "unit": "integer_divisor",
+      "source": "CIRS artigo 69.º",
+      "comment": "Na tributação conjunta as taxas aplicam-se a metade do rendimento coletável e a coleta é multiplicada por dois.",
+      "version": "2026.3.0"
+    },
+    "separateDependentExpenseSharePpm": {
+      "name": "Quota de despesas dos dependentes por titular",
+      "unit": "parts_per_million",
+      "source": "CIRS artigo 78.º, n.º 14, alínea b)",
+      "comment": "Cada titular considera 50% das despesas dos dependentes na tributação separada standard.",
+      "version": "2026.3.0"
+    },
+    "familyLimitDivisor": {
+      "name": "Redução de limites familiares na separada",
+      "unit": "integer_divisor",
+      "source": "CIRS artigo 78.º, n.º 14, alínea a)",
+      "comment": "Limites determinados por referência ao agregado são reduzidos a metade.",
+      "version": "2026.3.0"
+    },
+    "irsJovemRates": {
+      "name": "Taxas e duração do IRS Jovem",
+      "unit": "parts_per_million_and_years",
+      "source": "CIRS artigo 12.º-B, n.os 1, 3 e 5",
+      "comment": "Até 35 anos, dez anos de rendimentos, taxas 100%, 75%, 50% e 25%, limite 55 IAS.",
+      "version": "2026.3.0"
     },
     "generalSingleParentCapCents": {
       "name": "Limite de despesas gerais para família monoparental",
@@ -149,6 +186,8 @@
     {"rule": "minimumExistence", "legalReference": "CIRS artigo 70.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx"},
     {"rule": "deductions", "legalReference": "CIRS artigos 78.º a 84.º; EBF artigo 21.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/pages/codigo-do-irs-indice.aspx"},
     {"rule": "singleParentGeneralExpenses", "legalReference": "CIRS artigo 78.º-B, n.º 9", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78b.aspx"},
-    {"rule": "invoiceVatCategories", "legalReference": "CIRS artigo 78.º-F", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78f.aspx"}
+    {"rule": "invoiceVatCategories", "legalReference": "CIRS artigo 78.º-F", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78f.aspx"},
+    {"rule": "household", "legalReference": "CIRS artigos 59.º, 68.º-A, 69.º e 78.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78.aspx"},
+    {"rule": "irsJovem", "legalReference": "CIRS artigo 12.º-B", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx"}
   ]
 }

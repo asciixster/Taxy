@@ -10,6 +10,98 @@ enum FilingMode { separate, joint }
 
 enum IncomeEntryMode { annual, monthly }
 
+enum IncomeType {
+  employment,
+  selfEmployment,
+  pensions,
+  property,
+  capital,
+  securities,
+  crypto,
+  foreign,
+  other,
+}
+
+enum DependentAllocation { household, taxpayerA, taxpayerB }
+
+final class Dependent {
+  const Dependent({
+    required this.id,
+    required this.ageAtYearEnd,
+    this.sharedCustody = false,
+    this.alternatingResidence = false,
+    this.allocation = DependentAllocation.household,
+  });
+
+  final String id;
+  final int ageAtYearEnd;
+  final bool sharedCustody;
+  final bool alternatingResidence;
+  final DependentAllocation allocation;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'ageAtYearEnd': ageAtYearEnd,
+    'sharedCustody': sharedCustody,
+    'alternatingResidence': alternatingResidence,
+    'allocation': allocation.name,
+  };
+
+  factory Dependent.fromJson(Map<String, Object?> json) => Dependent(
+    id: json['id'] as String,
+    ageAtYearEnd: json['ageAtYearEnd'] as int,
+    sharedCustody: json['sharedCustody'] as bool? ?? false,
+    alternatingResidence: json['alternatingResidence'] as bool? ?? false,
+    allocation: DependentAllocation.values.byName(
+      json['allocation'] as String? ?? DependentAllocation.household.name,
+    ),
+  );
+}
+
+enum IrsJovemEligibility {
+  notRequested,
+  needsMoreInformation,
+  notEligible,
+  eligible,
+}
+
+final class IrsJovemAnswers {
+  const IrsJovemAnswers({
+    this.requested = false,
+    this.wasDependentAtYearEnd,
+    this.qualifyingIncomeYears,
+    this.taxSituationRegularized,
+    this.usedRnhOrIfici = false,
+    this.usedReturnProgram = false,
+  });
+
+  final bool requested;
+  final bool? wasDependentAtYearEnd;
+  final int? qualifyingIncomeYears;
+  final bool? taxSituationRegularized;
+  final bool usedRnhOrIfici;
+  final bool usedReturnProgram;
+
+  Map<String, Object?> toJson() => {
+    'requested': requested,
+    'wasDependentAtYearEnd': wasDependentAtYearEnd,
+    'qualifyingIncomeYears': qualifyingIncomeYears,
+    'taxSituationRegularized': taxSituationRegularized,
+    'usedRnhOrIfici': usedRnhOrIfici,
+    'usedReturnProgram': usedReturnProgram,
+  };
+
+  factory IrsJovemAnswers.fromJson(Map<String, Object?> json) =>
+      IrsJovemAnswers(
+        requested: json['requested'] as bool? ?? false,
+        wasDependentAtYearEnd: json['wasDependentAtYearEnd'] as bool?,
+        qualifyingIncomeYears: json['qualifyingIncomeYears'] as int?,
+        taxSituationRegularized: json['taxSituationRegularized'] as bool?,
+        usedRnhOrIfici: json['usedRnhOrIfici'] as bool? ?? false,
+        usedReturnProgram: json['usedReturnProgram'] as bool? ?? false,
+      );
+}
+
 final class TaxpayerProfile {
   const TaxpayerProfile({
     required this.taxYear,
@@ -273,6 +365,46 @@ final class DeductionInput {
   );
 }
 
+final class TaxpayerInput {
+  const TaxpayerInput({
+    required this.id,
+    required this.age,
+    required this.income,
+    required this.deductions,
+    this.irsJovem = const IrsJovemAnswers(),
+  });
+
+  final String id;
+  final int age;
+  final EmploymentIncome income;
+  final DeductionInput deductions;
+  final IrsJovemAnswers irsJovem;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'age': age,
+    'income': income.toJson(),
+    'deductions': deductions.toJson(),
+    'irsJovem': irsJovem.toJson(),
+  };
+
+  factory TaxpayerInput.fromJson(Map<String, Object?> json) => TaxpayerInput(
+    id: json['id'] as String,
+    age: json['age'] as int,
+    income: EmploymentIncome.fromJson(
+      (json['income'] as Map).cast<String, Object?>(),
+    ),
+    deductions: DeductionInput.fromJson(
+      (json['deductions'] as Map).cast<String, Object?>(),
+    ),
+    irsJovem: json['irsJovem'] == null
+        ? const IrsJovemAnswers()
+        : IrsJovemAnswers.fromJson(
+            (json['irsJovem'] as Map).cast<String, Object?>(),
+          ),
+  );
+}
+
 final class TaxSimulation {
   const TaxSimulation({
     required this.id,
@@ -283,6 +415,10 @@ final class TaxSimulation {
     required this.income,
     required this.deductions,
     this.situations = const TaxSituationFlags(),
+    this.secondaryTaxpayer,
+    this.dependents = const [],
+    this.dependentDeductions = const DeductionInput(),
+    this.incomeTypes = const {IncomeType.employment},
   });
 
   final String id;
@@ -293,6 +429,10 @@ final class TaxSimulation {
   final EmploymentIncome income;
   final DeductionInput deductions;
   final TaxSituationFlags situations;
+  final TaxpayerInput? secondaryTaxpayer;
+  final List<Dependent> dependents;
+  final DeductionInput dependentDeductions;
+  final Set<IncomeType> incomeTypes;
 
   TaxSimulation copyWith({
     String? id,
@@ -302,6 +442,11 @@ final class TaxSimulation {
     EmploymentIncome? income,
     DeductionInput? deductions,
     TaxSituationFlags? situations,
+    TaxpayerInput? secondaryTaxpayer,
+    bool clearSecondaryTaxpayer = false,
+    List<Dependent>? dependents,
+    DeductionInput? dependentDeductions,
+    Set<IncomeType>? incomeTypes,
   }) => TaxSimulation(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -311,6 +456,12 @@ final class TaxSimulation {
     income: income ?? this.income,
     deductions: deductions ?? this.deductions,
     situations: situations ?? this.situations,
+    secondaryTaxpayer: clearSecondaryTaxpayer
+        ? null
+        : secondaryTaxpayer ?? this.secondaryTaxpayer,
+    dependents: dependents ?? this.dependents,
+    dependentDeductions: dependentDeductions ?? this.dependentDeductions,
+    incomeTypes: incomeTypes ?? this.incomeTypes,
   );
 
   Map<String, Object?> toJson() => {
@@ -322,6 +473,10 @@ final class TaxSimulation {
     'income': income.toJson(),
     'deductions': deductions.toJson(),
     'situations': situations.toJson(),
+    'secondaryTaxpayer': secondaryTaxpayer?.toJson(),
+    'dependents': dependents.map((value) => value.toJson()).toList(),
+    'dependentDeductions': dependentDeductions.toJson(),
+    'incomeTypes': incomeTypes.map((value) => value.name).toList(),
   };
 
   String encode() => jsonEncode(toJson());
@@ -345,6 +500,37 @@ final class TaxSimulation {
         : TaxSituationFlags.fromJson(
             (json['situations'] as Map).cast<String, Object?>(),
           ),
+    secondaryTaxpayer: json['secondaryTaxpayer'] == null
+        ? null
+        : TaxpayerInput.fromJson(
+            (json['secondaryTaxpayer'] as Map).cast<String, Object?>(),
+          ),
+    dependents: json['dependents'] == null
+        ? List.generate(
+            ((json['profile'] as Map)['dependentAges'] as List).length,
+            (index) => Dependent(
+              id: 'legacy-$index',
+              ageAtYearEnd:
+                  ((json['profile'] as Map)['dependentAges'] as List)[index]
+                      as int,
+            ),
+          )
+        : (json['dependents'] as List)
+              .map(
+                (value) =>
+                    Dependent.fromJson((value as Map).cast<String, Object?>()),
+              )
+              .toList(growable: false),
+    dependentDeductions: json['dependentDeductions'] == null
+        ? const DeductionInput()
+        : DeductionInput.fromJson(
+            (json['dependentDeductions'] as Map).cast<String, Object?>(),
+          ),
+    incomeTypes: json['incomeTypes'] == null
+        ? const {IncomeType.employment}
+        : (json['incomeTypes'] as List)
+              .map((value) => IncomeType.values.byName(value as String))
+              .toSet(),
   );
 
   factory TaxSimulation.decode(String value) => TaxSimulation.fromJson(
