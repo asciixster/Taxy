@@ -4,6 +4,16 @@ Registo append-only de alterações motivadas por evidência fiscal. Cada entrad
 futura deve incluir data, caso anónimo, classificação, causa, ficheiros/regras
 afetados, testes adicionados, revisor e decisão. Nunca incluir dados pessoais.
 
+## 0.7.0 — quality gate sem casos oficiais
+
+- adicionados estados `EXACT`, `PARTIAL_EXACT`, `DIFFERENCE`,
+  `INVALID_FIXTURE` e `UNSUPPORTED`;
+- liquidações oficiais fornecidas: **0**;
+- divergências reais encontradas: **0**;
+- bugs fiscais confirmados ou corrigidos: **0**;
+- alterações de `rulesVersion`: **0**;
+- nenhuma fixture ou valor fiscal foi inventado.
+
 ## 0.6.0 — infraestrutura de intake e triage
 
 - audit trace tipado; o runner deixou de ler labels de UI;

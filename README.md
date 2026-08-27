@@ -1,10 +1,18 @@
-# taxy.pt — 0.6 Official AT Case Intake & Validation Triage
+# taxy.pt — 0.7 First Official AT Validation
 
 Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
 
 A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
-## O que a 0.6 acrescenta
+## Estado da 0.7
+
+Nenhuma liquidação real foi fornecida para esta release. Por isso, a 0.7 não
+adiciona fixtures oficiais, não altera o motor e não muda regras fiscais. Apenas
+formaliza o quality gate necessário para classificar imediatamente os primeiros
+casos reais como `EXACT`, `PARTIAL_EXACT`, `DIFFERENCE`, `INVALID_FIXTURE` ou
+`UNSUPPORTED`.
+
+## Base de validação preservada da 0.6
 
 - schema v3 robusto para liquidações oficiais AT anonimizadas;
 - `TaxCalculationTrace` tipado, independente de labels de UI;
@@ -33,7 +41,7 @@ A aplicação é Android-first, determinística e privada: guarda simulações n
   em tributação separada e conjunta;
 - scope check inicial, badge de âmbito e Validation Lab com exportação JSON;
 - runner automático para futuras liquidações oficiais anonimizadas;
-- 349 testes determinísticos e 21 referências manuais auditadas.
+- suite determinística e 21 referências manuais auditadas.
 
 O IRS Jovem continua dentro do módulo IRS. A liquidação normal permanece
 disponível quando o titular não é elegível; dados insuficientes nunca originam

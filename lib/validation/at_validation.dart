@@ -166,6 +166,17 @@ enum FixtureFailureCategory {
   final String code;
 }
 
+enum OfficialCaseQualityGate {
+  exact('EXACT'),
+  partialExact('PARTIAL_EXACT'),
+  difference('DIFFERENCE'),
+  invalidFixture('INVALID_FIXTURE'),
+  unsupported('UNSUPPORTED');
+
+  const OfficialCaseQualityGate(this.code);
+  final String code;
+}
+
 class FixtureFailure {
   const FixtureFailure({
     required this.category,
@@ -497,9 +508,40 @@ class AtFixtureComparison {
   final List<AtFieldComparison> fields;
   final FixtureFailure? failure;
 
-  bool get isExact => failure == null && fields.every((field) => field.isExact);
+  OfficialCaseQualityGate get qualityGate =>
+      OfficialCaseQualityGateEvaluator.fromComparison(this);
+  bool get isExact =>
+      qualityGate == OfficialCaseQualityGate.exact ||
+      qualityGate == OfficialCaseQualityGate.partialExact;
   List<AtFieldComparison> get mismatches =>
       fields.where((field) => !field.isExact).toList(growable: false);
+}
+
+/// Deterministic quality gate. It classifies evidence but never modifies the
+/// fixture, calculation, rules or comparison tolerance.
+abstract final class OfficialCaseQualityGateEvaluator {
+  static OfficialCaseQualityGate fromComparison(
+    AtFixtureComparison comparison,
+  ) {
+    final failure = comparison.failure;
+    if (failure != null) return fromFailure(failure);
+    if (comparison.fields.any((field) => !field.isExact)) {
+      return OfficialCaseQualityGate.difference;
+    }
+    final compared = comparison.fields.map((field) => field.field).toSet();
+    return compared.containsAll(AtValidationField.all)
+        ? OfficialCaseQualityGate.exact
+        : OfficialCaseQualityGate.partialExact;
+  }
+
+  static OfficialCaseQualityGate fromFailure(FixtureFailure failure) =>
+      switch (failure.category) {
+        FixtureFailureCategory.fixtureError =>
+          OfficialCaseQualityGate.invalidFixture,
+        FixtureFailureCategory.unsupportedScenario =>
+          OfficialCaseQualityGate.unsupported,
+        _ => OfficialCaseQualityGate.difference,
+      };
 }
 
 class AtValidationEngine {
@@ -653,8 +695,25 @@ class ValidationCoverage {
   final int referenceCalculationCount;
 
   int get totalCases => comparisons.length;
-  int get exactCases => comparisons.where((item) => item.isExact).length;
-  int get failedCases => totalCases - exactCases;
+  int get exactCases => comparisons
+      .where((item) => item.qualityGate == OfficialCaseQualityGate.exact)
+      .length;
+  int get partialExactCases => comparisons
+      .where((item) => item.qualityGate == OfficialCaseQualityGate.partialExact)
+      .length;
+  int get differenceCases => comparisons
+      .where((item) => item.qualityGate == OfficialCaseQualityGate.difference)
+      .length;
+  int get invalidFixtureCases => comparisons
+      .where(
+        (item) => item.qualityGate == OfficialCaseQualityGate.invalidFixture,
+      )
+      .length;
+  int get unsupportedCases => comparisons
+      .where((item) => item.qualityGate == OfficialCaseQualityGate.unsupported)
+      .length;
+  int get failedCases =>
+      differenceCases + invalidFixtureCases + unsupportedCases;
   int get totalFieldComparisons => comparisons.fold(
     0,
     (total, comparison) => total + comparison.fields.length,
@@ -728,7 +787,12 @@ class AtValidationReport {
         '${coverage.referenceCalculationCount}',
       )
       ..writeln('- Correspondencias exatas: ${coverage.exactCases}')
+      ..writeln(
+        '- Correspondencias parciais exatas: ${coverage.partialExactCases}',
+      )
       ..writeln('- Casos com diferencas: ${coverage.failedCases}')
+      ..writeln('- Fixtures invalidas: ${coverage.invalidFixtureCases}')
+      ..writeln('- Casos fora do scope: ${coverage.unsupportedCases}')
       ..writeln(
         '- Comparacoes de campos executadas: '
         '${coverage.totalFieldComparisons}',
@@ -773,7 +837,7 @@ class AtValidationReport {
       for (final comparison in coverage.comparisons) {
         buffer.writeln(
           '- ${comparison.fixture.anonymousCaseId}: '
-          '${comparison.isExact ? 'EXACT' : 'DIFFERENCE'}',
+          '${comparison.qualityGate.code}',
         );
       }
     }

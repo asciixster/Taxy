@@ -78,6 +78,18 @@ ficheiro original não é alterado.
 - `UNSUPPORTED_SCENARIO` — a liquidação contém matéria fora do scope;
 - `UNKNOWN` — estado inicial obrigatório até análise humana.
 
+## Quality gate por caso
+
+- `EXACT` — todos os campos do schema presentes e iguais ao cêntimo;
+- `PARTIAL_EXACT` — todos os campos diretamente disponíveis no documento são
+  iguais ao cêntimo, mas faltam fases sem correspondência documental;
+- `DIFFERENCE` — pelo menos um campo comparado diverge, mesmo por um cêntimo;
+- `INVALID_FIXTURE` — dados, schema, fonte ou anonimização inválidos;
+- `UNSUPPORTED` — o caso contém matéria fora do scope Taxy.
+
+O quality gate é classificativo: não corrige inputs, fixtures, regras ou
+resultados e não altera a tolerância de zero cêntimos.
+
 Ver também [ROUNDING_POLICY.md](ROUNDING_POLICY.md) e
 [VALIDATION_CHANGELOG.md](VALIDATION_CHANGELOG.md). O `FixtureFailure` guarda
 campo, esperado, atual, diferença, etapa provável e notas; a categoria inicial
