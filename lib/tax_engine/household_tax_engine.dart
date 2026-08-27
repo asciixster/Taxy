@@ -2,6 +2,8 @@ import '../domain/models.dart';
 import '../domain/money.dart';
 import 'supported_scope.dart';
 import 'tax_engine.dart';
+import 'irs_jovem_eligibility_engine.dart';
+import 'irs_jovem_tax_engine.dart';
 import 'tax_rules.dart';
 
 final class HouseholdTaxComparison {
@@ -22,6 +24,26 @@ final class HouseholdTaxComparison {
   final List<String> warnings;
 }
 
+final class HouseholdIrsJovemComparison {
+  const HouseholdIrsJovemComparison({
+    required this.normal,
+    required this.withIrsJovem,
+    required this.primaryEligibility,
+    required this.secondaryEligibility,
+    required this.estimatedBenefit,
+    required this.warnings,
+  });
+
+  final HouseholdTaxComparison normal;
+  final HouseholdTaxComparison? withIrsJovem;
+  final IrsJovemEligibilityResult primaryEligibility;
+  final IrsJovemEligibilityResult secondaryEligibility;
+  final Money estimatedBenefit;
+  final List<String> warnings;
+
+  bool get available => normal.available;
+}
+
 /// Liquidação standard de casados/unidos de facto com dois titulares.
 /// Exclui expressamente guarda partilhada, rendimentos não-A e situações
 /// especiais. A separada usa despesas próprias + 50% das dos dependentes.
@@ -30,7 +52,71 @@ final class HouseholdTaxEngine {
 
   final TaxRuleSet rules;
 
-  HouseholdTaxComparison compare(TaxSimulation simulation) {
+  HouseholdTaxComparison compare(TaxSimulation simulation) =>
+      _compare(simulation, exemptA: Money.zero, exemptB: Money.zero);
+
+  HouseholdIrsJovemComparison compareWithIrsJovem(TaxSimulation simulation) {
+    final secondary = simulation.secondaryTaxpayer;
+    final primaryEligibility = IrsJovemEligibilityEngine(rules).evaluate(
+      ageAtYearEnd: simulation.profile.age,
+      categoryAIncome: simulation.income.gross,
+      answers: simulation.primaryIrsJovem,
+    );
+    final secondaryEligibility = IrsJovemEligibilityEngine(rules).evaluate(
+      ageAtYearEnd: secondary?.age ?? 0,
+      categoryAIncome: secondary?.income.gross ?? Money.zero,
+      answers: secondary?.irsJovem ?? const IrsJovemAnswers(),
+    );
+    final normal = compare(simulation);
+    final incomplete = [
+      primaryEligibility,
+      secondaryEligibility,
+    ].any((value) => value.status == IrsJovemEligibility.needsMoreInformation);
+    if (!normal.available || incomplete) {
+      return HouseholdIrsJovemComparison(
+        normal: normal,
+        withIrsJovem: null,
+        primaryEligibility: primaryEligibility,
+        secondaryEligibility: secondaryEligibility,
+        estimatedBenefit: Money.zero,
+        warnings: [
+          if (incomplete)
+            'Falta informação para aplicar IRS Jovem com segurança.',
+        ],
+      );
+    }
+    final withBenefit = _compare(
+      simulation,
+      exemptA: primaryEligibility.status == IrsJovemEligibility.eligible
+          ? primaryEligibility.eligibleExemptIncome
+          : Money.zero,
+      exemptB: secondaryEligibility.status == IrsJovemEligibility.eligible
+          ? secondaryEligibility.eligibleExemptIncome
+          : Money.zero,
+    );
+    final normalBest =
+        normal.joint!.taxDue.cents <= normal.separate!.taxDue.cents
+        ? normal.joint!.taxDue
+        : normal.separate!.taxDue;
+    final jovemBest =
+        withBenefit.joint!.taxDue.cents <= withBenefit.separate!.taxDue.cents
+        ? withBenefit.joint!.taxDue
+        : withBenefit.separate!.taxDue;
+    return HouseholdIrsJovemComparison(
+      normal: normal,
+      withIrsJovem: withBenefit,
+      primaryEligibility: primaryEligibility,
+      secondaryEligibility: secondaryEligibility,
+      estimatedBenefit: (normalBest - jovemBest).max(Money.zero),
+      warnings: const [],
+    );
+  }
+
+  HouseholdTaxComparison _compare(
+    TaxSimulation simulation, {
+    required Money exemptA,
+    required Money exemptB,
+  }) {
     final issues = SupportedScopeValidator(rules).validate(simulation);
     final isCouple = simulation.profile.civilStatus != CivilStatus.single;
     final jurisdictionMatches =
@@ -91,6 +177,7 @@ final class HouseholdTaxEngine {
       calculationRules: separateRules,
       allowMinimumExistence: allowMinimumExistence,
       label: 'Titular A',
+      eligibleExemptIncome: exemptA,
     );
     final resultB = _individual(
       simulation,
@@ -101,6 +188,7 @@ final class HouseholdTaxEngine {
       calculationRules: separateRules,
       allowMinimumExistence: allowMinimumExistence,
       label: 'Titular B',
+      eligibleExemptIncome: exemptB,
     );
     final separate = _sumResults(resultA, resultB, FilingMode.separate);
 
@@ -114,6 +202,7 @@ final class HouseholdTaxEngine {
       ages,
       jointDeductions,
       allowMinimumExistence,
+      exemptA + exemptB,
     );
     final recommended = joint.taxDue.cents <= separate.taxDue.cents
         ? FilingMode.joint
@@ -138,6 +227,7 @@ final class HouseholdTaxEngine {
     List<int> ages,
     DeductionInput deductions,
     bool allowMinimumExistence,
+    Money eligibleExemptIncome,
   ) {
     final engine = TaxEngine(_jointRules());
     final specificA = engine.specificDeductionFor(source.income);
@@ -148,7 +238,7 @@ final class HouseholdTaxEngine {
     final minimumB = allowMinimumExistence
         ? engine.minimumExistenceAllowanceFor(secondary.income, specificB)
         : Money.zero;
-    final taxable =
+    final normalTaxable =
         (source.income.gross +
                 secondary.income.gross -
                 specificA -
@@ -157,11 +247,17 @@ final class HouseholdTaxEngine {
                 minimumB)
             .max(Money.zero);
     final jointDivisor = rules.h('jointDivisor');
+    final adjustment = IrsJovemTaxAdjustment.calculate(
+      engine: engine,
+      normalTaxableIncome: normalTaxable,
+      eligibleExemptIncome: eligibleExemptIncome,
+      divisor: jointDivisor,
+    );
+    final taxable = adjustment.taxableIncome;
     final quotient = Money.fromCents(
       Money.mulDiv(taxable.cents, 1, jointDivisor),
     );
-    final detail = engine.generalTaxDetailFor(quotient);
-    final grossTax = Money.fromCents(detail.tax.cents * jointDivisor);
+    final grossTax = adjustment.adjustedGrossTax;
     final solidarityHalf = engine.solidarityTaxForTaxableIncome(quotient);
     final solidarity = Money.fromCents(solidarityHalf.cents * jointDivisor);
     final warnings = <String>[];
@@ -199,11 +295,34 @@ final class HouseholdTaxEngine {
       withholding: withholding,
       balance: withholding - taxDue,
       breakdown: [
+        if (adjustment.exemptIncome.cents > 0)
+          TaxBreakdown(
+            'Rendimento isento IRS Jovem do agregado',
+            -adjustment.exemptIncome,
+            'Soma das parcelas elegíveis dos titulares, limitada individualmente.',
+          ),
         TaxBreakdown(
           'Rendimento coletável do agregado',
           taxable,
           'Total dos dois titulares.',
         ),
+        if (adjustment.exemptIncome.cents > 0) ...[
+          TaxBreakdown(
+            'Rendimento do agregado para taxa',
+            adjustment.rateDeterminingIncome,
+            'Inclui o rendimento isento sem deduções, nos termos do artigo 22.º.',
+          ),
+          TaxBreakdown(
+            'Quociente para determinação da taxa',
+            adjustment.rateDeterminingQuotient,
+            'Rendimento para taxa dividido pelo quociente conjugal 2.',
+          ),
+          TaxBreakdown(
+            'Coleta imputada ao rendimento isento',
+            -adjustment.taxOnExemptIncome,
+            'Parcela proporcional retirada depois de apurada a coleta para taxa.',
+          ),
+        ],
         TaxBreakdown(
           'Quociente conjugal',
           quotient,
@@ -221,9 +340,9 @@ final class HouseholdTaxEngine {
         'Regras ${rules.taxYear} ${rules.jurisdiction}, ${rules.rulesVersion}.',
       ],
       creditBreakdown: credits.breakdown,
-      bracketBaseTax: Money.fromCents(detail.baseTax.cents * jointDivisor),
-      bracketExcess: Money.fromCents(detail.excess.cents * jointDivisor),
-      marginalRatePpm: detail.ratePpm,
+      bracketBaseTax: adjustment.bracketBaseTax,
+      bracketExcess: adjustment.bracketExcess,
+      marginalRatePpm: adjustment.marginalRatePpm,
       overallDeductionsCap: credits.overallCap,
     );
   }
@@ -237,14 +356,20 @@ final class HouseholdTaxEngine {
     required TaxRuleSet calculationRules,
     required bool allowMinimumExistence,
     required String label,
+    required Money eligibleExemptIncome,
   }) {
     final engine = TaxEngine(calculationRules);
     final specific = engine.specificDeductionFor(income);
     final minimum = allowMinimumExistence
         ? engine.minimumExistenceAllowanceFor(income, specific)
         : Money.zero;
-    final taxable = (income.gross - specific - minimum).max(Money.zero);
-    final detail = engine.generalTaxDetailFor(taxable);
+    final normalTaxable = (income.gross - specific - minimum).max(Money.zero);
+    final adjustment = IrsJovemTaxAdjustment.calculate(
+      engine: engine,
+      normalTaxableIncome: normalTaxable,
+      eligibleExemptIncome: eligibleExemptIncome,
+    );
+    final taxable = adjustment.taxableIncome;
     final solidarity = engine.solidarityTaxForTaxableIncome(taxable);
     final warnings = <String>[];
     final credits = engine.creditsForSimulation(
@@ -255,17 +380,19 @@ final class HouseholdTaxEngine {
         dependentAges: dependentAges,
       ),
       taxable,
-      detail.tax,
+      adjustment.adjustedGrossTax,
       warnings,
     );
-    final due = (detail.tax - credits.total).max(Money.zero) + solidarity;
+    final due =
+        (adjustment.adjustedGrossTax - credits.total).max(Money.zero) +
+        solidarity;
     return TaxResult(
       available: true,
       grossIncome: income.gross,
       specificDeduction: specific,
       minimumExistenceAllowance: minimum,
       taxableIncome: taxable,
-      grossTax: detail.tax,
+      grossTax: adjustment.adjustedGrossTax,
       taxCredits: credits.total,
       solidarityTax: solidarity,
       taxDue: due,
@@ -277,15 +404,32 @@ final class HouseholdTaxEngine {
           due,
           'Liquidação individual em tributação separada.',
         ),
+        if (adjustment.exemptIncome.cents > 0) ...[
+          TaxBreakdown(
+            'Rendimento isento IRS Jovem · $label',
+            -adjustment.exemptIncome,
+            'Isenção elegível deste titular.',
+          ),
+          TaxBreakdown(
+            'Rendimento para taxa · $label',
+            adjustment.rateDeterminingIncome,
+            'Inclui a parcela isenta sem deduções.',
+          ),
+          TaxBreakdown(
+            'Coleta imputada ao rendimento isento · $label',
+            -adjustment.taxOnExemptIncome,
+            'Imputação proporcional do artigo 22.º.',
+          ),
+        ],
       ],
       warnings: warnings,
       assumptions: [
         'Tributação separada: despesas próprias + 50% das despesas dos dependentes.',
       ],
       creditBreakdown: credits.breakdown,
-      bracketBaseTax: detail.baseTax,
-      bracketExcess: detail.excess,
-      marginalRatePpm: detail.ratePpm,
+      bracketBaseTax: adjustment.bracketBaseTax,
+      bracketExcess: adjustment.bracketExcess,
+      marginalRatePpm: adjustment.marginalRatePpm,
       overallDeductionsCap: credits.overallCap,
     );
   }

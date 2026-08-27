@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "taxYear": 2025,
   "jurisdiction": "CONTINENT",
-  "rulesVersion": "2025.3.1",
+  "rulesVersion": "2025.4.0",
   "verifiedAt": "2026-08-27",
   "status": "VERIFIED",
   "baseAsset": "assets/tax_rules/2025/base.json",

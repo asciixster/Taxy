@@ -7,7 +7,8 @@ Esta pasta recebe liquidações oficiais anonimizadas. Não contém casos oficia
 3. Copiar `schema.example.json` para `<ano>-<id-anonimo>-<modo>.json`.
 4. Colar o `TaxSimulation.toJson()` completo em `inputs`, incluindo região,
    `filingMode`, segundo titular, dependentes e IRS Jovem quando aplicável.
-5. Transcrever os seis resultados oficiais em cêntimos.
+5. Transcrever os sete resultados oficiais em cêntimos, incluindo
+   `exemptIncomeCents` (zero quando IRS Jovem não foi aplicado).
 6. Registar a versão exata das regras e notas de revisão.
 7. Executar `flutter test test/official_assessment_fixture_test.dart`.
 

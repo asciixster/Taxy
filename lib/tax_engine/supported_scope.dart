@@ -135,11 +135,6 @@ final class SupportedScopeValidator {
     );
 
     reject(
-      s.irsJovem,
-      'IRS_JOVEM',
-      'IRS Jovem ainda não é suportado (NEEDS_VERIFICATION).',
-    );
-    reject(
       s.categoryB,
       'CATEGORY_B',
       'Categoria B ainda não é suportada (NEEDS_VERIFICATION).',

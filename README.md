@@ -1,10 +1,10 @@
-# taxy.pt — 0.3 IRS Expansion + Multi-Module Foundation
+# taxy.pt — 0.4 IRS Jovem + Official Validation
 
 Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
 
 A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
-## O que a 0.3 entrega
+## O que a 0.4 entrega
 
 - shell multi-módulo com registo explícito `TaxyModule`; só IRS está ativo;
 - IRS 2025 Continente e IRS 2026 Continente, Madeira e Açores;
@@ -12,12 +12,18 @@ A aplicação é Android-first, determinística e privada: guarda simulações n
 - dois titulares explícitos para casados e unidos de facto;
 - comparação determinística entre tributação separada e conjunta;
 - despesas próprias por titular e despesas dos dependentes repartidas 50/50 na separada;
-- dependentes tipados e motor separado de elegibilidade IRS Jovem;
+- dependentes tipados e elegibilidade IRS Jovem por histórico anual objetivo;
+- liquidação com/sem IRS Jovem, incluindo artigo 22.º, retenções e deduções;
+- comparação IRS Jovem nos quatro cenários conjugais (A, B, ambos, nenhum),
+  em tributação separada e conjunta;
 - scope check inicial, badge de âmbito e Validation Lab com exportação JSON;
 - runner automático para futuras liquidações oficiais anonimizadas;
-- mais de 200 testes determinísticos.
+- mais de 300 testes determinísticos e 12 referências IRS Jovem auditadas.
 
-O cálculo da isenção IRS Jovem ainda não é aplicado à liquidação. A elegibilidade está implementada, mas o englobamento e a imputação da dedução específica ficam `NEEDS_VERIFICATION` até existirem fixtures oficiais. Consulte [SUPPORTED_SCOPE.md](SUPPORTED_SCOPE.md).
+O IRS Jovem continua dentro do módulo IRS. A liquidação normal permanece
+disponível quando o titular não é elegível; dados insuficientes nunca originam
+uma isenção aproximada. Consulte [IRS_JOVEM.md](IRS_JOVEM.md) e
+[SUPPORTED_SCOPE.md](SUPPORTED_SCOPE.md).
 
 ## Arquitetura
 
@@ -66,6 +72,6 @@ A única GitHub Action executa `flutter pub get`, `flutter analyze` e `flutter t
 
 O loader em `test/official_assessment_fixture_test.dart` descobre os JSON em `test/fixtures/official_assessments/`. A tolerância é zero cêntimos por defeito. Não foram inventadas liquidações oficiais.
 
-Os casos em `test/fixtures/reference_calculations/` são referências manuais independentes, identificadas como tal, e não liquidações da AT. Incluem nove agregados de dois titulares e impedem que os testes se limitem a recalcular expectativas com o próprio motor.
+Os casos em `test/fixtures/reference_calculations/` são referências manuais independentes, identificadas como tal, e não liquidações da AT. A subpasta `irs_jovem/` contém casos com cálculos e expectativas fixas ao cêntimo. Não existem liquidações oficiais reais incluídas nesta release.
 
 Esta tarefa não gera APK ou AAB. Consulte [ROADMAP.md](ROADMAP.md).

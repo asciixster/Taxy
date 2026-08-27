@@ -70,7 +70,6 @@ void main() {
   });
 
   final flags = <(String, TaxSituationFlags)>[
-    ('IRS Jovem', const TaxSituationFlags(irsJovem: true)),
     ('Categoria B', const TaxSituationFlags(categoryB: true)),
     ('pensões', const TaxSituationFlags(pensions: true)),
     ('rendimentos estrangeiros', const TaxSituationFlags(foreignIncome: true)),
@@ -85,6 +84,13 @@ void main() {
       const TaxSituationFlags(otherSpecialSituation: true),
     ),
   ];
+
+  test('pedido IRS Jovem não bloqueia a liquidação normal', () {
+    final result = engine.calculate(
+      _simulation(situations: const TaxSituationFlags(irsJovem: true)),
+    );
+    expect(result.available, isTrue);
+  });
   for (final item in flags) {
     test('${item.$1} falha fechado', () {
       final result = engine.calculate(_simulation(situations: item.$2));

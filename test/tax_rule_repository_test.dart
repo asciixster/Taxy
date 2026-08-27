@@ -41,7 +41,7 @@ void main() {
   }
 
   test('repository resolves version and jurisdiction explicitly', () {
-    expect(sets['2025-continent']!.rulesVersion, '2025.3.1');
+    expect(sets['2025-continent']!.rulesVersion, '2025.4.0');
     expect(sets['2026-continent']!.jurisdiction, 'CONTINENT');
     expect(sets['2026-madeira']!.jurisdiction, 'MADEIRA');
     expect(sets['2026-azores']!.jurisdiction, 'AZORES');

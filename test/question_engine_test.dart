@@ -72,4 +72,28 @@ void main() {
       contains('transportes públicos'),
     );
   });
+
+  test(
+    'IRS Jovem começa por interesse e só depois pede histórico objetivo',
+    () {
+      final draft = TaxDraft();
+      var ids = engine.steps(draft).map((step) => step.id);
+      expect(ids, contains('irsJovemInterest'));
+      expect(ids, isNot(contains('irsJovemHistory')));
+      draft.wantsIrsJovemA = true;
+      ids = engine.steps(draft).map((step) => step.id);
+      expect(ids, containsAllInOrder(['irsJovemInterest', 'irsJovemHistory']));
+    },
+  );
+
+  test('IRS Jovem permanece funcionalidade do módulo IRS', () {
+    final draft = TaxDraft()..wantsIrsJovemA = true;
+    expect(
+      engine
+          .steps(draft)
+          .singleWhere((step) => step.id == 'irsJovemHistory')
+          .section,
+      QuestionSection.eligibility,
+    );
+  });
 }

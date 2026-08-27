@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "source": "MANUALLY_AUDITED_REFERENCE",
+  "rulesVersion": "2025.4.0",
+  "year": 2025,
+  "region": "continent",
+  "cases": [
+    {"id":"year1-low","grossA":2000000,"socialSecurityA":220000,"regimeYearA":1,"expected":{"normalTax":238973,"exempt":2000000,"taxable":0,"rateIncome":2000000,"jovemTax":0},"audit":"20,000.00 - 4,462.15 = 15,537.85 normal taxable; 100% of 20,000.00 exempt; taxable zero."},
+    {"id":"year1-high","grossA":6000000,"socialSecurityA":660000,"regimeYearA":1,"expected":{"normalTax":1572189,"exempt":2873750,"taxable":2466250,"rateIncome":5340000,"jovemTax":726107},"audit":"Normal taxable 53,400.00; exemption capped at 55 x 522.50 = 28,737.50; effective tax allocation by article 22(4)."},
+    {"id":"year2","grossA":3000000,"socialSecurityA":330000,"regimeYearA":2,"expected":{"normalTax":500690,"exempt":2250000,"taxable":303785,"rateIncome":2553785,"jovemTax":59559},"audit":"75% x 30,000.00 = 22,500.00; normal taxable 25,537.85."},
+    {"id":"year5","grossA":3000000,"socialSecurityA":330000,"regimeYearA":5,"expected":{"normalTax":500690,"exempt":1500000,"taxable":1053785,"rateIncome":2553785,"jovemTax":206603},"audit":"50% x 30,000.00 = 15,000.00; rate income remains 25,537.85."},
+    {"id":"year8","grossA":3000000,"socialSecurityA":330000,"regimeYearA":8,"expected":{"normalTax":500690,"exempt":750000,"taxable":1803785,"rateIncome":2553785,"jovemTax":353646},"audit":"25% x 30,000.00 = 7,500.00."},
+    {"id":"limit-minus-cent","grossA":2873749,"socialSecurityA":316112,"regimeYearA":1,"expected":{"normalTax":461047,"exempt":2873749,"taxable":0,"rateIncome":2873749,"jovemTax":0},"audit":"One cent below the 55 IAS ceiling; full gross is exempt."},
+    {"id":"limit-exact","grossA":2873750,"socialSecurityA":316113,"regimeYearA":1,"expected":{"normalTax":461048,"exempt":2873750,"taxable":0,"rateIncome":2873750,"jovemTax":0},"audit":"Exactly 55 IAS for 2025."},
+    {"id":"limit-plus-cent","grossA":2873751,"socialSecurityA":316113,"regimeYearA":1,"expected":{"normalTax":461048,"exempt":2873750,"taxable":0,"rateIncome":2873750,"jovemTax":0},"audit":"One cent above 55 IAS; exemption remains 28,737.50."},
+    {"id":"well-above-limit","grossA":10000000,"socialSecurityA":1100000,"regimeYearA":1,"expected":{"normalTax":3200510,"exempt":2873750,"taxable":6026250,"rateIncome":8900000,"jovemTax":2151852},"audit":"100,000.00 gross; normal tax due includes 225.00 solidarity; with IRS Jovem taxable income is below the solidarity threshold; exemption capped at 55 IAS."},
+    {"id":"couple-only-a","grossA":6000000,"socialSecurityA":660000,"regimeYearA":1,"grossB":3000000,"socialSecurityB":330000,"expected":{"normalSeparateTax":2072879,"normalJointTax":1953712,"jovemSeparateTax":1226797,"jovemJointTax":1242459,"benefit":726915},"audit":"A eligible year 1; B did not request. Best normal joint vs best Jovem separate."},
+    {"id":"couple-only-b","grossA":6000000,"socialSecurityA":660000,"grossB":3000000,"socialSecurityB":330000,"regimeYearB":5,"expected":{"normalSeparateTax":2072879,"normalJointTax":1953712,"jovemSeparateTax":1778792,"jovemJointTax":1582462,"benefit":371250},"audit":"B eligible year 5; A did not request. Best normal joint vs best Jovem joint."},
+    {"id":"couple-both","grossA":6000000,"socialSecurityA":660000,"regimeYearA":1,"grossB":3000000,"socialSecurityB":330000,"regimeYearB":5,"expected":{"normalSeparateTax":2072879,"normalJointTax":1953712,"jovemSeparateTax":932710,"jovemJointTax":871209,"benefit":1082503},"audit":"Both eligible; compares four complete liquidation outcomes."}
+  ]
+}

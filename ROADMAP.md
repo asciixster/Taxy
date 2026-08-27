@@ -7,16 +7,16 @@
 - Categoria A standard;
 - individual, monoparental, casado e união de facto;
 - conjunta vs. separada;
-- elegibilidade IRS Jovem;
+- IRS Jovem end-to-end: histórico, elegibilidade, liquidação e comparação;
+- referências IRS Jovem manualmente auditadas e loader oficial com rendimento
+  isento;
 - persistência local, cenários, breakdown e Validation Lab.
 
 ## NEXT
 
-- validar liquidação IRS Jovem com demonstrações oficiais;
-- comparação com/sem IRS Jovem;
-- substituir o input transitório `qualifyingIncomeYears` por histórico anual
-  objetivo: rendimentos A/B, qualidade de dependente e anos sem rendimento. O
-  modelo já aceita `incomeHistory`, mas a UX final ainda não o recolhe;
+- adicionar liquidações oficiais reais anonimizadas da AT (zero presentes);
+- validar humanamente casos transitórios anteriores a 2025 e arredondamentos
+  diretamente contra demonstrações de liquidação;
 - despesas de dependentes separadas na UX principal;
 - guarda partilhada;
 - Categoria B e pensões como módulos explícitos.

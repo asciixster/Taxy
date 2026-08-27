@@ -1,13 +1,16 @@
 {
   "schemaVersion": 2,
   "taxYear": 2025,
-  "rulesVersion": "2025.3.1-base",
+  "rulesVersion": "2025.4.0-base",
   "verifiedAt": "2026-08-27",
   "status": "VERIFIED_FOR_MVP_SCOPE",
   "sources": [
     "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/Deducoes_beneficios_taxas/Paginas/default.aspx",
     "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx",
-    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx"
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs22.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Folhetos_informativos/Documents/Folheto_IRS_jovem_2025.pdf"
   ],
   "supportedScope": {
     "jurisdiction": "CONTINENT",
@@ -41,7 +44,7 @@
   ],
   "solidarity": {"firstThresholdCents": 8000000, "secondThresholdCents": 25000000, "firstRatePpm": 25000, "secondRatePpm": 50000},
   "household": {"jointDivisor": 2, "separateDependentExpenseSharePpm": 500000, "familyLimitDivisor": 2},
-  "irsJovem": {"maximumAge": 35, "maximumYears": 10, "exemptionLimitIasMultiplier": 55, "year1RatePpm": 1000000, "years2To4RatePpm": 750000, "years5To7RatePpm": 500000, "years8To10RatePpm": 250000},
+  "irsJovem": {"maximumAge": 35, "maximumYears": 10, "exemptionLimitIasMultiplier": 55, "year1RatePpm": 1000000, "years2To4RatePpm": 750000, "years5To7RatePpm": 500000, "years8To10RatePpm": 250000, "annualOptionRequired": 1, "exemptIncomeIncludedForRate": 1},
   "deductions": {
     "dependentBaseCents": 60000,
     "dependentUnderThreeExtraCents": 12600,
@@ -86,7 +89,10 @@
     "jointDivisor": {"name":"Quociente conjugal","unit":"integer_divisor","source":"CIRS artigo 69.º","comment":"Taxas sobre metade e coleta multiplicada por dois.","version":"2025.3.1"},
     "separateDependentExpenseSharePpm": {"name":"Quota de despesas dos dependentes","unit":"parts_per_million","source":"CIRS artigo 78.º, n.º 14, alínea b)","comment":"50% para cada titular na separada standard.","version":"2025.3.1"},
     "familyLimitDivisor": {"name":"Redução de limites familiares","unit":"integer_divisor","source":"CIRS artigo 78.º, n.º 14, alínea a)","comment":"Só limites determinados por referência ao agregado são reduzidos a metade.","version":"2025.3.1"},
-    "irsJovemRates": {"name":"IRS Jovem","unit":"parts_per_million_and_years","source":"CIRS artigo 12.º-B","comment":"Elegibilidade parcial; liquidação não implementada.","version":"2025.3.1"},
+    "irsJovemRates": {"name":"Taxas, duração e limite IRS Jovem","unit":"parts_per_million_and_years","source":"CIRS artigo 12.º-B, n.os 1, 3 e 5; Folheto AT IRS Jovem 2025","comment":"Até 35 anos; dez anos de rendimentos A/B como não dependente; 100%, 75%, 50% e 25%; limite 55 IAS.","version":"2025.4.0"},
+    "irsJovemHistory": {"name":"Contagem objetiva dos anos","unit":"annual_history","source":"CIRS artigo 12.º-B, n.os 1, 2 e 4; Folheto AT IRS Jovem 2025","comment":"Anos sem A/B e anos como dependente não consomem o benefício; o histórico tem de ser completo.","version":"2025.4.0"},
+    "irsJovemEnglobement": {"name":"Englobamento para determinação da taxa","unit":"boolean_and_proportional_allocation","source":"CIRS artigo 22.º, n.º 4; AT Fórmula da taxa de tributação efetiva","comment":"O rendimento isento é incluído sem deduções para determinar a taxa; a coleta correspondente é imputada proporcionalmente.","version":"2025.4.0"},
+    "irsJovemIncompatibilities": {"name":"Regimes incompatíveis","unit":"eligibility_conditions","source":"CIRS artigo 12.º-B, n.º 6","comment":"RNH, IFICI, programa Regressar e situação tributária não regularizada impedem a aplicação.","version":"2025.4.0"},
     "rentFloorCapCents": {"name":"Limite base das rendas","unit":"euro_cents","source":"CIRS artigo 78.º-E e artigo 3.º da Lei n.º 36/2024","comment":"Limite transitório 2025 de 700 euros.","version":"2025.3.1"},
     "rentTransitionCaps": {"name":"Majoração de rendas","unit":"euro_cents","source":"CIRS artigo 78.º-E, n.º 4, e artigo 3.º da Lei n.º 36/2024","comment":"Limite de 1000 euros em baixo rendimento e interpolação para 700 euros.","version":"2025.3.1"},
     "pprCapsPerTaxpayer": {"name":"Limites individuais PPR","unit":"euro_cents_per_taxpayer","source":"EBF artigo 21.º, n.º 2","comment":"Limites individuais por idade.","version":"2025.3.1"}

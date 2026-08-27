@@ -68,25 +68,44 @@ enum IrsJovemEligibility {
 final class IrsJovemIncomeYear {
   const IrsJovemIncomeYear({
     required this.year,
-    required this.hadCategoryAOrBIncome,
+    required this.hadCategoryAIncome,
+    required this.hadCategoryBIncome,
     required this.wasDependent,
+    required this.residentInPortugal,
+    this.usedIncompatibleRegime = false,
   });
 
   final int year;
-  final bool hadCategoryAOrBIncome;
+  final bool hadCategoryAIncome;
+  final bool hadCategoryBIncome;
   final bool wasDependent;
+  final bool residentInPortugal;
+  final bool usedIncompatibleRegime;
+
+  bool get hadCategoryAOrBIncome => hadCategoryAIncome || hadCategoryBIncome;
 
   Map<String, Object?> toJson() => {
     'year': year,
-    'hadCategoryAOrBIncome': hadCategoryAOrBIncome,
+    'hadCategoryAIncome': hadCategoryAIncome,
+    'hadCategoryBIncome': hadCategoryBIncome,
     'wasDependent': wasDependent,
+    'residentInPortugal': residentInPortugal,
+    'usedIncompatibleRegime': usedIncompatibleRegime,
   };
 
   factory IrsJovemIncomeYear.fromJson(Map<String, Object?> json) =>
       IrsJovemIncomeYear(
         year: json['year'] as int,
-        hadCategoryAOrBIncome: json['hadCategoryAOrBIncome'] as bool,
+        // Migra o modelo transitório da 0.3 sem inventar Categoria B.
+        hadCategoryAIncome:
+            json['hadCategoryAIncome'] as bool? ??
+            json['hadCategoryAOrBIncome'] as bool? ??
+            false,
+        hadCategoryBIncome: json['hadCategoryBIncome'] as bool? ?? false,
         wasDependent: json['wasDependent'] as bool,
+        residentInPortugal: json['residentInPortugal'] as bool? ?? true,
+        usedIncompatibleRegime:
+            json['usedIncompatibleRegime'] as bool? ?? false,
       );
 }
 
@@ -99,6 +118,7 @@ final class IrsJovemAnswers {
     this.usedRnhOrIfici = false,
     this.usedReturnProgram = false,
     this.incomeHistory = const [],
+    this.historyConfirmedComplete = false,
   });
 
   final bool requested;
@@ -112,6 +132,10 @@ final class IrsJovemAnswers {
   /// transitória até a UX recolher um histórico anual objetivo.
   final List<IrsJovemIncomeYear> incomeHistory;
 
+  /// Confirma que o histórico cobre todos os anos desde o primeiro rendimento
+  /// A/B como sujeito passivo até ao ano simulado, incluindo anos sem rendimento.
+  final bool historyConfirmedComplete;
+
   Map<String, Object?> toJson() => {
     'requested': requested,
     'wasDependentAtYearEnd': wasDependentAtYearEnd,
@@ -120,6 +144,7 @@ final class IrsJovemAnswers {
     'usedRnhOrIfici': usedRnhOrIfici,
     'usedReturnProgram': usedReturnProgram,
     'incomeHistory': incomeHistory.map((value) => value.toJson()).toList(),
+    'historyConfirmedComplete': historyConfirmedComplete,
   };
 
   factory IrsJovemAnswers.fromJson(Map<String, Object?> json) =>
@@ -137,6 +162,8 @@ final class IrsJovemAnswers {
               ),
             )
             .toList(growable: false),
+        historyConfirmedComplete:
+            json['historyConfirmedComplete'] as bool? ?? false,
       );
 }
 

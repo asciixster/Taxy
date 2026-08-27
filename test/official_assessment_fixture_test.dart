@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:taxy_pt/domain/models.dart';
 import 'package:taxy_pt/tax_engine/household_tax_engine.dart';
-import 'package:taxy_pt/tax_engine/tax_engine.dart';
+import 'package:taxy_pt/tax_engine/irs_jovem_tax_engine.dart';
 import 'package:taxy_pt/tax_engine/tax_rules.dart';
 
 import 'support/official_assessment_fixture.dart';
@@ -27,20 +28,29 @@ void main() {
       final profile = fixture.simulation.profile;
       final rules = await repository.load(profile.taxYear, profile.region.name);
       expect(rules.rulesVersion, fixture.rulesVersion);
-      final result = profile.civilStatus.name == 'single'
-          ? TaxEngine(rules).calculate(fixture.simulation)
-          : (() {
-              final comparison = HouseholdTaxEngine(rules)
-                  .compare(fixture.simulation);
-              expect(comparison.available, isTrue);
-              return profile.filingMode.name == 'joint'
-                  ? comparison.joint!
-                  : comparison.separate!;
-            })();
+      late final TaxResult result;
+      var exemptIncomeCents = 0;
+      if (profile.civilStatus.name == 'single') {
+        final comparison = IrsJovemTaxEngine(rules).compare(fixture.simulation);
+        result = comparison.withIrsJovem ?? comparison.normal;
+        exemptIncomeCents = comparison.adjustment?.exemptIncome.cents ?? 0;
+      } else {
+        final comparison = HouseholdTaxEngine(rules)
+            .compareWithIrsJovem(fixture.simulation);
+        expect(comparison.available, isTrue);
+        final selected = comparison.withIrsJovem ?? comparison.normal;
+        result = profile.filingMode.name == 'joint'
+            ? selected.joint!
+            : selected.separate!;
+        exemptIncomeCents =
+            comparison.primaryEligibility.eligibleExemptIncome.cents +
+            comparison.secondaryEligibility.eligibleExemptIncome.cents;
+      }
       final actual = <String, int>{
         'taxableIncomeCents': result.taxableIncome.cents,
         'grossTaxCents': result.grossTax.cents,
         'deductionsCents': result.taxCredits.cents,
+        'exemptIncomeCents': exemptIncomeCents,
         'taxDueCents': result.taxDue.cents,
         'withholdingCents': result.withholding.cents,
         'balanceCents': result.balance.cents,

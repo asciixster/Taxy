@@ -4,7 +4,7 @@
   "taxYear": 2026,
   "region": "CONTINENT",
   "civilStatus": "MARRIED",
-  "rulesVersion": "2026.3.1",
+  "rulesVersion": "2026.4.0",
   "sources": [
     "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs59.aspx",
     "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs69.aspx",

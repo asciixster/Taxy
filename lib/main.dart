@@ -13,6 +13,7 @@ import 'screens/how_we_calculate_screen.dart';
 import 'state/providers.dart';
 import 'tax_engine/tax_engine.dart';
 import 'tax_engine/household_tax_engine.dart';
+import 'tax_engine/irs_jovem_tax_engine.dart';
 import 'tax_engine/tax_rules.dart';
 import 'widgets/notice_card.dart';
 
@@ -23,9 +24,25 @@ const _taxyCream = Color(0xFFF6F5FA);
 
 TaxResult _calculateSimulation(TaxSimulation simulation, TaxRuleSet rules) {
   if (simulation.profile.civilStatus == CivilStatus.single) {
+    if (simulation.primaryIrsJovem.requested) {
+      final comparison = IrsJovemTaxEngine(rules).compare(simulation);
+      return comparison.withIrsJovem ?? comparison.normal;
+    }
     return TaxEngine(rules).calculate(simulation);
   }
-  final comparison = HouseholdTaxEngine(rules).compare(simulation);
+  final requested =
+      simulation.primaryIrsJovem.requested ||
+      (simulation.secondaryTaxpayer?.irsJovem.requested ?? false);
+  final comparison = requested
+      ? HouseholdTaxEngine(rules).compareWithIrsJovem(simulation).withIrsJovem
+      : HouseholdTaxEngine(rules).compare(simulation);
+  if (comparison == null) {
+    final normal = HouseholdTaxEngine(rules).compare(simulation);
+    if (!normal.available) return TaxEngine(rules).calculate(simulation);
+    return simulation.profile.filingMode == FilingMode.joint
+        ? normal.joint!
+        : normal.separate!;
+  }
   if (!comparison.available) return TaxEngine(rules).calculate(simulation);
   return simulation.profile.filingMode == FilingMode.joint
       ? comparison.joint!
@@ -853,6 +870,84 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       ],
       onChanged: (value) => setState(() => draft.hasSpecialSituation = value),
     ),
+    'irsJovemInterest' => Column(
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Verificar IRS Jovem para o titular A'),
+          subtitle: const Text('A elegibilidade será apurada por histórico.'),
+          value: draft.wantsIrsJovemA,
+          onChanged: (value) => setState(() => draft.wantsIrsJovemA = value),
+        ),
+        if (draft.civilStatus != CivilStatus.single)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Verificar IRS Jovem para o titular B'),
+            value: draft.wantsIrsJovemB,
+            onChanged: (value) => setState(() => draft.wantsIrsJovemB = value),
+          ),
+      ],
+    ),
+    'irsJovemHistory' => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Uma linha por ano: ano,A|B|AB|N,dependente,residente,regime incompatível',
+        ),
+        const SizedBox(height: 12),
+        if (draft.wantsIrsJovemA) ...[
+          TextFormField(
+            initialValue: draft.irsJovemHistoryA,
+            minLines: 3,
+            maxLines: 8,
+            decoration: const InputDecoration(
+              labelText: 'Histórico do titular A',
+              hintText: '2024,A,true,true,false\n2025,A,false,true,false',
+            ),
+            onChanged: (value) => draft.irsJovemHistoryA = value,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('O histórico A está completo'),
+            value: draft.irsJovemHistoryCompleteA,
+            onChanged: (value) =>
+                setState(() => draft.irsJovemHistoryCompleteA = value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Situação tributária A regularizada'),
+            value: draft.irsJovemRegularizedA,
+            onChanged: (value) =>
+                setState(() => draft.irsJovemRegularizedA = value),
+          ),
+        ],
+        if (draft.wantsIrsJovemB) ...[
+          TextFormField(
+            initialValue: draft.irsJovemHistoryB,
+            minLines: 3,
+            maxLines: 8,
+            decoration: const InputDecoration(
+              labelText: 'Histórico do titular B',
+            ),
+            onChanged: (value) => draft.irsJovemHistoryB = value,
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('O histórico B está completo'),
+            value: draft.irsJovemHistoryCompleteB,
+            onChanged: (value) =>
+                setState(() => draft.irsJovemHistoryCompleteB = value),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Situação tributária B regularizada'),
+            value: draft.irsJovemRegularizedB,
+            onChanged: (value) =>
+                setState(() => draft.irsJovemRegularizedB = value),
+          ),
+        ],
+      ],
+    ),
     'secondaryAge' => _NumberPicker(
       value: draft.secondaryAge,
       min: 18,
@@ -1123,6 +1218,18 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
     if (id == 'specialSituations' && draft.hasSpecialSituation) {
       return 'Este caso exige validação adicional e não será aproximado.';
     }
+    if (id == 'irsJovemHistory') {
+      if (draft.wantsIrsJovemA &&
+          (draft.irsJovemHistoryA.trim().isEmpty ||
+              !draft.irsJovemHistoryCompleteA)) {
+        return 'Falta o histórico anual completo do titular A.';
+      }
+      if (draft.wantsIrsJovemB &&
+          (draft.irsJovemHistoryB.trim().isEmpty ||
+              !draft.irsJovemHistoryCompleteB)) {
+        return 'Falta o histórico anual completo do titular B.';
+      }
+    }
     if (id == 'singleParent' && !draft.isSingleParentHousehold) {
       return 'Com dependentes, só está validado o agregado monoparental standard.';
     }
@@ -1146,6 +1253,27 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
     } on FormatException {
       return Money.zero;
     }
+  }
+
+  List<IrsJovemIncomeYear> _irsHistory(String raw) {
+    final history = <IrsJovemIncomeYear>[];
+    for (final rawLine in raw.split('\n')) {
+      final values = rawLine.split(',').map((value) => value.trim()).toList();
+      final year = values.isEmpty ? null : int.tryParse(values[0]);
+      if (values.length != 5 || year == null) continue;
+      final income = values[1].toUpperCase();
+      history.add(
+        IrsJovemIncomeYear(
+          year: year,
+          hadCategoryAIncome: income.contains('A'),
+          hadCategoryBIncome: income.contains('B'),
+          wasDependent: values[2].toLowerCase() == 'true',
+          residentInPortugal: values[3].toLowerCase() == 'true',
+          usedIncompatibleRegime: values[4].toLowerCase() == 'true',
+        ),
+      );
+    }
+    return history;
   }
 
   Future<void> _calculate() async {
@@ -1191,6 +1319,12 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
         invoiceVat100: _money(draft.invoiceVat100),
         ppr: _money(draft.ppr),
       ),
+      primaryIrsJovem: IrsJovemAnswers(
+        requested: draft.wantsIrsJovemA,
+        taxSituationRegularized: draft.irsJovemRegularizedA,
+        historyConfirmedComplete: draft.irsJovemHistoryCompleteA,
+        incomeHistory: _irsHistory(draft.irsJovemHistoryA),
+      ),
       secondaryTaxpayer: draft.civilStatus == CivilStatus.single
           ? null
           : TaxpayerInput(
@@ -1214,6 +1348,12 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
                 invoiceVat35: _money(draft.secondaryVat35),
                 invoiceVat100: _money(draft.secondaryVat100),
               ),
+              irsJovem: IrsJovemAnswers(
+                requested: draft.wantsIrsJovemB,
+                taxSituationRegularized: draft.irsJovemRegularizedB,
+                historyConfirmedComplete: draft.irsJovemHistoryCompleteB,
+                incomeHistory: _irsHistory(draft.irsJovemHistoryB),
+              ),
             ),
       dependents: [
         for (var i = 0; i < draft.dependentAges.length; i++)
@@ -1221,6 +1361,7 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       ],
       incomeTypes: {...draft.incomeTypes},
       situations: TaxSituationFlags(
+        irsJovem: draft.wantsIrsJovemA || draft.wantsIrsJovemB,
         otherSpecialSituation: draft.hasSpecialSituation,
       ),
     );
@@ -1258,6 +1399,17 @@ final class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final result = _calculateSimulation(simulation, rules);
+    final jovemRequested =
+        simulation.primaryIrsJovem.requested ||
+        (simulation.secondaryTaxpayer?.irsJovem.requested ?? false);
+    final singleJovem =
+        simulation.profile.civilStatus == CivilStatus.single && jovemRequested
+        ? IrsJovemTaxEngine(rules).compare(simulation)
+        : null;
+    final householdJovem =
+        simulation.profile.civilStatus != CivilStatus.single && jovemRequested
+        ? HouseholdTaxEngine(rules).compareWithIrsJovem(simulation)
+        : null;
     final household = simulation.profile.civilStatus == CivilStatus.single
         ? null
         : HouseholdTaxEngine(rules).compare(simulation);
@@ -1267,6 +1419,68 @@ final class ResultScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 14, 24, 36),
         children: [
           _ResultHero(result: result, year: simulation.profile.taxYear),
+          if (jovemRequested) ...[
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'IRS Jovem',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 10),
+                    if (singleJovem != null) ...[
+                      Text('IRS normal: ${singleJovem.normal.taxDue.format()}'),
+                      if (singleJovem.withIrsJovem != null) ...[
+                        Text(
+                          'IRS Jovem: ${singleJovem.withIrsJovem!.taxDue.format()}',
+                        ),
+                        Text(
+                          'Benefício fiscal estimado: ${singleJovem.estimatedBenefit.format()}',
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${singleJovem.eligibility.relevantIncomeYear}.º ano · '
+                          '${singleJovem.eligibility.exemptionRatePpm / 10000}% · '
+                          'limite ${singleJovem.eligibility.exemptionLimit.format()} · '
+                          'isento ${singleJovem.adjustment!.exemptIncome.format()}',
+                        ),
+                      ] else
+                        Text(singleJovem.eligibility.reasons.join(' ')),
+                    ] else if (householdJovem != null) ...[
+                      Text(
+                        'Separada sem IRS Jovem: ${householdJovem.normal.separate!.taxDue.format()}',
+                      ),
+                      Text(
+                        'Conjunta sem IRS Jovem: ${householdJovem.normal.joint!.taxDue.format()}',
+                      ),
+                      if (householdJovem.withIrsJovem != null) ...[
+                        Text(
+                          'Separada com IRS Jovem: ${householdJovem.withIrsJovem!.separate!.taxDue.format()}',
+                        ),
+                        Text(
+                          'Conjunta com IRS Jovem: ${householdJovem.withIrsJovem!.joint!.taxDue.format()}',
+                        ),
+                        Text(
+                          'Benefício fiscal estimado na melhor opção: ${householdJovem.estimatedBenefit.format()}',
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ] else
+                        Text(householdJovem.warnings.join(' ')),
+                    ],
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Com os dados introduzidos, esta é a diferença de imposto estimado; não constitui garantia de benefício.',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           if (household?.available ?? false) ...[
             const SizedBox(height: 12),
             Card(
@@ -1343,6 +1557,15 @@ final class ResultScreen extends StatelessWidget {
                 ),
               ),
               Chip(label: Text('Regras ${rules.rulesVersion}')),
+              if (jovemRequested)
+                Chip(
+                  label: Text(
+                    (singleJovem?.applied ??
+                            (householdJovem?.withIrsJovem != null))
+                        ? 'IRS Jovem aplicado'
+                        : 'IRS Jovem não aplicado',
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),

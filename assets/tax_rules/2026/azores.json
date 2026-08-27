@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "taxYear": 2026,
   "jurisdiction": "AZORES",
-  "rulesVersion": "2026.3.1-A",
+  "rulesVersion": "2026.4.0-A",
   "verifiedAt": "2026-08-27",
   "status": "VERIFIED",
   "baseAsset": "assets/tax_rules/2026.json",
