@@ -14,6 +14,9 @@
 
 - validar liquidação IRS Jovem com demonstrações oficiais;
 - comparação com/sem IRS Jovem;
+- substituir o input transitório `qualifyingIncomeYears` por histórico anual
+  objetivo: rendimentos A/B, qualidade de dependente e anos sem rendimento. O
+  modelo já aceita `incomeHistory`, mas a UX final ainda não o recolhe;
 - despesas de dependentes separadas na UX principal;
 - guarda partilhada;
 - Categoria B e pensões como módulos explícitos.

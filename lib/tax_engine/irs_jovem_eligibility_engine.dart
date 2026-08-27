@@ -65,14 +65,47 @@ final class IrsJovemEligibilityEngine {
         'É necessário rendimento elegível de Categoria A ou B.',
       ]);
     }
-    if (answers.wasDependentAtYearEnd == null ||
-        answers.qualifyingIncomeYears == null ||
+    final history = answers.incomeHistory;
+    final currentEntries = history
+        .where((entry) => entry.year == rules.taxYear)
+        .toList(growable: false);
+    if (currentEntries.length > 1 ||
+        history.any((entry) => entry.year > rules.taxYear)) {
+      return result(IrsJovemEligibility.needsMoreInformation, [
+        'O histórico anual contém anos duplicados ou posteriores ao ano fiscal.',
+      ]);
+    }
+    final currentEntry = currentEntries.isEmpty ? null : currentEntries.first;
+    if (history.isNotEmpty && currentEntry == null) {
+      return result(IrsJovemEligibility.needsMoreInformation, [
+        'O histórico anual não contém o ano fiscal que está a ser simulado.',
+      ]);
+    }
+    if (currentEntry != null && !currentEntry.hadCategoryAOrBIncome) {
+      return result(IrsJovemEligibility.needsMoreInformation, [
+        'O histórico não confirma rendimento A/B no ano que está a ser simulado.',
+      ]);
+    }
+    final wasDependent =
+        currentEntry?.wasDependent ?? answers.wasDependentAtYearEnd;
+    final qualifyingYear = history.isNotEmpty
+        ? history
+              .where(
+                (entry) =>
+                    entry.year <= rules.taxYear &&
+                    entry.hadCategoryAOrBIncome &&
+                    !entry.wasDependent,
+              )
+              .length
+        : answers.qualifyingIncomeYears;
+    if (wasDependent == null ||
+        qualifyingYear == null ||
         answers.taxSituationRegularized == null) {
       return result(IrsJovemEligibility.needsMoreInformation, [
         'Faltam respostas objetivas para determinar a elegibilidade.',
       ]);
     }
-    if (answers.wasDependentAtYearEnd!) {
+    if (wasDependent) {
       return result(IrsJovemEligibility.notEligible, [
         'O titular foi considerado dependente nesse ano.',
       ]);
@@ -87,7 +120,7 @@ final class IrsJovemEligibilityEngine {
         'Existe um regime fiscal incompatível com o IRS Jovem.',
       ]);
     }
-    final year = answers.qualifyingIncomeYears!;
+    final year = qualifyingYear;
     if (year < 1 || year > rules.jovem('maximumYears')) {
       return result(IrsJovemEligibility.notEligible, [
         'O período de 10 anos de rendimentos elegíveis não está em curso.',

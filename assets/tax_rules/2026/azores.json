@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "taxYear": 2026,
   "jurisdiction": "AZORES",
-  "rulesVersion": "2026.3.0-A",
+  "rulesVersion": "2026.3.1-A",
   "verifiedAt": "2026-08-27",
   "status": "VERIFIED",
   "baseAsset": "assets/tax_rules/2026.json",
@@ -18,8 +18,8 @@
     {"upperCents": null, "marginalRatePpm": 336000, "averageRatePpm": null}
   ],
   "overrides": {},
+  "calculationNote": "Taxas marginais e médias nacionais reduzidas em 30%, conservando a precisão ppm.",
   "sources": [
-    "https://diariodarepublica.pt/dr/detalhe/decreto-legislativo-regional/2-1999-197151",
-    "https://info.portaldasfinancas.gov.pt/pt/dgci/divulgacao/Area_Beneficios_Fiscais/Assessment_Report_Tax_Expenditure_Portugal/Documents/U-TAX_Relatorio_Despesa_Fiscal_2025.pdf"
+    "https://diariodarepublica.pt/dr/legislacao-consolidada/decreto-legislativo-regional/1999-164477580-164477062"
   ]
 }

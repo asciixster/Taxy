@@ -1276,19 +1276,51 @@ final class ResultScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Melhor opção estimada',
+                      'Comparação de tributação',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 12),
+                    const Text('Tributação separada'),
+                    const SizedBox(height: 4),
                     Text(
-                      household!.recommendedMode == FilingMode.joint
+                      household!.separate!.taxDue.format(),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Tributação conjunta'),
+                    const SizedBox(height: 4),
+                    Text(
+                      household.joint!.taxDue.format(),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Diferença'),
+                    Text(
+                      household.difference.format(),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Opção estimada mais favorável'),
+                    Text(
+                      household.difference.cents == 0
+                          ? 'Sem diferença estimada'
+                          : household.recommendedMode == FilingMode.joint
                           ? 'Tributação conjunta'
                           : 'Tributação separada',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w900),
                     ),
+                    const SizedBox(height: 6),
                     Text(
-                      'Diferença estimada: ${household.difference.format()}',
+                      household.difference.cents == 0
+                          ? 'Nesta simulação, as duas opções apresentam o mesmo imposto estimado.'
+                          : household.recommendedMode == FilingMode.joint
+                          ? 'Nesta simulação, a tributação conjunta apresenta menor imposto estimado.'
+                          : 'Nesta simulação, a tributação separada apresenta menor imposto estimado.',
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Simulação baseada nos dados introduzidos e regras fiscais configuradas; não substitui a liquidação oficial da AT.',
                     ),
                   ],
                 ),
@@ -1676,7 +1708,7 @@ final class OpportunitiesScreen extends StatelessWidget {
         'Rendas de habitação permanente fiscalmente elegíveis.',
         Icons.home_outlined,
         d.rent,
-        target('rent2026FloorCapCents', 'rentRatePpm'),
+        target('rentFloorCapCents', 'rentRatePpm'),
         (x, value) => x.copyWith(rent: value),
       ),
       _OpportunityCandidate(

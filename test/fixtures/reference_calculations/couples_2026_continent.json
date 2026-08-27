@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "origin": "MANUALLY_AUDITED_REFERENCE",
+  "taxYear": 2026,
+  "region": "CONTINENT",
+  "civilStatus": "MARRIED",
+  "rulesVersion": "2026.3.1",
+  "sources": [
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs59.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs69.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/Deducoes_beneficios_taxas/Paginas/default.aspx"
+  ],
+  "cases": [
+    {
+      "id": "equal-income-no-dependents",
+      "description": "Casal sem dependentes, rendimentos iguais",
+      "input": {"ageA":40,"ageB":42,"grossA":4000000,"grossB":4000000,"socialSecurityA":440000,"socialSecurityB":440000,"withholdingA":600000,"withholdingB":400000,"dependentAges":[],"deductionsA":{},"deductionsB":{},"dependentDeductions":{}},
+      "expected": {"separate":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":0,"taxDueCents":1629832,"withholdingCents":1000000,"balanceCents":-629832},"joint":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":0,"taxDueCents":1629832,"withholdingCents":1000000,"balanceCents":-629832},"recommendedMode":"TIE","differenceCents":0},
+      "calculationNotes": "Cada titular: 40000 - 4587,09 = 35412,91. A soma das duas coletas individuais é igual à coleta sobre quociente 35412,91 multiplicada por 2."
+    },
+    {
+      "id": "unequal-income-no-dependents",
+      "description": "Casal sem dependentes, rendimentos muito diferentes",
+      "input": {"ageA":40,"ageB":42,"grossA":8000000,"grossB":2000000,"socialSecurityA":880000,"socialSecurityB":220000,"withholdingA":1800000,"withholdingB":200000,"dependentAges":[],"deductionsA":{},"deductionsB":{},"dependentDeductions":{}},
+      "expected": {"separate":{"taxableIncomeCents":8661291,"grossTaxCents":2562199,"taxCreditsCents":0,"taxDueCents":2562199,"withholdingCents":2000000,"balanceCents":-562199},"joint":{"taxableIncomeCents":8661291,"grossTaxCents":2184362,"taxCreditsCents":0,"taxDueCents":2184362,"withholdingCents":2000000,"balanceCents":-184362},"recommendedMode":"JOINT","differenceCents":377837},
+      "calculationNotes": "Dedução específica A=8800 e B=4587,09. Quociente conjunto 43306,46; coleta do quociente 10921,81 multiplicada por 2."
+    },
+    {
+      "id": "one-dependent",
+      "description": "Casal com um dependente de 10 anos",
+      "input": {"ageA":40,"ageB":42,"grossA":4000000,"grossB":4000000,"socialSecurityA":440000,"socialSecurityB":440000,"withholdingA":600000,"withholdingB":400000,"dependentAges":[10],"deductionsA":{},"deductionsB":{},"dependentDeductions":{}},
+      "expected": {"separate":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":60000,"taxDueCents":1569832,"withholdingCents":1000000,"balanceCents":-569832},"joint":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":60000,"taxDueCents":1569832,"withholdingCents":1000000,"balanceCents":-569832},"recommendedMode":"TIE","differenceCents":0},
+      "calculationNotes": "Dedução do dependente 600; na separada 300 por titular, na conjunta 600 para o agregado."
+    },
+    {
+      "id": "two-dependents",
+      "description": "Casal com dependentes de 5 e 2 anos",
+      "input": {"ageA":40,"ageB":42,"grossA":4000000,"grossB":4000000,"socialSecurityA":440000,"socialSecurityB":440000,"withholdingA":600000,"withholdingB":400000,"dependentAges":[5,2],"deductionsA":{},"deductionsB":{},"dependentDeductions":{}},
+      "expected": {"separate":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":150000,"taxDueCents":1479832,"withholdingCents":1000000,"balanceCents":-479832},"joint":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":150000,"taxDueCents":1479832,"withholdingCents":1000000,"balanceCents":-479832},"recommendedMode":"TIE","differenceCents":0},
+      "calculationNotes": "600+600+300 para o segundo dependente até 6 anos; 750 por declaração separada."
+    },
+    {
+      "id": "health-only-taxpayer-a",
+      "description": "Despesas de saúde apenas no titular A",
+      "input": {"ageA":40,"ageB":42,"grossA":4000000,"grossB":4000000,"socialSecurityA":440000,"socialSecurityB":440000,"withholdingA":600000,"withholdingB":400000,"dependentAges":[],"deductionsA":{"health":100000},"deductionsB":{},"dependentDeductions":{}},
+      "expected": {"separate":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":15000,"taxDueCents":1614832,"withholdingCents":1000000,"balanceCents":-614832},"joint":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":15000,"taxDueCents":1614832,"withholdingCents":1000000,"balanceCents":-614832},"recommendedMode":"TIE","differenceCents":0},
+      "calculationNotes": "15% de 1000 = 150; a despesa mantém-se integralmente na declaração do titular A."
+    },
+    {
+      "id": "education-only-taxpayer-b",
+      "description": "Despesas de educação apenas no titular B",
+      "input": {"ageA":40,"ageB":42,"grossA":4000000,"grossB":4000000,"socialSecurityA":440000,"socialSecurityB":440000,"withholdingA":600000,"withholdingB":400000,"dependentAges":[],"deductionsA":{},"deductionsB":{"education":100000},"dependentDeductions":{}},
+      "expected": {"separate":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":30000,"taxDueCents":1599832,"withholdingCents":1000000,"balanceCents":-599832},"joint":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":30000,"taxDueCents":1599832,"withholdingCents":1000000,"balanceCents":-599832},"recommendedMode":"TIE","differenceCents":0},
+      "calculationNotes": "30% de 1000 = 300; a despesa mantém-se integralmente na declaração do titular B."
+    },
+    {
+      "id": "dependent-health-expenses",
+      "description": "Despesas de saúde do dependente",
+      "input": {"ageA":40,"ageB":42,"grossA":4000000,"grossB":4000000,"socialSecurityA":440000,"socialSecurityB":440000,"withholdingA":600000,"withholdingB":400000,"dependentAges":[10],"deductionsA":{},"deductionsB":{},"dependentDeductions":{"health":100000}},
+      "expected": {"separate":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":75000,"taxDueCents":1554832,"withholdingCents":1000000,"balanceCents":-554832},"joint":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":75000,"taxDueCents":1554832,"withholdingCents":1000000,"balanceCents":-554832},"recommendedMode":"TIE","differenceCents":0},
+      "calculationNotes": "Dependente 600 mais saúde 150. Na separada cada titular considera metade da despesa e metade da dedução fixa."
+    },
+    {
+      "id": "ppr-both-taxpayers-individual-caps",
+      "description": "PPR dos dois titulares com limites individuais não transferíveis",
+      "input": {"ageA":30,"ageB":55,"grossA":4000000,"grossB":4000000,"socialSecurityA":440000,"socialSecurityB":440000,"withholdingA":600000,"withholdingB":400000,"dependentAges":[],"deductionsA":{"ppr":300000},"deductionsB":{"ppr":50000},"dependentDeductions":{}},
+      "expected": {"separate":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":50000,"taxDueCents":1579832,"withholdingCents":1000000,"balanceCents":-579832},"joint":{"taxableIncomeCents":7082582,"grossTaxCents":1629832,"taxCreditsCents":50000,"taxDueCents":1579832,"withholdingCents":1000000,"balanceCents":-579832},"recommendedMode":"TIE","differenceCents":0},
+      "calculationNotes": "Titular A: 20% de 3000 limitado a 400. Titular B: 20% de 500 = 100. O limite não usado por B não pode aumentar a dedução de A."
+    },
+    {
+      "id": "minimum-existence-two-holders",
+      "description": "Mínimo de existência calculado individualmente para dois titulares",
+      "input": {"ageA":40,"ageB":42,"grossA":1200000,"grossB":1200000,"socialSecurityA":132000,"socialSecurityB":132000,"withholdingA":0,"withholdingB":0,"dependentAges":[],"deductionsA":{},"deductionsB":{},"dependentDeductions":{}},
+      "expected": {"separate":{"taxableIncomeCents":224000,"grossTaxCents":28000,"taxCreditsCents":0,"taxDueCents":28000,"withholdingCents":0,"balanceCents":-28000},"joint":{"taxableIncomeCents":224000,"grossTaxCents":28000,"taxCreditsCents":0,"taxDueCents":28000,"withholdingCents":0,"balanceCents":-28000},"recommendedMode":"TIE","differenceCents":0},
+      "calculationNotes": "Por titular: abatimento = 12880 - 4587,09 - (250/12,5%) = 6292,91; coletável = 1120; coleta = 140. O cutoff do artigo 70.º, n.º 4, considera os dois sujeitos passivos."
+    }
+  ]
+}

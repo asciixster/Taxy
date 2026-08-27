@@ -33,7 +33,9 @@ lib/
   state/ navigation/     providers e navegação
   data/                  persistência local atómica
 assets/tax_rules/
+  2025/base.json
   2025/continent.json
+  2026.json
   2026/continent.json
   2026/madeira.json
   2026/azores.json
@@ -55,7 +57,7 @@ A única GitHub Action executa `flutter pub get`, `flutter analyze` e `flutter t
 ## Adicionar ano ou região
 
 1. Criar `assets/tax_rules/<ano>/<região>.json`.
-2. Registar schema, versão, data, jurisdição, fontes e overrides.
+2. Registar schema, versão, data, jurisdição, fontes e apenas overrides permitidos.
 3. Adicionar o asset ao `pubspec.yaml`.
 4. Acrescentar testes de fronteira e scope.
 5. Só usar `status: VERIFIED` após revisão fiscal.
@@ -63,5 +65,7 @@ A única GitHub Action executa `flutter pub get`, `flutter analyze` e `flutter t
 ## Liquidações oficiais
 
 O loader em `test/official_assessment_fixture_test.dart` descobre os JSON em `test/fixtures/official_assessments/`. A tolerância é zero cêntimos por defeito. Não foram inventadas liquidações oficiais.
+
+Os casos em `test/fixtures/reference_calculations/` são referências manuais independentes, identificadas como tal, e não liquidações da AT. Incluem nove agregados de dois titulares e impedem que os testes se limitem a recalcular expectativas com o próprio motor.
 
 Esta tarefa não gera APK ou AAB. Consulte [ROADMAP.md](ROADMAP.md).

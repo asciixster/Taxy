@@ -59,6 +59,7 @@ flutter:
   assets:
     - assets/tax_rules/2026.json
     - assets/tax_rules/2025/continent.json
+    - assets/tax_rules/2025/base.json
     - assets/tax_rules/2026/continent.json
     - assets/tax_rules/2026/madeira.json
     - assets/tax_rules/2026/azores.json

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taxy_pt/data/simulation_repository.dart';
+import 'package:taxy_pt/domain/models.dart';
+import 'package:taxy_pt/domain/money.dart';
 import 'package:taxy_pt/main.dart';
 import 'package:taxy_pt/tax_engine/tax_rules.dart';
 
@@ -60,6 +62,64 @@ void main() {
       );
     });
   }
+
+  testWidgets('resultado conjugal mostra os dois valores e linguagem neutra', (
+    tester,
+  ) async {
+    final rules = TaxRuleSet.fromJsonString(
+      File('assets/tax_rules/2026.json').readAsStringSync(),
+    );
+    final now = DateTime.utc(2026);
+    final simulation = TaxSimulation(
+      id: 'ui-couple',
+      name: 'UI couple',
+      createdAt: now,
+      updatedAt: now,
+      profile: const TaxpayerProfile(
+        taxYear: 2026,
+        age: 40,
+        civilStatus: CivilStatus.married,
+        dependentAges: [],
+        fullYearResident: true,
+        region: TaxRegion.continent,
+        filingMode: FilingMode.joint,
+      ),
+      income: const EmploymentIncome(
+        entryMode: IncomeEntryMode.annual,
+        gross: Money.fromCents(8000000),
+        withholding: Money.fromCents(1000000),
+        socialSecurity: Money.fromCents(880000),
+      ),
+      deductions: const DeductionInput(),
+      secondaryTaxpayer: const TaxpayerInput(
+        id: 'B',
+        age: 42,
+        income: EmploymentIncome(
+          entryMode: IncomeEntryMode.annual,
+          gross: Money.fromCents(2000000),
+          withholding: Money.fromCents(200000),
+          socialSecurity: Money.fromCents(220000),
+        ),
+        deductions: DeductionInput(),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ResultScreen(simulation: simulation, rules: rules),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Comparação de tributação'), findsOneWidget);
+    expect(find.text('Tributação separada'), findsOneWidget);
+    expect(find.text('Tributação conjunta'), findsWidgets);
+    expect(find.text('Diferença'), findsOneWidget);
+    expect(find.text('Opção estimada mais favorável'), findsOneWidget);
+    expect(find.textContaining('menor imposto estimado'), findsOneWidget);
+    expect(
+      find.textContaining('não substitui a liquidação oficial'),
+      findsOneWidget,
+    );
+  });
 }
 
 Future<void> _pumpWizard(WidgetTester tester) async {

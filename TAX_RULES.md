@@ -4,25 +4,25 @@ Todos os valores executáveis são carregados de ficheiros versionados. Cêntimo
 
 | Ano | Jurisdição | Versão | Estado |
 |---|---|---|---|
-| 2025 | Continente | `2025.3.0` | SUPPORTED |
-| 2026 | Continente | `2026.3.0` | SUPPORTED |
-| 2026 | Madeira | `2026.3.0-M` | SUPPORTED |
-| 2026 | Açores | `2026.3.0-A` | SUPPORTED |
+| 2025 | Continente | `2025.3.1` | SUPPORTED |
+| 2026 | Continente | `2026.3.1` | SUPPORTED |
+| 2026 | Madeira | `2026.3.1-M` | SUPPORTED |
+| 2026 | Açores | `2026.3.1-A` | SUPPORTED |
 
-`TaxRuleRepository` resolve `year + jurisdiction`. Os descritores schema v3 aplicam overrides declarativos sobre a base validada.
+`TaxRuleRepository` resolve exclusivamente `year + jurisdiction`, normaliza a jurisdição e recusa schema/status, ano, jurisdição, base ou override incompatível. Não existe fallback regional. A base 2025 é fisicamente independente de 2026, impedindo herança acidental de parâmetros futuros.
 
 ## 2025 Continente
 
-- escalões do artigo 68.º após Lei n.º 55-A/2025;
+- escalões nacionais publicados pela AT para rendimentos de 2025;
 - IAS 522,50 € e dedução específica 8,54 IAS = 4.462,15 €;
 - mínimo de existência de referência 12.180 €;
 - renda standard 15%, limite base 700 € e transição até 1.000 €.
 
-Fonte: AT, folheto “IRS — Deduções, benefícios fiscais e taxas para rendimentos do ano de 2025” e artigo 68.º em vigor até dezembro de 2025.
+Fontes: [AT — Deduções, benefícios e taxas 2025](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/Deducoes_beneficios_taxas/Paginas/default.aspx), [CIRS artigo 68.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx) e [artigo 70.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx).
 
 ## 2026 regiões
 
-Continente usa o artigo 68.º na redação da Lei n.º 73-A/2025. Madeira usa a tabela do artigo 18.º do DLR n.º 8/2025/M. Açores aplica redução de 30% às taxas nacionais pelo artigo 4.º do DLR n.º 2/99/A, redação do DLR n.º 15-A/2021/A.
+Continente usa o artigo 68.º vigente para 2026. Madeira usa a tabela expressa do artigo 18.º do [DLR n.º 8/2025/M](https://diariodarepublica.pt/dr/detalhe/decreto-legislativo-regional/8-2025-993031451), sem derivação aproximada. Açores aplica a redução de 30% às taxas nacionais prevista no artigo 4.º do [DLR n.º 2/99/A consolidado](https://diariodarepublica.pt/dr/legislacao-consolidada/decreto-legislativo-regional/1999-164477580-164477062). As listas fixas de taxas são verificadas nos testes.
 
 ## Casados e unidos de facto
 
@@ -32,7 +32,9 @@ Parâmetros JSON:
 - `separateDependentExpenseSharePpm = 500000` — artigo 78.º, n.º 14;
 - `familyLimitDivisor = 2` — limites familiares reduzidos na separada.
 
-O adicional de solidariedade conjunto também usa metade do rendimento e multiplica o resultado por dois (artigo 68.º-A, n.º 3). O mínimo de existência considera os dois titulares.
+Na separada, os rendimentos próprios são liquidados individualmente e 50% dos rendimentos dos dependentes são imputados a cada titular ([artigo 59.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs59.aspx)). As deduções usam despesas próprias mais 50% das despesas dos dependentes e os limites referidos ao agregado são reduzidos para metade ([artigo 78.º, n.º 14](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78.aspx)).
+
+Na conjunta, o quociente é 2 e a coleta é multiplicada por dois ([artigo 69.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs69.aspx)). O adicional de solidariedade também usa metade do rendimento e multiplica o resultado por dois ([artigo 68.º-A, n.º 3](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68a.aspx)). O mínimo de existência é apurado por titular, aplicando-se o corte conjunto previsto no artigo 70.º.
 
 ## Deduções
 
@@ -48,8 +50,10 @@ Mantêm-se base 600 € por dependente, majoração 126 € até 3 anos ou 300 �
 | PPR | 20% | 400/350/300 € por titular |
 | IVA | 15/30/35/100% | global 250 € |
 
+O limite de PPR é sempre apurado por titular segundo a sua idade, inclusive na tributação conjunta; não existe partilha do limite não utilizado. Em 2026, a renda standard usa o limite mínimo de 900 € e os limites transitórios configurados de 750 €/1.050 €, conforme o [artigo 78.º-E](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78e.aspx). Em 2025 permanecem isolados os valores de 700 €/1.000 €.
+
 ## IRS Jovem
 
-Idade máxima, dez anos, limite 55 IAS e taxas 100/75/50/25% estão no JSON. Fontes: artigo 12.º-B e folheto oficial IRS Jovem 2025. O motor atual determina elegibilidade; não liquida o benefício.
+Idade máxima, dez anos, limite 55 IAS e taxas 100/75/50/25% estão no JSON. Fontes: [artigo 12.º-B](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx) e folheto oficial IRS Jovem 2025. O motor atual determina elegibilidade com histórico anual; não liquida o benefício.
 
 URLs completas residem nos descritores. Alterações exigem versão, data, testes e revisão humana.

@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "name": "REPLACE_WITH_ANONYMOUS_ID",
-  "rulesVersion": "2026.3.0",
+  "source": "OFFICIAL_AT_ASSESSMENT",
+  "rulesVersion": "2026.3.1",
   "inputs": {
     "id": "anonymous",
     "name": "Official assessment",
@@ -10,7 +11,12 @@
     "profile": "REPLACE_WITH_FULL_TaxpayerProfile_JSON",
     "income": "REPLACE_WITH_FULL_EmploymentIncome_JSON",
     "deductions": "REPLACE_WITH_FULL_DeductionInput_JSON",
-    "situations": "REPLACE_WITH_FULL_TaxSituationFlags_JSON"
+    "situations": "REPLACE_WITH_FULL_TaxSituationFlags_JSON",
+    "secondaryTaxpayer": "NULL_OR_FULL_TaxpayerInput_JSON",
+    "dependents": "FULL_Dependent_JSON_LIST",
+    "dependentDeductions": "FULL_DeductionInput_JSON",
+    "incomeTypes": ["employment"],
+    "primaryIrsJovem": "FULL_IrsJovemAnswers_JSON"
   },
   "expected": {
     "taxableIncomeCents": "REPLACE_WITH_INTEGER",

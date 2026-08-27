@@ -33,14 +33,25 @@ final class TaxEngine {
     TaxSimulation simulation,
     Money taxableIncome,
     Money grossTax,
-    List<String> warnings,
-  ) => _credits(simulation, taxableIncome, grossTax, warnings);
+    List<String> warnings, {
+    Money? pprCreditOverride,
+  }) => _credits(
+    simulation,
+    taxableIncome,
+    grossTax,
+    warnings,
+    pprCreditOverride: pprCreditOverride,
+  );
 
   /// Exposto para auditoria das fronteiras do limite global de deduções.
   Money? overallCreditCapForTaxableIncome(
     Money taxableIncome, {
     int dependents = 0,
   }) => _overallCreditCap(taxableIncome, dependents);
+
+  /// Exposto para validação independente da transição dos limites de rendas.
+  Money rentCreditCapForTaxableIncome(Money taxableIncome) =>
+      Money.fromCents(_rentCap(taxableIncome));
 
   TaxResult calculate(TaxSimulation simulation, {bool validateScope = true}) {
     final warnings = <String>[];
@@ -54,7 +65,7 @@ final class TaxEngine {
     ];
     final input = simulation.income;
     final scopeIssues = validateScope
-        ? SupportedScopeValidator(rules.taxYear).validate(simulation)
+        ? SupportedScopeValidator(rules).validate(simulation)
         : const <ScopeValidationIssue>[];
     final expectedJurisdiction = simulation.profile.region.name.toUpperCase();
     if (scopeIssues.isNotEmpty ||
@@ -122,7 +133,7 @@ final class TaxEngine {
         TaxBreakdown(
           'Imposto antes de deduções',
           grossTax,
-          'Resultado da aplicação progressiva das taxas gerais de 2026.',
+          'Resultado da aplicação progressiva das taxas gerais de ${rules.taxYear}.',
         ),
         TaxBreakdown(
           'Deduções à coleta',
@@ -247,8 +258,9 @@ final class TaxEngine {
     TaxSimulation simulation,
     Money taxable,
     Money grossTax,
-    List<String> warnings,
-  ) {
+    List<String> warnings, {
+    Money? pprCreditOverride,
+  }) {
     final p = simulation.profile;
     final d = simulation.deductions;
     var dependentCredit = Money.zero;
@@ -325,7 +337,9 @@ final class TaxEngine {
         : (p.age <= 50
               ? rules.d('ppr35To50CapCents')
               : rules.d('pprOver50CapCents'));
-    final ppr = _limited(d.ppr, rules.d('pprRatePpm'), pprCap, 'PPR', warnings);
+    final ppr =
+        pprCreditOverride ??
+        _limited(d.ppr, rules.d('pprRatePpm'), pprCap, 'PPR', warnings);
 
     final limitedGroupRaw = health + education + care + vat + rent + ppr;
     final overallCap = _overallCreditCap(taxable, p.dependents);
@@ -439,7 +453,7 @@ final class TaxEngine {
     } else {
       transitional = transitionBase;
     }
-    return intMax(transitional, rules.d('rent2026FloorCapCents'));
+    return intMax(transitional, rules.d('rentFloorCapCents'));
   }
 
   Money? _overallCreditCap(Money taxable, int dependents) {

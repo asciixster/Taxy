@@ -1,4 +1,5 @@
 import '../domain/models.dart';
+import 'tax_rules.dart';
 
 final class ScopeValidationIssue {
   const ScopeValidationIssue(this.code, this.message);
@@ -9,8 +10,8 @@ final class ScopeValidationIssue {
 /// Única porta de entrada para o âmbito fiscal suportado pela Taxy 0.3.
 /// Qualquer situação não explicitamente validada falha de forma fechada.
 final class SupportedScopeValidator {
-  const SupportedScopeValidator(this.taxYear);
-  final int taxYear;
+  const SupportedScopeValidator(this.rules);
+  final TaxRuleSet rules;
 
   List<ScopeValidationIssue> validate(TaxSimulation simulation) {
     final p = simulation.profile;
@@ -22,11 +23,42 @@ final class SupportedScopeValidator {
     }
 
     reject(
-      p.taxYear != taxYear,
+      p.taxYear != rules.taxYear,
       'TAX_YEAR',
       'As regras de ${p.taxYear} ainda não estão validadas (NEEDS_VERIFICATION).',
     );
     final isCouple = p.civilStatus != CivilStatus.single;
+    final civilStatusId = switch (p.civilStatus) {
+      CivilStatus.single => 'SINGLE',
+      CivilStatus.married => 'MARRIED',
+      CivilStatus.deFacto => 'DE_FACTO',
+    };
+    final filingModeId = switch (p.filingMode) {
+      FilingMode.separate => 'SEPARATE',
+      FilingMode.joint => 'JOINT',
+    };
+    final householdType = isCouple
+        ? (p.dependents == 0
+              ? 'COUPLE_STANDARD'
+              : 'COUPLE_WITH_DEPENDENTS_STANDARD')
+        : (p.dependents == 0
+              ? 'SINGLE_NO_DEPENDENTS'
+              : 'SINGLE_PARENT_STANDARD');
+    reject(
+      !rules.supportedScope.civilStatuses.contains(civilStatusId),
+      'CIVIL_STATUS_SCOPE',
+      'O estado civil indicado não está validado por este conjunto de regras.',
+    );
+    reject(
+      !rules.supportedScope.filingModes.contains(filingModeId),
+      'FILING_MODE_SCOPE',
+      'O modo de tributação indicado não está validado por este conjunto de regras.',
+    );
+    reject(
+      !rules.supportedScope.householdTypes.contains(householdType),
+      'HOUSEHOLD_SCOPE',
+      'O tipo de agregado indicado não está validado por este conjunto de regras.',
+    );
     reject(
       isCouple && simulation.secondaryTaxpayer == null,
       'SECOND_TAXPAYER_REQUIRED',
@@ -43,14 +75,15 @@ final class SupportedScopeValidator {
       'A tributação conjunta exige casamento ou união de facto.',
     );
     reject(
-      !p.fullYearResident,
+      rules.supportedScope.residency != 'FULL_YEAR_PORTUGAL' ||
+          !p.fullYearResident,
       'PARTIAL_RESIDENCE',
       'Residência fiscal parcial ainda não está validada (NEEDS_VERIFICATION).',
     );
     reject(
-      p.taxYear == 2025 && p.region != TaxRegion.continent,
-      'REGION_YEAR',
-      'Em 2025 apenas o Continente está validado (NEEDS_VERIFICATION).',
+      rules.jurisdiction != p.region.name.toUpperCase(),
+      'JURISDICTION_SCOPE',
+      'O conjunto de regras carregado não corresponde à região indicada.',
     );
     reject(
       p.dependents > 0 &&
@@ -85,7 +118,13 @@ final class SupportedScopeValidator {
       'Alocação especial de dependentes a um titular permanece NEEDS_VERIFICATION.',
     );
     reject(
-      simulation.incomeTypes.any((type) => type != IncomeType.employment),
+      simulation.dependentDeductions.ppr.cents != 0,
+      'DEPENDENT_PPR',
+      'PPR de dependentes não integra o âmbito standard validado.',
+    );
+    reject(
+      !rules.supportedScope.incomeCategories.contains('A') ||
+          simulation.incomeTypes.any((type) => type != IncomeType.employment),
       'UNSUPPORTED_INCOME_TYPE',
       'A simulação inclui tipos de rendimento ainda não suportados.',
     );

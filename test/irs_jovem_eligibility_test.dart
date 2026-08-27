@@ -183,6 +183,83 @@ void main() {
     expect(result.eligibleExemptIncome, result.exemptionLimit);
     expect(result.exemptionLimit.cents, 53713 * 55);
   });
+
+  test(
+    'histórico objetivo ignora anos sem rendimento e anos como dependente',
+    () {
+      final result = engine.evaluate(
+        ageAtYearEnd: 30,
+        categoryAIncome: const Money.fromCents(2000000),
+        answers: const IrsJovemAnswers(
+          requested: true,
+          taxSituationRegularized: true,
+          incomeHistory: [
+            IrsJovemIncomeYear(
+              year: 2022,
+              hadCategoryAOrBIncome: true,
+              wasDependent: true,
+            ),
+            IrsJovemIncomeYear(
+              year: 2023,
+              hadCategoryAOrBIncome: true,
+              wasDependent: false,
+            ),
+            IrsJovemIncomeYear(
+              year: 2024,
+              hadCategoryAOrBIncome: false,
+              wasDependent: false,
+            ),
+            IrsJovemIncomeYear(
+              year: 2026,
+              hadCategoryAOrBIncome: true,
+              wasDependent: false,
+            ),
+          ],
+        ),
+      );
+      expect(result.status, IrsJovemEligibility.eligible);
+      expect(result.exemptionRatePpm, 750000);
+      expect(result.reasons.single, contains('2.º ano'));
+    },
+  );
+
+  test('histórico contraditório pede mais informação', () {
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: const Money.fromCents(2000000),
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        incomeHistory: [
+          IrsJovemIncomeYear(
+            year: 2026,
+            hadCategoryAOrBIncome: false,
+            wasDependent: false,
+          ),
+        ],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.needsMoreInformation);
+  });
+
+  test('histórico sem o ano simulado pede mais informação', () {
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: const Money.fromCents(2000000),
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        incomeHistory: [
+          IrsJovemIncomeYear(
+            year: 2025,
+            hadCategoryAOrBIncome: true,
+            wasDependent: false,
+          ),
+        ],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.needsMoreInformation);
+  });
 }
 
 IrsJovemAnswers _answers({

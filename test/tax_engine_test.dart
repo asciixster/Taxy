@@ -19,9 +19,9 @@ void main() {
   });
 
   group('regras e dinheiro exato', () {
-    test('carrega regras base 2026.3.0 e data de validação', () {
+    test('carrega regras base 2026.3.1 e data de validação', () {
       expect(rules.taxYear, 2026);
-      expect(rules.rulesVersion, '2026.3.0-base');
+      expect(rules.rulesVersion, '2026.3.1-base');
       expect(rules.verifiedAt, DateTime(2026, 8, 27));
       expect(rules.brackets, hasLength(9));
     });
@@ -37,11 +37,7 @@ void main() {
         'invoiceVatCapCents',
       ]) {
         expect(rules.ruleMetadata[key]?.source, isNotEmpty, reason: key);
-        expect(
-          rules.ruleMetadata[key]?.version,
-          isNotEmpty,
-          reason: key,
-        );
+        expect(rules.ruleMetadata[key]?.version, isNotEmpty, reason: key);
       }
     });
 

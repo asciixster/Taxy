@@ -54,6 +54,22 @@ void main() {
     expect(result.joint!.taxDue.cents, lessThan(result.separate!.taxDue.cents));
   });
 
+  test('scope carregado pode recusar casais sem executar o cálculo', () {
+    final restricted = engine.rules.copyWith(
+      supportedScope: TaxSupportedScope(
+        jurisdiction: engine.rules.jurisdiction,
+        residency: engine.rules.supportedScope.residency,
+        incomeCategories: engine.rules.supportedScope.incomeCategories,
+        civilStatuses: const {'single'},
+        filingModes: const {'separate'},
+        householdTypes: const {'SINGLE_NO_DEPENDENTS'},
+      ),
+    );
+    final result = HouseholdTaxEngine(restricted).compare(_simulation());
+    expect(result.available, isFalse);
+    expect(result.warnings, isNotEmpty);
+  });
+
   for (final ages in [
     <int>[],
     [2],
@@ -124,6 +140,13 @@ void main() {
         Dependent(id: 'd', ageAtYearEnd: 8, sharedCustody: true),
       ],
       profile: _simulation().profile.copyWith(dependentAges: const [8]),
+    );
+    expect(engine.compare(simulation).available, isFalse);
+  });
+
+  test('PPR de dependente falha fechado', () {
+    final simulation = _simulation(dependentAges: const [10]).copyWith(
+      dependentDeductions: const DeductionInput(ppr: Money.fromCents(100000)),
     );
     expect(engine.compare(simulation).available, isFalse);
   });

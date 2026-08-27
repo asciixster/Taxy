@@ -42,6 +42,42 @@ final class TaxRuleMetadata {
       );
 }
 
+/// Contrato executável do âmbito suportado por um ruleset.
+///
+/// Os valores usam identificadores estáveis do JSON para que UI, validação e
+/// documentação possam refletir a mesma fonte de verdade sem inferir suporte a
+/// partir de taxas ou da presença de campos no modelo.
+final class TaxSupportedScope {
+  const TaxSupportedScope({
+    required this.jurisdiction,
+    required this.residency,
+    required this.incomeCategories,
+    required this.civilStatuses,
+    required this.filingModes,
+    required this.householdTypes,
+  });
+
+  final String jurisdiction;
+  final String residency;
+  final Set<String> incomeCategories;
+  final Set<String> civilStatuses;
+  final Set<String> filingModes;
+  final Set<String> householdTypes;
+
+  factory TaxSupportedScope.fromJson(Map<String, Object?> json) {
+    Set<String> values(String key) =>
+        (json[key] as List).cast<String>().toSet();
+    return TaxSupportedScope(
+      jurisdiction: json['jurisdiction'] as String,
+      residency: json['residency'] as String,
+      incomeCategories: values('incomeCategories'),
+      civilStatuses: values('civilStatus'),
+      filingModes: values('filingModes'),
+      householdTypes: values('householdTypes'),
+    );
+  }
+}
+
 final class TaxRuleSet {
   const TaxRuleSet({
     required this.jurisdiction,
@@ -58,6 +94,7 @@ final class TaxRuleSet {
     required this.irsJovem,
     required this.deductions,
     required this.ruleMetadata,
+    required this.supportedScope,
   });
 
   final String jurisdiction;
@@ -74,6 +111,7 @@ final class TaxRuleSet {
   final Map<String, int> irsJovem;
   final Map<String, int> deductions;
   final Map<String, TaxRuleMetadata> ruleMetadata;
+  final TaxSupportedScope supportedScope;
 
   int d(String key) =>
       deductions[key] ?? (throw StateError('Regra $key em falta'));
@@ -101,6 +139,7 @@ final class TaxRuleSet {
     Map<String, int>? irsJovem,
     Map<String, int>? deductions,
     Map<String, TaxRuleMetadata>? ruleMetadata,
+    TaxSupportedScope? supportedScope,
   }) => TaxRuleSet(
     jurisdiction: jurisdiction ?? this.jurisdiction,
     taxYear: taxYear ?? this.taxYear,
@@ -119,6 +158,7 @@ final class TaxRuleSet {
     irsJovem: irsJovem ?? this.irsJovem,
     deductions: deductions ?? this.deductions,
     ruleMetadata: ruleMetadata ?? this.ruleMetadata,
+    supportedScope: supportedScope ?? this.supportedScope,
   );
 
   factory TaxRuleSet.fromJsonString(String source) {
@@ -153,14 +193,26 @@ final class TaxRuleSet {
       'separateDependentExpenseSharePpm',
       'familyLimitDivisor',
       'irsJovemRates',
+      'rentFloorCapCents',
+      'rentTransitionCaps',
+      'pprCapsPerTaxpayer',
     };
     if (!metadata.keys.toSet().containsAll(requiredMetadata)) {
       throw const FormatException('Metadados obrigatórios das regras em falta');
     }
+    final supportedScope = TaxSupportedScope.fromJson(
+      (json['supportedScope'] as Map).cast<String, Object?>(),
+    );
+    if (supportedScope.jurisdiction.isEmpty ||
+        supportedScope.residency.isEmpty ||
+        supportedScope.incomeCategories.isEmpty ||
+        supportedScope.civilStatuses.isEmpty ||
+        supportedScope.filingModes.isEmpty ||
+        supportedScope.householdTypes.isEmpty) {
+      throw const FormatException('Âmbito suportado vazio ou incompleto');
+    }
     return TaxRuleSet(
-      jurisdiction:
-          ((json['supportedScope'] as Map?)?['jurisdiction'] as String?) ??
-          (json['jurisdiction'] as String? ?? 'CONTINENT'),
+      jurisdiction: supportedScope.jurisdiction,
       taxYear: json['taxYear'] as int,
       rulesVersion: json['rulesVersion'] as String,
       verifiedAt: DateTime.parse(json['verifiedAt'] as String),
@@ -176,6 +228,7 @@ final class TaxRuleSet {
       irsJovem: (json['irsJovem'] as Map).cast<String, int>(),
       deductions: (json['deductions'] as Map).cast<String, int>(),
       ruleMetadata: metadata,
+      supportedScope: supportedScope,
     );
   }
 }
@@ -193,23 +246,53 @@ final class TaxRuleRepository {
       'assets/tax_rules/$year/${jurisdiction.toLowerCase()}.json';
 
   Future<TaxRuleSet> load(int year, String jurisdiction) async {
-    final path = descriptorPath(year, jurisdiction);
+    final normalizedJurisdiction = jurisdiction.toUpperCase();
+    final path = descriptorPath(year, normalizedJurisdiction);
     final descriptor = (jsonDecode(await loadAsset(path)) as Map)
         .cast<String, Object?>();
     if (descriptor['schemaVersion'] != 3 ||
         descriptor['status'] != 'VERIFIED') {
       throw FormatException('Descritor fiscal não verificado: $path');
     }
+    if (descriptor['taxYear'] != year ||
+        descriptor['jurisdiction'] != normalizedJurisdiction) {
+      throw FormatException(
+        'Descritor fiscal não corresponde a $year/$normalizedJurisdiction: $path',
+      );
+    }
     final basePath = descriptor['baseAsset'] as String;
     final base = TaxRuleSet.fromJsonString(await loadAsset(basePath));
+    if (base.taxYear != year) {
+      throw FormatException(
+        'A base $basePath pertence a ${base.taxYear}, não a $year',
+      );
+    }
     final overrides = (descriptor['overrides'] as Map? ?? const {})
         .cast<String, Object?>();
+    const allowedOverrideKeys = {
+      'iasCents',
+      'employmentSpecificDeductionCents',
+      'minimumExistenceReferenceCents',
+      'deductions',
+      'minimumExistence',
+    };
+    if (overrides.keys.any((key) => !allowedOverrideKeys.contains(key))) {
+      throw FormatException('Override fiscal desconhecido em $path');
+    }
     final bracketValues = descriptor['brackets'] as List?;
     final deductionOverrides = (overrides['deductions'] as Map? ?? const {})
         .cast<String, int>();
     final minimumOverrides = (overrides['minimumExistence'] as Map? ?? const {})
         .cast<String, int>();
-    return base.copyWith(
+    if (deductionOverrides.keys.any(
+          (key) => !base.deductions.containsKey(key),
+        ) ||
+        minimumOverrides.keys.any(
+          (key) => !base.minimumExistence.containsKey(key),
+        )) {
+      throw FormatException('Override referencia regra inexistente em $path');
+    }
+    final resolved = base.copyWith(
       jurisdiction: descriptor['jurisdiction'] as String,
       taxYear: descriptor['taxYear'] as int,
       rulesVersion: descriptor['rulesVersion'] as String,
@@ -232,6 +315,33 @@ final class TaxRuleRepository {
                 )
                 .toList(growable: false),
       deductions: {...base.deductions, ...deductionOverrides},
+      supportedScope: TaxSupportedScope(
+        jurisdiction: normalizedJurisdiction,
+        residency: base.supportedScope.residency,
+        incomeCategories: base.supportedScope.incomeCategories,
+        civilStatuses: base.supportedScope.civilStatuses,
+        filingModes: base.supportedScope.filingModes,
+        householdTypes: base.supportedScope.householdTypes,
+      ),
     );
+    _validateResolved(resolved, path);
+    return resolved;
+  }
+
+  static void _validateResolved(TaxRuleSet rules, String path) {
+    if (rules.brackets.length != 9 || rules.brackets.last.upperCents != null) {
+      throw FormatException('Escalões IRS inválidos após resolução: $path');
+    }
+    var previous = 0;
+    for (final bracket in rules.brackets.take(rules.brackets.length - 1)) {
+      final upper = bracket.upperCents;
+      if (upper == null || upper <= previous) {
+        throw FormatException('Limites de escalões inválidos: $path');
+      }
+      previous = upper;
+    }
+    if (rules.supportedScope.jurisdiction != rules.jurisdiction) {
+      throw FormatException('Scope e jurisdição divergentes: $path');
+    }
   }
 }

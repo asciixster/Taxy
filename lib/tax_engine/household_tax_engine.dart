@@ -31,7 +31,7 @@ final class HouseholdTaxEngine {
   final TaxRuleSet rules;
 
   HouseholdTaxComparison compare(TaxSimulation simulation) {
-    final issues = SupportedScopeValidator(rules.taxYear).validate(simulation);
+    final issues = SupportedScopeValidator(rules).validate(simulation);
     final isCouple = simulation.profile.civilStatus != CivilStatus.single;
     final jurisdictionMatches =
         rules.jurisdiction == simulation.profile.region.name.toUpperCase();
@@ -139,7 +139,7 @@ final class HouseholdTaxEngine {
     DeductionInput deductions,
     bool allowMinimumExistence,
   ) {
-    final engine = TaxEngine(_jointRules(source.profile.age, secondary.age));
+    final engine = TaxEngine(_jointRules());
     final specificA = engine.specificDeductionFor(source.income);
     final specificB = engine.specificDeductionFor(secondary.income);
     final minimumA = allowMinimumExistence
@@ -176,6 +176,12 @@ final class HouseholdTaxEngine {
       quotient,
       grossTax,
       warnings,
+      // O limite do EBF artigo 21.º é individual. Somar apenas os créditos já
+      // limitados por titular impede transferir para A o limite PPR não usado
+      // por B (ou vice-versa) na tributação conjunta.
+      pprCreditOverride:
+          _individualPprCredit(source.deductions.ppr, source.profile.age) +
+          _individualPprCredit(secondary.deductions.ppr, secondary.age),
     );
     final taxDue = (grossTax - credits.total).max(Money.zero) + solidarity;
     final withholding =
@@ -306,7 +312,10 @@ final class HouseholdTaxEngine {
     marginalRatePpm: a.marginalRatePpm > b.marginalRatePpm
         ? a.marginalRatePpm
         : b.marginalRatePpm,
-    overallDeductionsCap: null,
+    overallDeductionsCap:
+        a.overallDeductionsCap != null && b.overallDeductionsCap != null
+        ? a.overallDeductionsCap! + b.overallDeductionsCap!
+        : null,
   );
 
   TaxSimulation _creditSimulation(
@@ -328,6 +337,9 @@ final class HouseholdTaxEngine {
 
   TaxRuleSet _separateRules() {
     final divisor = rules.h('familyLimitDivisor');
+    // O artigo 78.º, n.º 14 reduz os limites referidos ao agregado e atribui
+    // metade das despesas dos dependentes a cada titular. O limite de despesas
+    // gerais e o PPR continuam individuais e, por isso, não são divididos aqui.
     return rules.copyWith(
       deductions: {
         ...rules.deductions,
@@ -362,8 +374,8 @@ final class HouseholdTaxEngine {
           1,
           divisor,
         ),
-        'rent2026FloorCapCents': Money.mulDiv(
-          rules.d('rent2026FloorCapCents'),
+        'rentFloorCapCents': Money.mulDiv(
+          rules.d('rentFloorCapCents'),
           1,
           divisor,
         ),
@@ -391,23 +403,25 @@ final class HouseholdTaxEngine {
     );
   }
 
-  TaxRuleSet _jointRules(int ageA, int ageB) {
-    int pprCap(int age) => age < 35
-        ? rules.d('pprUnder35CapCents')
-        : age <= 50
-        ? rules.d('ppr35To50CapCents')
-        : rules.d('pprOver50CapCents');
-    final combinedPprCap = pprCap(ageA) + pprCap(ageB);
+  TaxRuleSet _jointRules() {
     return rules.copyWith(
       deductions: {
         ...rules.deductions,
         'generalCapPerTaxpayerCents':
             rules.d('generalCapPerTaxpayerCents') * rules.h('jointDivisor'),
-        'pprUnder35CapCents': combinedPprCap,
-        'ppr35To50CapCents': combinedPprCap,
-        'pprOver50CapCents': combinedPprCap,
       },
     );
+  }
+
+  Money _individualPprCredit(Money contribution, int age) {
+    final cap = age < 35
+        ? rules.d('pprUnder35CapCents')
+        : age <= 50
+        ? rules.d('ppr35To50CapCents')
+        : rules.d('pprOver50CapCents');
+    return contribution
+        .timesPpm(rules.d('pprRatePpm'))
+        .min(Money.fromCents(cap));
   }
 
   static DeductionInput _add(DeductionInput a, DeductionInput b) =>
