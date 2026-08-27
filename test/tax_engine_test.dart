@@ -133,6 +133,17 @@ void main() {
       expect(result.specificDeduction.cents, 10000);
       expect(result.taxableIncome, Money.zero);
     });
+
+    test('rendimento coletável zero preserva taxa do primeiro escalão', () {
+      final result = engine.calculate(_simulation(gross: 10000));
+
+      expect(result.grossTax, Money.zero);
+      expect(result.marginalRatePpm, rules.brackets.first.marginalRatePpm);
+      expect(
+        result.trace.marginalRatePpm,
+        rules.brackets.first.marginalRatePpm,
+      );
+    });
   });
 
   group('golden — deduções isoladas', () {

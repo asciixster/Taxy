@@ -6,11 +6,11 @@ A aplicação é Android-first, determinística e privada: guarda simulações n
 
 ## Estado da 0.7
 
-Nenhuma liquidação real foi fornecida para esta release. Por isso, a 0.7 não
-adiciona fixtures oficiais, não altera o motor e não muda regras fiscais. Apenas
-formaliza o quality gate necessário para classificar imediatamente os primeiros
-casos reais como `EXACT`, `PARTIAL_EXACT`, `DIFFERENCE`, `INVALID_FIXTURE` ou
-`UNSUPPORTED`.
+O primeiro caso real anonimizado da AT está integrado como
+`AT-2025-JOINT-A-001`: Categoria A, Continente, casal em tributação conjunta e
+um dependente standard. Os 13 campos documentalmente comparáveis coincidem a
+zero cêntimos e o runner classifica o caso como `PARTIAL_EXACT`. A validação não
+alterou o motor nem as regras fiscais.
 
 ## Base de validação preservada da 0.6
 
@@ -20,7 +20,7 @@ casos reais como `EXACT`, `PARTIAL_EXACT`, `DIFFERENCE`, `INVALID_FIXTURE` ou
   para taxa auditados separadamente;
 - comparação exata campo a campo e classificação auditável de diferenças;
 - validação de privacidade fail-closed, sem anonimização automática;
-- relatório com contagens absolutas: **0 casos oficiais** e **21 cálculos de
+- relatório com contagens absolutas: **1 caso oficial** e **21 cálculos de
   referência manual** nesta versão;
 - política explícita de arredondamentos e changelog de validação;
 - Validation Lab com Taxy / AT / diferença e export de fixture oficial;

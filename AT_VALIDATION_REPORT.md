@@ -2,38 +2,38 @@
 
 > Relatorio gerado automaticamente. Apenas fixtures anonimizadas com origem oficial AT sao contabilizadas.
 
-- Gerado em: 2026-08-27T20:42:04.696011Z
-- Casos oficiais executados: 0
+- Gerado em: 2026-08-27T22:51:00.215011Z
+- Casos oficiais executados: 1
 - Casos de referência manual executáveis: 21
 - Correspondencias exatas: 0
-- Correspondencias parciais exatas: 0
+- Correspondencias parciais exatas: 1
 - Casos com diferencas: 0
 - Fixtures invalidas: 0
 - Casos fora do scope: 0
-- Comparacoes de campos executadas: 0
-- Comparacoes de campos exatas: 0
+- Comparacoes de campos executadas: 13
+- Comparacoes de campos exatas: 13
 - Campos divergentes: 0
 - Tolerancia global: 0 centimos
 
 ## Cobertura absoluta
 
-Ainda nao existem liquidacoes oficiais anonimizadas.
+- 2025 continent | married/joint | IRS Jovem nao: 1 caso(s)
 
 ### Por ano
 
-- 0 casos
+- 2025: 1 caso(s)
 
 ### Por regiao
 
-- 0 casos
+- continent: 1 caso(s)
 
 ### Por modo de tributacao
 
-- 0 casos
+- joint: 1 caso(s)
 
 ### Por IRS Jovem
 
-- 0 casos
+- nao: 1 caso(s)
 
 ## Falhas por categoria
 
@@ -41,4 +41,4 @@ Ainda nao existem liquidacoes oficiais anonimizadas.
 
 ## Casos
 
-Nenhum caso oficial foi inventado ou adicionado.
+- AT-2025-JOINT-A-001: PARTIAL_EXACT

@@ -1,0 +1,143 @@
+{
+  "fixtureSchemaVersion": 3,
+  "source": "OFFICIAL_AT_ASSESSMENT",
+  "sourceDocumentType": "IRS_ASSESSMENT_DEMONSTRATION",
+  "anonymousCaseId": "AT-2025-JOINT-A-001",
+  "taxYear": 2025,
+  "jurisdiction": "continent",
+  "civilStatus": "married",
+  "filingMode": "joint",
+  "rulesVersion": "2025.4.0",
+  "inputs": {
+    "id": "anonymous",
+    "name": "Official assessment",
+    "createdAt": "2026-08-27T00:00:00.000Z",
+    "updatedAt": "2026-08-27T00:00:00.000Z",
+    "profile": {
+      "taxYear": 2025,
+      "age": 35,
+      "civilStatus": "married",
+      "dependentAges": [10],
+      "fullYearResident": true,
+      "region": "continent",
+      "filingMode": "joint",
+      "isSingleParentHousehold": false
+    },
+    "income": {
+      "entryMode": "annual",
+      "grossCents": 184800,
+      "withholdingCents": 0,
+      "socialSecurityCents": 20328,
+      "monthlyAmountCents": 0,
+      "months": 14
+    },
+    "deductions": {
+      "generalCents": 427101,
+      "healthCents": 2613,
+      "educationCents": 0,
+      "rentCents": 0,
+      "careHomesCents": 0,
+      "invoiceVat15Cents": 0,
+      "invoiceVat30Cents": 0,
+      "invoiceVat35Cents": 0,
+      "invoiceVat100Cents": 0,
+      "pprCents": 0
+    },
+    "situations": {
+      "irsJovem": false,
+      "categoryB": false,
+      "pensions": false,
+      "foreignIncome": false,
+      "capitalIncome": false,
+      "propertyIncome": false,
+      "capitalGains": false,
+      "disability": false,
+      "displacedStudent": false,
+      "sharedCustody": false,
+      "otherSpecialSituation": false
+    },
+    "secondaryTaxpayer": {
+      "id": "B",
+      "age": 35,
+      "income": {
+        "entryMode": "annual",
+        "grossCents": 0,
+        "withholdingCents": 0,
+        "socialSecurityCents": 0,
+        "monthlyAmountCents": 0,
+        "months": 14
+      },
+      "deductions": {
+        "generalCents": 0,
+        "healthCents": 0,
+        "educationCents": 0,
+        "rentCents": 0,
+        "careHomesCents": 0,
+        "invoiceVat15Cents": 0,
+        "invoiceVat30Cents": 0,
+        "invoiceVat35Cents": 0,
+        "invoiceVat100Cents": 0,
+        "pprCents": 0
+      },
+      "irsJovem": {
+        "requested": false,
+        "wasDependentAtYearEnd": null,
+        "qualifyingIncomeYears": null,
+        "taxSituationRegularized": null,
+        "usedRnhOrIfici": false,
+        "usedReturnProgram": false,
+        "incomeHistory": [],
+        "historyConfirmedComplete": false
+      }
+    },
+    "dependents": [
+      {
+        "id": "dependent-1",
+        "ageAtYearEnd": 10,
+        "sharedCustody": false,
+        "alternatingResidence": false,
+        "allocation": "household"
+      }
+    ],
+    "dependentDeductions": {
+      "generalCents": 0,
+      "healthCents": 0,
+      "educationCents": 0,
+      "rentCents": 0,
+      "careHomesCents": 0,
+      "invoiceVat15Cents": 0,
+      "invoiceVat30Cents": 0,
+      "invoiceVat35Cents": 0,
+      "invoiceVat100Cents": 0,
+      "pprCents": 0
+    },
+    "incomeTypes": ["employment"],
+    "primaryIrsJovem": {
+      "requested": false,
+      "wasDependentAtYearEnd": null,
+      "qualifyingIncomeYears": null,
+      "taxSituationRegularized": null,
+      "usedRnhOrIfici": false,
+      "usedReturnProgram": false,
+      "incomeHistory": [],
+      "historyConfirmedComplete": false
+    }
+  },
+  "officialResults": {
+    "grossIncomeCents": 184800,
+    "specificDeductionCents": 184800,
+    "minimumExistenceAllowanceCents": 0,
+    "taxableIncomeCents": 0,
+    "maritalQuotient": 2,
+    "rateDeterminingIncomeCents": 0,
+    "marginalRatePpm": 125000,
+    "grossTaxAfterExemptionCents": 0,
+    "totalTaxCreditsCents": 0,
+    "solidarityTaxCents": 0,
+    "finalTaxDueCents": 0,
+    "withholdingCents": 0,
+    "balanceCents": 0
+  },
+  "notes": "Primeiro caso oficial real, revisto manualmente e totalmente anonimizado.",
+  "sourceNotes": "Categoria A confirmada no Anexo A; casamento, tributação conjunta e um dependente confirmados no Modelo 3; valores esperados transcritos apenas de linhas fiscais diretamente correspondentes. NO_DIRECT_AT_FIELD: rendimento líquido da categoria, quociente monetário para taxa, fases de IRS Jovem, dedução isolada do dependente, créditos potenciais por categoria e limite interno. A demonstração apresenta deduções efetivamente utilizadas, enquanto o trace individualiza créditos potenciais antes do limite pela coleta; apenas o total efetivamente aplicado é comparável. As idades não constam dos recortes e usam valores técnicos neutros sem impacto numa liquidação com coleta zero. O valor agregado de exigência de fatura não foi atribuído a uma taxa setorial sem suporte documental."
+}
