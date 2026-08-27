@@ -1,4 +1,4 @@
-# Taxy 0.4 — Supported Scope
+# Taxy 0.5 — Supported Scope
 
 O scope check ocorre antes do questionário completo. O contrato declarativo está no `supportedScope` da base fiscal de cada ano; `lib/tax_engine/supported_scope.dart` aplica esse contrato e as exclusões especiais fail-closed.
 
@@ -46,3 +46,10 @@ regimes incompatíveis. Anos sem A/B e anos como dependente não consomem o
 período. `qualifyingIncomeYears` existe apenas para migração de dados 0.3; a UX
 0.4 recolhe `incomeHistory`. A liquidação aplica a isenção apenas a Categoria A
 e usa o artigo 22.º para a taxa. Ver [IRS_JOVEM.md](IRS_JOVEM.md).
+
+## Evidência externa
+
+O âmbito fiscal é igual ao da 0.4; a 0.5 não adiciona regras. Existem atualmente
+**0 liquidações oficiais AT anonimizadas** e **21 cálculos de referência manual**.
+Isto não equivale a validação oficial nem autoriza promessas de precisão. Ver
+[AT_VALIDATION.md](AT_VALIDATION.md).

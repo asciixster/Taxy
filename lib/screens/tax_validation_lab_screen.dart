@@ -10,6 +10,7 @@ import '../tax_engine/household_tax_engine.dart';
 import '../tax_engine/irs_jovem_eligibility_engine.dart';
 import '../tax_engine/irs_jovem_tax_engine.dart';
 import '../tax_engine/tax_rules.dart';
+import '../validation/at_validation.dart';
 
 /// Ferramenta developer-only. A navegação para este ecrã é protegida por
 /// [kDebugMode], portanto não surge numa build de produção normal.
@@ -45,6 +46,9 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
     'jovemHistoryA': TextEditingController(text: '2026,A,false,true,false'),
     'jovemHistoryB': TextEditingController(text: '2026,A,false,true,false'),
   };
+  final _officialValues = <String, TextEditingController>{
+    for (final field in AtValidationField.all) field: TextEditingController(),
+  };
   bool _singleParent = false;
   late TaxRuleSet _rules = widget.rules;
   late int _year = widget.rules.taxYear;
@@ -62,6 +66,9 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
   @override
   void dispose() {
     for (final controller in _values.values) {
+      controller.dispose();
+    }
+    for (final controller in _officialValues.values) {
       controller.dispose();
     }
     super.dispose();
@@ -196,6 +203,16 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
             : _filingMode == FilingMode.joint
             ? jovemHousehold!.withIrsJovem!.joint
             : jovemHousehold!.withIrsJovem!.separate);
+    Map<String, int>? comparable;
+    FixtureFailure? comparableFailure;
+    try {
+      comparable = const AtValidationEngine().calculateComparable(
+        _simulation,
+        _rules,
+      );
+    } on AtFixtureValidationException catch (error) {
+      comparableFailure = error.failure;
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Tax Validation Lab')),
       body: ListView(
@@ -395,6 +412,29 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
               ),
           ],
           const SizedBox(height: 20),
+          _section('Comparação manual com a AT'),
+          const Text(
+            'Transcreve apenas valores de uma liquidação oficial já '
+            'anonimizada. Nunca introduzas NIF, nome, morada, IBAN, email, '
+            'telefone ou números de declaração.',
+          ),
+          const SizedBox(height: 8),
+          if (comparableFailure != null)
+            _row(comparableFailure.category.code, comparableFailure.message)
+          else
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('Valores oficiais e diferenças'),
+              subtitle: const Text('Tolerância: 0 cêntimos por campo'),
+              children: [
+                for (final field in AtValidationField.all) ...[
+                  _officialInput(field),
+                  if (_officialMoney(field) case final official?)
+                    _comparisonRow(field, comparable![field]!, official.cents),
+                ],
+              ],
+            ),
+          const SizedBox(height: 20),
           FilledButton.icon(
             onPressed: () => _export(
               result,
@@ -405,6 +445,12 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
             ),
             icon: const Icon(Icons.copy_all_rounded),
             label: const Text('Export validation case'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: comparable == null ? null : _exportOfficialTemplate,
+            icon: const Icon(Icons.fact_check_outlined),
+            label: const Text('Export official fixture template'),
           ),
         ],
       ),
@@ -473,6 +519,48 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
     );
   }
 
+  Money? _officialMoney(String field) {
+    final raw = _officialValues[field]!.text.trim();
+    if (raw.isEmpty) return null;
+    try {
+      return Money.parseEuros(raw);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  Future<void> _exportOfficialTemplate() async {
+    final inputs = Map<String, Object?>.from(_simulation.toJson())
+      ..['id'] = 'anonymous'
+      ..['name'] = 'Official assessment';
+    final payload = const JsonEncoder.withIndent('  ').convert({
+      'fixtureSchemaVersion': OfficialAssessmentFixture.currentSchemaVersion,
+      'source': 'OFFICIAL_AT_ASSESSMENT',
+      'sourceDocumentType': 'IRS_ASSESSMENT_DEMONSTRATION',
+      'anonymousCaseId': 'AT-$_year-CASE-REPLACE',
+      'taxYear': _year,
+      'jurisdiction': _region.name,
+      'civilStatus': _civilStatus.name,
+      'filingMode': _filingMode.name,
+      'rulesVersion': _rules.rulesVersion,
+      'inputs': inputs,
+      'officialResults': {
+        for (final field in AtValidationField.all)
+          field: _officialMoney(field)?.cents,
+      },
+      'notes': 'REVIEWED_ANONYMISED_OFFICIAL_AT_DOCUMENT',
+    });
+    await Clipboard.setData(ClipboardData(text: payload));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Template oficial copiado. Preenche os campos AT e valida a privacidade antes de guardar.',
+        ),
+      ),
+    );
+  }
+
   Widget _input(String label, String key, {bool money = true}) => Padding(
     padding: const EdgeInsets.only(bottom: 10),
     child: TextField(
@@ -499,6 +587,52 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
       onChanged: (_) => setState(() {}),
     ),
   );
+
+  Widget _officialInput(String field) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: TextField(
+      controller: _officialValues[field],
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+        signed: true,
+      ),
+      decoration: InputDecoration(
+        labelText: '${AtValidationField.labels[field]} · AT',
+        suffixText: '€',
+      ),
+      onChanged: (_) => setState(() {}),
+    ),
+  );
+
+  Widget _comparisonRow(String field, int taxyCents, int officialCents) {
+    final difference = taxyCents - officialCents;
+    return Semantics(
+      label:
+          '${AtValidationField.labels[field]}. Taxy ${Money.fromCents(taxyCents).format()}. AT ${Money.fromCents(officialCents).format()}. Diferença ${Money.fromCents(difference).format(signed: true)}.',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: difference == 0
+              ? Colors.green.withValues(alpha: .08)
+              : Theme.of(context).colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AtValidationField.labels[field] ?? field,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            _row('Taxy', Money.fromCents(taxyCents).format()),
+            _row('AT', Money.fromCents(officialCents).format()),
+            _row('Diferença', Money.fromCents(difference).format(signed: true)),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _section(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 10),

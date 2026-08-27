@@ -68,6 +68,122 @@ final class TaxDraft {
     }
   }
 
+  TaxDraft.fromJson(Map<String, Object?> json) {
+    id = json['id'] as String?;
+    name = json['name'] as String? ?? name;
+    taxYear = json['taxYear'] as int? ?? taxYear;
+    age = json['age'] as int? ?? age;
+    civilStatus = CivilStatus.values.byName(
+      json['civilStatus'] as String? ?? civilStatus.name,
+    );
+    dependentAges = (json['dependentAges'] as List? ?? const []).cast<int>();
+    isSingleParentHousehold = json['isSingleParentHousehold'] as bool? ?? false;
+    fullYearResident = json['fullYearResident'] as bool? ?? true;
+    region = TaxRegion.values.byName(json['region'] as String? ?? region.name);
+    filingMode = FilingMode.values.byName(
+      json['filingMode'] as String? ?? filingMode.name,
+    );
+    incomeEntryMode = IncomeEntryMode.values.byName(
+      json['incomeEntryMode'] as String? ?? incomeEntryMode.name,
+    );
+    gross = json['gross'] as String? ?? '';
+    monthly = json['monthly'] as String? ?? '';
+    months = json['months'] as int? ?? 14;
+    withholding = json['withholding'] as String? ?? '';
+    socialSecurity = json['socialSecurity'] as String? ?? '';
+    general = json['general'] as String? ?? '';
+    health = json['health'] as String? ?? '';
+    education = json['education'] as String? ?? '';
+    rent = json['rent'] as String? ?? '';
+    careHomes = json['careHomes'] as String? ?? '';
+    invoiceVat15 = json['invoiceVat15'] as String? ?? '';
+    invoiceVat30 = json['invoiceVat30'] as String? ?? '';
+    invoiceVat35 = json['invoiceVat35'] as String? ?? '';
+    invoiceVat100 = json['invoiceVat100'] as String? ?? '';
+    ppr = json['ppr'] as String? ?? '';
+    incomeTypes = (json['incomeTypes'] as List? ?? const ['employment'])
+        .map((value) => IncomeType.values.byName(value as String))
+        .toSet();
+    hasSpecialSituation = json['hasSpecialSituation'] as bool? ?? false;
+    wantsIrsJovemA = json['wantsIrsJovemA'] as bool? ?? false;
+    wantsIrsJovemB = json['wantsIrsJovemB'] as bool? ?? false;
+    irsJovemHistoryA = json['irsJovemHistoryA'] as String? ?? '';
+    irsJovemHistoryB = json['irsJovemHistoryB'] as String? ?? '';
+    irsJovemHistoryCompleteA =
+        json['irsJovemHistoryCompleteA'] as bool? ?? false;
+    irsJovemHistoryCompleteB =
+        json['irsJovemHistoryCompleteB'] as bool? ?? false;
+    irsJovemRegularizedA = json['irsJovemRegularizedA'] as bool? ?? true;
+    irsJovemRegularizedB = json['irsJovemRegularizedB'] as bool? ?? true;
+    secondaryAge = json['secondaryAge'] as int? ?? 30;
+    secondaryGross = json['secondaryGross'] as String? ?? '';
+    secondaryWithholding = json['secondaryWithholding'] as String? ?? '';
+    secondarySocialSecurity = json['secondarySocialSecurity'] as String? ?? '';
+    secondaryGeneral = json['secondaryGeneral'] as String? ?? '';
+    secondaryHealth = json['secondaryHealth'] as String? ?? '';
+    secondaryEducation = json['secondaryEducation'] as String? ?? '';
+    secondaryRent = json['secondaryRent'] as String? ?? '';
+    secondaryCareHomes = json['secondaryCareHomes'] as String? ?? '';
+    secondaryPpr = json['secondaryPpr'] as String? ?? '';
+    secondaryVat15 = json['secondaryVat15'] as String? ?? '';
+    secondaryVat30 = json['secondaryVat30'] as String? ?? '';
+    secondaryVat35 = json['secondaryVat35'] as String? ?? '';
+    secondaryVat100 = json['secondaryVat100'] as String? ?? '';
+  }
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'taxYear': taxYear,
+    'age': age,
+    'civilStatus': civilStatus.name,
+    'dependentAges': dependentAges,
+    'isSingleParentHousehold': isSingleParentHousehold,
+    'fullYearResident': fullYearResident,
+    'region': region.name,
+    'filingMode': filingMode.name,
+    'incomeEntryMode': incomeEntryMode.name,
+    'gross': gross,
+    'monthly': monthly,
+    'months': months,
+    'withholding': withholding,
+    'socialSecurity': socialSecurity,
+    'general': general,
+    'health': health,
+    'education': education,
+    'rent': rent,
+    'careHomes': careHomes,
+    'invoiceVat15': invoiceVat15,
+    'invoiceVat30': invoiceVat30,
+    'invoiceVat35': invoiceVat35,
+    'invoiceVat100': invoiceVat100,
+    'ppr': ppr,
+    'incomeTypes': incomeTypes.map((value) => value.name).toList(),
+    'hasSpecialSituation': hasSpecialSituation,
+    'wantsIrsJovemA': wantsIrsJovemA,
+    'wantsIrsJovemB': wantsIrsJovemB,
+    'irsJovemHistoryA': irsJovemHistoryA,
+    'irsJovemHistoryB': irsJovemHistoryB,
+    'irsJovemHistoryCompleteA': irsJovemHistoryCompleteA,
+    'irsJovemHistoryCompleteB': irsJovemHistoryCompleteB,
+    'irsJovemRegularizedA': irsJovemRegularizedA,
+    'irsJovemRegularizedB': irsJovemRegularizedB,
+    'secondaryAge': secondaryAge,
+    'secondaryGross': secondaryGross,
+    'secondaryWithholding': secondaryWithholding,
+    'secondarySocialSecurity': secondarySocialSecurity,
+    'secondaryGeneral': secondaryGeneral,
+    'secondaryHealth': secondaryHealth,
+    'secondaryEducation': secondaryEducation,
+    'secondaryRent': secondaryRent,
+    'secondaryCareHomes': secondaryCareHomes,
+    'secondaryPpr': secondaryPpr,
+    'secondaryVat15': secondaryVat15,
+    'secondaryVat30': secondaryVat30,
+    'secondaryVat35': secondaryVat35,
+    'secondaryVat100': secondaryVat100,
+  };
+
   static String _raw(Money money) =>
       '${money.cents ~/ 100},${(money.cents.abs() % 100).toString().padLeft(2, '0')}';
 

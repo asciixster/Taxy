@@ -1,32 +1,29 @@
 {
-  "schemaVersion": 1,
-  "name": "REPLACE_WITH_ANONYMOUS_ID",
+  "fixtureSchemaVersion": 2,
   "source": "OFFICIAL_AT_ASSESSMENT",
+  "sourceDocumentType": "IRS_ASSESSMENT_DEMONSTRATION",
+  "anonymousCaseId": "AT-2026-CASE-001",
+  "taxYear": 2026,
+  "jurisdiction": "continent",
+  "civilStatus": "single",
+  "filingMode": "separate",
   "rulesVersion": "2026.4.0",
-  "inputs": {
-    "id": "anonymous",
-    "name": "Official assessment",
-    "createdAt": "2026-01-01T00:00:00.000Z",
-    "updatedAt": "2026-01-01T00:00:00.000Z",
-    "profile": "REPLACE_WITH_FULL_TaxpayerProfile_JSON",
-    "income": "REPLACE_WITH_FULL_EmploymentIncome_JSON",
-    "deductions": "REPLACE_WITH_FULL_DeductionInput_JSON",
-    "situations": "REPLACE_WITH_FULL_TaxSituationFlags_JSON",
-    "secondaryTaxpayer": "NULL_OR_FULL_TaxpayerInput_JSON",
-    "dependents": "FULL_Dependent_JSON_LIST",
-    "dependentDeductions": "FULL_DeductionInput_JSON",
-    "incomeTypes": ["employment"],
-    "primaryIrsJovem": "FULL_IrsJovemAnswers_JSON"
+  "inputs": "REPLACE_WITH_FULL_ANONYMISED_TaxSimulation_JSON",
+  "officialResults": {
+    "grossIncomeCents": null,
+    "specificDeductionCents": null,
+    "netIncomeCents": null,
+    "minimumExistenceCents": null,
+    "taxableIncomeCents": null,
+    "quotientCents": null,
+    "grossTaxCents": null,
+    "exemptIncomeCents": null,
+    "exemptTaxCents": null,
+    "solidarityTaxCents": null,
+    "taxCreditsCents": null,
+    "taxDueCents": null,
+    "withholdingCents": null,
+    "balanceCents": null
   },
-  "expected": {
-    "taxableIncomeCents": "REPLACE_WITH_INTEGER",
-    "grossTaxCents": "REPLACE_WITH_INTEGER",
-    "deductionsCents": "REPLACE_WITH_INTEGER",
-    "exemptIncomeCents": "REPLACE_WITH_INTEGER",
-    "taxDueCents": "REPLACE_WITH_INTEGER",
-    "withholdingCents": "REPLACE_WITH_INTEGER",
-    "balanceCents": "REPLACE_WITH_INTEGER"
-  },
-  "documentedRoundingCents": {},
-  "notes": "REPLACE_WITH_SOURCE_AND_REVIEW_NOTES"
+  "notes": "Documento AT revisto manualmente; sem dados pessoais."
 }

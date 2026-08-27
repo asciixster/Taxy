@@ -96,4 +96,31 @@ void main() {
       QuestionSection.eligibility,
     );
   });
+
+  test('rascunho preserva todos os grupos relevantes num round-trip', () {
+    final original = TaxDraft()
+      ..taxYear = 2025
+      ..age = 41
+      ..civilStatus = CivilStatus.married
+      ..region = TaxRegion.continent
+      ..filingMode = FilingMode.joint
+      ..dependentAges = [2, 10]
+      ..gross = '50000,25'
+      ..withholding = '7000,10'
+      ..general = '1200,00'
+      ..invoiceVat100 = '25,30'
+      ..wantsIrsJovemA = true
+      ..irsJovemHistoryA = '2025,A,false,true,false'
+      ..irsJovemHistoryCompleteA = true
+      ..secondaryAge = 39
+      ..secondaryGross = '20000,00'
+      ..secondaryPpr = '1500,00';
+
+    final restored = TaxDraft.fromJson(original.toJson());
+
+    expect(restored.toJson(), original.toJson());
+    expect(restored.dependentAges, [2, 10]);
+    expect(restored.civilStatus, CivilStatus.married);
+    expect(restored.filingMode, FilingMode.joint);
+  });
 }

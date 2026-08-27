@@ -1,4 +1,4 @@
-# Tax rules — Taxy 0.4
+# Tax rules — Taxy 0.5
 
 Todos os valores executáveis são carregados de ficheiros versionados. Cêntimos e `ppm` são as únicas unidades do motor.
 
@@ -62,3 +62,8 @@ determinação da taxa e a coleta correspondente é retirada proporcionalmente.
 Fontes: [artigo 12.º-B](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx), [artigo 22.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs22.aspx), [folheto AT IRS Jovem 2025](https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Folhetos_informativos/Documents/Folheto_IRS_jovem_2025.pdf) e [Newsletter AT janeiro 2026](https://info.portaldasfinancas.gov.pt/pt/at/Divulgacao/publicacoes_internas/Newsletter_AT/Documents/Newsletter-39-janeiro-2026.pdf).
 
 URLs completas residem nos descritores. Alterações exigem versão, data, testes e revisão humana.
+
+A 0.5 não altera valores nem expande o scope fiscal. Formaliza a validação
+externa e a sequência de cálculo documentada em
+[ROUNDING_POLICY.md](ROUNDING_POLICY.md). A inexistência atual de liquidações AT
+anonimizadas permanece explícita em [AT_VALIDATION_REPORT.md](AT_VALIDATION_REPORT.md).

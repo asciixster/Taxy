@@ -1,4 +1,4 @@
-# Tax Engine — matriz de testes 0.4
+# Tax Engine — matriz de testes 0.5
 
 A suite executa mais de 200 testes e compara cêntimos inteiros.
 
@@ -31,11 +31,27 @@ existência. Casais cobrem nenhum/A/B/ambos em separada e conjunta.
 
 Continuam cobertos mínimo de existência, dedução específica, solidariedade, limites, deduções isoladas, IVA, serialização e fail-safe. UI/question engine cobrem scope check, regiões 2025, opções conjugais, segundo titular, tipos de rendimento, ausência de “outras deduções” e educação standard.
 
-## Fixtures oficiais
+## Fixtures oficiais e validação 0.5
 
-O runner descobre fixtures automaticamente e exige zero cêntimos de diferença por defeito em rendimento coletável, coleta, deduções, rendimento isento, imposto, retenções e saldo. Uma exceção de arredondamento é local ao campo e exige nota; não existe tolerância global.
+O runner descobre fixtures automaticamente e exige zero cêntimos de diferença
+em todos os campos presentes. Rendimento coletável, coleta, deduções, imposto,
+retenções e saldo são obrigatórios. Não existem tolerâncias globais ou locais.
 
-O loader só aceita `source: OFFICIAL_AT_ASSESSMENT` e rejeita fixtures incompletas. O exemplo não é executado como liquidação real.
+Testes adicionais cobrem:
+
+- schema v2 e metadados coerentes com os inputs;
+- fonte/documento oficial e identificador anónimo;
+- rejeição recursiva de NIF, IBAN, email, telefone, morada e identificadores;
+- ausência de mutação/anonimização automática;
+- diferença de 0,01 € como falha `UNKNOWN` até triagem humana;
+- versões de regras incompatíveis e outputs obrigatórios em falta;
+- contagens absolutas e relatório vazio sem alegações de precisão;
+- gravação, recuperação e eliminação de rascunhos;
+- home com retoma, ecrã compacto/dark mode e Validation Lab AT.
+
+O loader só aceita `source: OFFICIAL_AT_ASSESSMENT` e tipos de documento AT
+documentados. O exemplo não é executado como liquidação real. Nesta release:
+**0 fixtures oficiais**, **21 referências manuais**.
 
 ## Referências independentes
 
