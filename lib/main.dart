@@ -154,21 +154,37 @@ final class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rules = ref.watch(rulesProvider);
     final simulations = ref.watch(simulationsProvider);
+    final savedDraft = ref.watch(simulationDraftProvider);
     return Scaffold(
       body: SafeArea(
         child: rules.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _FatalError(
-            message: 'Não foi possível validar as regras fiscais: $error',
+          error: (_, _) => const _FatalError(
+            message: 'Não foi possível carregar as regras fiscais com segurança. Fecha e volta a abrir a aplicação.',
           ),
-          data: (ruleSet) => simulations.when(
+          data: (ruleSet) => savedDraft.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => _FatalError(
-              message: 'Não foi possível abrir as simulações: $error',
+            error: (_, _) => simulations.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => const _FatalError(
+                message: 'Não foi possível abrir os dados guardados neste dispositivo.',
+              ),
+              data: (items) => items.isEmpty
+                  ? _Welcome(rules: ruleSet, hasDraft: false)
+                  : _DashboardRuleLoader(simulations: items, hasDraft: false),
             ),
-            data: (items) => items.isEmpty
-                ? _Welcome(rules: ruleSet)
-                : _DashboardRuleLoader(simulations: items),
+            data: (draft) => simulations.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => const _FatalError(
+                message: 'Não foi possível abrir as simulações guardadas neste dispositivo.',
+              ),
+              data: (items) => items.isEmpty
+                  ? _Welcome(rules: ruleSet, hasDraft: draft != null)
+                  : _DashboardRuleLoader(
+                      simulations: items,
+                      hasDraft: draft != null,
+                    ),
+            ),
           ),
         ),
       ),
@@ -177,9 +193,13 @@ final class HomeScreen extends ConsumerWidget {
 }
 
 final class _DashboardRuleLoader extends ConsumerWidget {
-  const _DashboardRuleLoader({required this.simulations});
+  const _DashboardRuleLoader({
+    required this.simulations,
+    required this.hasDraft,
+  });
 
   final List<TaxSimulation> simulations;
+  final bool hasDraft;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -189,17 +209,22 @@ final class _DashboardRuleLoader extends ConsumerWidget {
     );
     return rules.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _FatalError(
-        message: 'Não foi possível validar as regras da simulação: $error',
+      error: (_, _) => const _FatalError(
+        message: 'Não foi possível carregar as regras desta simulação com segurança.',
       ),
-      data: (value) => _Dashboard(rules: value, simulations: simulations),
+      data: (value) => _Dashboard(
+        rules: value,
+        simulations: simulations,
+        hasDraft: hasDraft,
+      ),
     );
   }
 }
 
 final class _Welcome extends StatelessWidget {
-  const _Welcome({required this.rules});
+  const _Welcome({required this.rules, required this.hasDraft});
   final TaxRuleSet rules;
+  final bool hasDraft;
 
   @override
   Widget build(BuildContext context) => Stack(
@@ -274,7 +299,9 @@ final class _Welcome extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: () => _openWizard(context, rules),
                   icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('Começar simulação'),
+                  label: Text(
+                    hasDraft ? 'Retomar simulação' : 'Começar simulação',
+                  ),
                 ),
                 Center(
                   child: TextButton(
@@ -297,9 +324,14 @@ final class _Welcome extends StatelessWidget {
 }
 
 final class _Dashboard extends ConsumerWidget {
-  const _Dashboard({required this.rules, required this.simulations});
+  const _Dashboard({
+    required this.rules,
+    required this.simulations,
+    required this.hasDraft,
+  });
   final TaxRuleSet rules;
   final List<TaxSimulation> simulations;
+  final bool hasDraft;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -367,6 +399,14 @@ final class _Dashboard extends ConsumerWidget {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
+                if (hasDraft) ...[
+                  const SizedBox(height: 14),
+                  OutlinedButton.icon(
+                    onPressed: () => _openWizard(context, rules),
+                    icon: const Icon(Icons.restore_rounded),
+                    label: const Text('Retomar simulação em curso'),
+                  ),
+                ],
                 const SizedBox(height: 22),
                 _ResultHero(
                   result: result,
@@ -450,7 +490,11 @@ final class _Dashboard extends ConsumerWidget {
                       ),
                     ),
                     TextButton.icon(
-                      onPressed: () => _openWizard(context, rules),
+                      onPressed: () => _openWizard(
+                        context,
+                        rules,
+                        resumeDraft: false,
+                      ),
                       icon: const Icon(Icons.add_rounded),
                       label: const Text('Nova'),
                     ),
@@ -635,11 +679,16 @@ Future<void> _openWizard(
   BuildContext context,
   TaxRuleSet rules, {
   TaxSimulation? source,
+  bool resumeDraft = true,
 }) async {
   await Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => WizardScreen(rules: rules, source: source),
+      builder: (_) => WizardScreen(
+        rules: rules,
+        source: source,
+        resumeDraft: resumeDraft,
+      ),
     ),
   );
 }
@@ -658,25 +707,71 @@ void _openResult(
 }
 
 final class WizardScreen extends ConsumerStatefulWidget {
-  const WizardScreen({super.key, required this.rules, this.source});
+  const WizardScreen({
+    super.key,
+    required this.rules,
+    this.source,
+    this.resumeDraft = true,
+  });
   final TaxRuleSet rules;
   final TaxSimulation? source;
+  final bool resumeDraft;
 
   @override
   ConsumerState<WizardScreen> createState() => _WizardScreenState();
 }
 
 final class _WizardScreenState extends ConsumerState<WizardScreen> {
-  late final TaxDraft draft = TaxDraft(source: widget.source);
+  late TaxDraft draft;
   final engine = const QuestionEngine();
   int index = 0;
   String? error;
+  bool restoring = true;
+
+  @override
+  void initState() {
+    super.initState();
+    draft = TaxDraft(source: widget.source);
+    if (widget.source != null || !widget.resumeDraft) {
+      restoring = false;
+    } else {
+      _restoreDraft();
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final saved = await ref.read(repositoryProvider).loadDraft();
+      if (!mounted) return;
+      setState(() {
+        if (saved != null && saved['schemaVersion'] == 1) {
+          draft = TaxDraft.fromJson(
+            (saved['draft'] as Map).cast<String, Object?>(),
+          );
+          index = (saved['stepIndex'] as int? ?? 0).clamp(
+            0,
+            engine.steps(draft).length - 1,
+          );
+        }
+        restoring = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        restoring = false;
+        error = 'Não foi possível recuperar o rascunho. Os dados guardados não foram alterados.';
+      });
+    }
+  }
 
   List<QuestionStep> get steps => engine.steps(draft);
   QuestionStep get step => steps[index.clamp(0, steps.length - 1)];
 
   @override
   Widget build(BuildContext context) {
+    if (restoring) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final current = step;
     final progress = (index + 1) / steps.length;
     return Scaffold(
@@ -1180,16 +1275,19 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
         ),
       ],
     ),
-    'review' => _ReviewCard(draft: draft),
+    'review' => _ReviewCard(draft: draft, onEdit: _editSection),
     _ => const SizedBox.shrink(),
   };
 
-  void _back() => setState(() {
-    error = null;
-    index = (index - 1).clamp(0, steps.length - 1);
-  });
+  Future<void> _back() async {
+    setState(() {
+      error = null;
+      index = (index - 1).clamp(0, steps.length - 1);
+    });
+    await _persistDraft();
+  }
 
-  void _next() {
+  Future<void> _next() async {
     final validation = _validate(step.id);
     if (validation != null) {
       setState(() => error = validation);
@@ -1199,50 +1297,80 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       error = null;
       index = (index + 1).clamp(0, steps.length - 1);
     });
+    await _persistDraft();
+  }
+
+  Future<void> _persistDraft() async {
+    if (widget.source != null) return;
+    try {
+      await ref.read(repositoryProvider).saveDraft({
+        'schemaVersion': 1,
+        'stepIndex': index,
+        'savedAt': DateTime.now().toUtc().toIso8601String(),
+        'draft': draft.toJson(),
+      });
+      ref.invalidate(simulationDraftProvider);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        error = 'Não foi possível guardar o progresso neste dispositivo. Podes continuar, mas confirma o armazenamento antes de fechar.';
+      });
+    }
+  }
+
+  void _editSection(QuestionSection section) {
+    final target = steps.indexWhere(
+      (candidate) => candidate.section == section,
+    );
+    if (target < 0) return;
+    setState(() {
+      error = null;
+      index = target;
+    });
   }
 
   String? _validate(String id) {
     if (id == 'residency' && !draft.fullYearResident) {
-      return 'Residência parcial ainda não está validada.';
+      return 'Ainda não suportado: residência fiscal parcial.';
     }
     if (id == 'region' &&
         draft.taxYear == 2025 &&
         draft.region != TaxRegion.continent) {
-      return 'Para 2025, Madeira e Açores permanecem NEEDS_VERIFICATION.';
+      return 'Ainda não suportado: Madeira e Açores em 2025 permanecem NEEDS_VERIFICATION.';
     }
     if (id == 'incomeTypes' &&
         (draft.incomeTypes.isEmpty ||
             draft.incomeTypes.any((type) => type != IncomeType.employment))) {
-      return 'Neste momento só conseguimos calcular quando existe exclusivamente trabalho dependente.';
+      return 'Ainda não suportado: só conseguimos calcular quando existe exclusivamente trabalho dependente.';
     }
     if (id == 'specialSituations' && draft.hasSpecialSituation) {
-      return 'Este caso exige validação adicional e não será aproximado.';
+      return 'Ainda não suportado: este caso exige validação adicional e não será aproximado.';
     }
     if (id == 'irsJovemHistory') {
       if (draft.wantsIrsJovemA &&
           (draft.irsJovemHistoryA.trim().isEmpty ||
               !draft.irsJovemHistoryCompleteA)) {
-        return 'Falta o histórico anual completo do titular A.';
+        return 'Dados insuficientes: falta o histórico anual completo do titular A.';
       }
       if (draft.wantsIrsJovemB &&
           (draft.irsJovemHistoryB.trim().isEmpty ||
               !draft.irsJovemHistoryCompleteB)) {
-        return 'Falta o histórico anual completo do titular B.';
+        return 'Dados insuficientes: falta o histórico anual completo do titular B.';
       }
     }
     if (id == 'singleParent' && !draft.isSingleParentHousehold) {
-      return 'Com dependentes, só está validado o agregado monoparental standard.';
+      return 'Ainda não suportado: com dependentes, só está validado o agregado monoparental standard.';
     }
     if (id == 'gross') {
       final value = draft.incomeEntryMode == IncomeEntryMode.annual
           ? draft.gross
           : draft.monthly;
       if (_money(value).cents <= 0) {
-        return 'Indica um rendimento superior a zero.';
+        return 'Dados inválidos: indica um rendimento superior a zero.';
       }
     }
     if (id == 'secondaryGross' && _money(draft.secondaryGross).cents < 0) {
-      return 'O rendimento do segundo titular não pode ser negativo.';
+      return 'Dados inválidos: o rendimento do segundo titular não pode ser negativo.';
     }
     return null;
   }
@@ -1277,101 +1405,118 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   Future<void> _calculate() async {
-    final now = DateTime.now();
-    final gross = draft.incomeEntryMode == IncomeEntryMode.annual
-        ? _money(draft.gross)
-        : Money.fromCents(_money(draft.monthly).cents * draft.months);
-    final selectedRules = await ref
-        .read(taxRuleRepositoryProvider)
-        .load(draft.taxYear, draft.region.name);
-    final simulation = TaxSimulation(
-      id: widget.source?.id ?? now.microsecondsSinceEpoch.toString(),
-      name: widget.source?.name ?? 'IRS ${draft.taxYear}',
-      createdAt: widget.source?.createdAt ?? now,
-      updatedAt: now,
-      profile: TaxpayerProfile(
-        taxYear: draft.taxYear,
-        age: draft.age,
-        civilStatus: draft.civilStatus,
-        dependentAges: [...draft.dependentAges],
-        fullYearResident: draft.fullYearResident,
-        region: draft.region,
-        filingMode: draft.filingMode,
-        isSingleParentHousehold: draft.isSingleParentHousehold,
-      ),
-      income: EmploymentIncome(
-        entryMode: draft.incomeEntryMode,
-        gross: gross,
-        withholding: _money(draft.withholding),
-        socialSecurity: _money(draft.socialSecurity),
-        monthlyAmount: _money(draft.monthly),
-        months: draft.months,
-      ),
-      deductions: DeductionInput(
-        general: _money(draft.general),
-        health: _money(draft.health),
-        education: _money(draft.education),
-        rent: _money(draft.rent),
-        careHomes: _money(draft.careHomes),
-        invoiceVat15: _money(draft.invoiceVat15),
-        invoiceVat30: _money(draft.invoiceVat30),
-        invoiceVat35: _money(draft.invoiceVat35),
-        invoiceVat100: _money(draft.invoiceVat100),
-        ppr: _money(draft.ppr),
-      ),
-      primaryIrsJovem: IrsJovemAnswers(
-        requested: draft.wantsIrsJovemA,
-        taxSituationRegularized: draft.irsJovemRegularizedA,
-        historyConfirmedComplete: draft.irsJovemHistoryCompleteA,
-        incomeHistory: _irsHistory(draft.irsJovemHistoryA),
-      ),
-      secondaryTaxpayer: draft.civilStatus == CivilStatus.single
-          ? null
-          : TaxpayerInput(
-              id: 'B',
-              age: draft.secondaryAge,
-              income: EmploymentIncome(
-                entryMode: IncomeEntryMode.annual,
-                gross: _money(draft.secondaryGross),
-                withholding: _money(draft.secondaryWithholding),
-                socialSecurity: _money(draft.secondarySocialSecurity),
+    try {
+      final now = DateTime.now();
+      final gross = draft.incomeEntryMode == IncomeEntryMode.annual
+          ? _money(draft.gross)
+          : Money.fromCents(_money(draft.monthly).cents * draft.months);
+      final selectedRules = await ref
+          .read(taxRuleRepositoryProvider)
+          .load(draft.taxYear, draft.region.name);
+      final simulation = TaxSimulation(
+        id: widget.source?.id ?? now.microsecondsSinceEpoch.toString(),
+        name: widget.source?.name ?? 'IRS ${draft.taxYear}',
+        createdAt: widget.source?.createdAt ?? now,
+        updatedAt: now,
+        profile: TaxpayerProfile(
+          taxYear: draft.taxYear,
+          age: draft.age,
+          civilStatus: draft.civilStatus,
+          dependentAges: [...draft.dependentAges],
+          fullYearResident: draft.fullYearResident,
+          region: draft.region,
+          filingMode: draft.filingMode,
+          isSingleParentHousehold: draft.isSingleParentHousehold,
+        ),
+        income: EmploymentIncome(
+          entryMode: draft.incomeEntryMode,
+          gross: gross,
+          withholding: _money(draft.withholding),
+          socialSecurity: _money(draft.socialSecurity),
+          monthlyAmount: _money(draft.monthly),
+          months: draft.months,
+        ),
+        deductions: DeductionInput(
+          general: _money(draft.general),
+          health: _money(draft.health),
+          education: _money(draft.education),
+          rent: _money(draft.rent),
+          careHomes: _money(draft.careHomes),
+          invoiceVat15: _money(draft.invoiceVat15),
+          invoiceVat30: _money(draft.invoiceVat30),
+          invoiceVat35: _money(draft.invoiceVat35),
+          invoiceVat100: _money(draft.invoiceVat100),
+          ppr: _money(draft.ppr),
+        ),
+        primaryIrsJovem: IrsJovemAnswers(
+          requested: draft.wantsIrsJovemA,
+          taxSituationRegularized: draft.irsJovemRegularizedA,
+          historyConfirmedComplete: draft.irsJovemHistoryCompleteA,
+          incomeHistory: _irsHistory(draft.irsJovemHistoryA),
+        ),
+        secondaryTaxpayer: draft.civilStatus == CivilStatus.single
+            ? null
+            : TaxpayerInput(
+                id: 'B',
+                age: draft.secondaryAge,
+                income: EmploymentIncome(
+                  entryMode: IncomeEntryMode.annual,
+                  gross: _money(draft.secondaryGross),
+                  withholding: _money(draft.secondaryWithholding),
+                  socialSecurity: _money(draft.secondarySocialSecurity),
+                ),
+                deductions: DeductionInput(
+                  general: _money(draft.secondaryGeneral),
+                  health: _money(draft.secondaryHealth),
+                  education: _money(draft.secondaryEducation),
+                  rent: _money(draft.secondaryRent),
+                  careHomes: _money(draft.secondaryCareHomes),
+                  ppr: _money(draft.secondaryPpr),
+                  invoiceVat15: _money(draft.secondaryVat15),
+                  invoiceVat30: _money(draft.secondaryVat30),
+                  invoiceVat35: _money(draft.secondaryVat35),
+                  invoiceVat100: _money(draft.secondaryVat100),
+                ),
+                irsJovem: IrsJovemAnswers(
+                  requested: draft.wantsIrsJovemB,
+                  taxSituationRegularized: draft.irsJovemRegularizedB,
+                  historyConfirmedComplete: draft.irsJovemHistoryCompleteB,
+                  incomeHistory: _irsHistory(draft.irsJovemHistoryB),
+                ),
               ),
-              deductions: DeductionInput(
-                general: _money(draft.secondaryGeneral),
-                health: _money(draft.secondaryHealth),
-                education: _money(draft.secondaryEducation),
-                rent: _money(draft.secondaryRent),
-                careHomes: _money(draft.secondaryCareHomes),
-                ppr: _money(draft.secondaryPpr),
-                invoiceVat15: _money(draft.secondaryVat15),
-                invoiceVat30: _money(draft.secondaryVat30),
-                invoiceVat35: _money(draft.secondaryVat35),
-                invoiceVat100: _money(draft.secondaryVat100),
-              ),
-              irsJovem: IrsJovemAnswers(
-                requested: draft.wantsIrsJovemB,
-                taxSituationRegularized: draft.irsJovemRegularizedB,
-                historyConfirmedComplete: draft.irsJovemHistoryCompleteB,
-                incomeHistory: _irsHistory(draft.irsJovemHistoryB),
-              ),
-            ),
-      dependents: [
-        for (var i = 0; i < draft.dependentAges.length; i++)
-          Dependent(id: 'dependent-$i', ageAtYearEnd: draft.dependentAges[i]),
-      ],
-      incomeTypes: {...draft.incomeTypes},
-      situations: TaxSituationFlags(
-        irsJovem: draft.wantsIrsJovemA || draft.wantsIrsJovemB,
-        otherSpecialSituation: draft.hasSpecialSituation,
-      ),
-    );
-    await ref.read(repositoryProvider).save(simulation);
-    ref.invalidate(simulationsProvider);
-    if (!mounted) return;
-    await AppNavigation.replace(
-      context,
-      ResultScreen(simulation: simulation, rules: selectedRules),
-    );
+        dependents: [
+          for (var i = 0; i < draft.dependentAges.length; i++)
+            Dependent(id: 'dependent-$i', ageAtYearEnd: draft.dependentAges[i]),
+        ],
+        incomeTypes: {...draft.incomeTypes},
+        situations: TaxSituationFlags(
+          irsJovem: draft.wantsIrsJovemA || draft.wantsIrsJovemB,
+          otherSpecialSituation: draft.hasSpecialSituation,
+        ),
+      );
+      await ref.read(repositoryProvider).save(simulation);
+      if (widget.source == null) {
+        await ref.read(repositoryProvider).clearDraft();
+        ref.invalidate(simulationDraftProvider);
+      }
+      ref.invalidate(simulationsProvider);
+      if (!mounted) return;
+      await AppNavigation.replace(
+        context,
+        ResultScreen(simulation: simulation, rules: selectedRules),
+      );
+    } on FormatException {
+      if (!mounted) return;
+      setState(() {
+        error =
+            'Dados inválidos: revê os valores monetários antes de calcular.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        error = 'Não foi possível concluir o cálculo com segurança. O teu rascunho continua guardado; tenta novamente.';
+      });
+    }
   }
 
   String _incomeTypeLabel(IncomeType type) => switch (type) {
@@ -1451,6 +1596,21 @@ final class ResultScreen extends StatelessWidget {
                         ),
                       ] else
                         Text(singleJovem.eligibility.reasons.join(' ')),
+                      ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding: const EdgeInsets.only(bottom: 8),
+                        title: const Text('Porque sou elegível?'),
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              singleJovem.eligibility.reasons.isEmpty
+                                  ? 'A elegibilidade foi determinada pelo histórico anual, idade, residência e situação tributária indicados.'
+                                  : singleJovem.eligibility.reasons.join(' '),
+                            ),
+                          ),
+                        ],
+                      ),
                     ] else if (householdJovem != null) ...[
                       Text(
                         'Separada sem IRS Jovem: ${householdJovem.normal.separate!.taxDue.format()}',
@@ -1471,6 +1631,20 @@ final class ResultScreen extends StatelessWidget {
                         ),
                       ] else
                         Text(householdJovem.warnings.join(' ')),
+                      ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding: const EdgeInsets.only(bottom: 8),
+                        title: const Text('Porque somos elegíveis?'),
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Titular A: ${householdJovem.primaryEligibility.reasons.join(' ')}\n'
+                              'Titular B: ${householdJovem.secondaryEligibility.reasons.join(' ')}',
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                     const SizedBox(height: 8),
                     const Text(
@@ -1613,20 +1787,18 @@ final class ResultScreen extends StatelessWidget {
               icon: const Icon(Icons.auto_awesome_outlined),
               label: const Text('Ver oportunidades'),
             ),
-            const SizedBox(height: 28),
-            Text(
-              'Como chegámos aqui',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 5),
-            Text(
-              'Toca em cada linha para perceber o que significa.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             Card(
-              child: Column(
+              child: ExpansionTile(
+                shape: const Border(),
+                collapsedShape: const Border(),
+                title: const Text(
+                  'Ver cálculo detalhado',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                subtitle: const Text('Valores e explicações linha a linha'),
                 children: [
+                  const Divider(height: 1),
                   for (var i = 0; i < result.breakdown.length; i++) ...[
                     ExpansionTile(
                       shape: const Border(),
@@ -2338,8 +2510,9 @@ final class _MoneyField extends StatelessWidget {
 }
 
 final class _ReviewCard extends StatelessWidget {
-  const _ReviewCard({required this.draft});
+  const _ReviewCard({required this.draft, required this.onEdit});
   final TaxDraft draft;
+  final ValueChanged<QuestionSection> onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -2347,22 +2520,141 @@ final class _ReviewCard extends StatelessWidget {
     final gross = draft.incomeEntryMode == IncomeEntryMode.annual
         ? safe(draft.gross)
         : '${safe(draft.monthly)} × ${draft.months}';
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _ReviewRow('Ano fiscal', '${draft.taxYear}'),
-            _ReviewRow('Idade', '${draft.age} anos'),
-            _ReviewRow('Dependentes', '${draft.dependentAges.length}'),
-            _ReviewRow('Rendimento bruto', gross),
-            _ReviewRow('Retenção', safe(draft.withholding)),
-            _ReviewRow('Segurança Social', safe(draft.socialSecurity)),
+    Money read(String value) {
+      try {
+        return Money.parseEuros(value);
+      } on FormatException {
+        return Money.zero;
+      }
+    }
+
+    final deductionsA = [
+      draft.general,
+      draft.health,
+      draft.education,
+      draft.rent,
+      draft.careHomes,
+      draft.invoiceVat15,
+      draft.invoiceVat30,
+      draft.invoiceVat35,
+      draft.invoiceVat100,
+      draft.ppr,
+    ].fold(Money.zero, (total, value) => total + read(value));
+    final deductionsB = [
+      draft.secondaryGeneral,
+      draft.secondaryHealth,
+      draft.secondaryEducation,
+      draft.secondaryRent,
+      draft.secondaryCareHomes,
+      draft.secondaryVat15,
+      draft.secondaryVat30,
+      draft.secondaryVat35,
+      draft.secondaryVat100,
+      draft.secondaryPpr,
+    ].fold(Money.zero, (total, value) => total + read(value));
+    return Column(
+      children: [
+        _ReviewSection(
+          title: 'Âmbito fiscal',
+          onEdit: () => onEdit(QuestionSection.eligibility),
+          rows: [
+            ('Ano e região', '${draft.taxYear} · ${draft.region.name}'),
+            (
+              'Agregado',
+              '${draft.civilStatus.name} · ${draft.filingMode.name}',
+            ),
+            (
+              'IRS Jovem',
+              draft.wantsIrsJovemA || draft.wantsIrsJovemB
+                  ? 'A verificar'
+                  : 'Não pedido',
+            ),
           ],
         ),
-      ),
+        const SizedBox(height: 10),
+        _ReviewSection(
+          title: 'Perfil e agregado',
+          onEdit: () => onEdit(QuestionSection.profile),
+          rows: [
+            ('Titular A', '${draft.age} anos'),
+            if (draft.civilStatus != CivilStatus.single)
+              ('Titular B', '${draft.secondaryAge} anos'),
+            (
+              'Dependentes',
+              draft.dependentAges.isEmpty
+                  ? 'Nenhum'
+                  : draft.dependentAges.map((age) => '$age anos').join(', '),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _ReviewSection(
+          title: 'Rendimentos e retenções',
+          onEdit: () => onEdit(QuestionSection.income),
+          rows: [
+            ('Rendimento A', gross),
+            ('Retenção A', safe(draft.withholding)),
+            ('Segurança Social A', safe(draft.socialSecurity)),
+            if (draft.civilStatus != CivilStatus.single) ...[
+              ('Rendimento B', safe(draft.secondaryGross)),
+              ('Retenção B', safe(draft.secondaryWithholding)),
+              ('Segurança Social B', safe(draft.secondarySocialSecurity)),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
+        _ReviewSection(
+          title: 'Deduções introduzidas',
+          onEdit: () => onEdit(QuestionSection.deductions),
+          rows: [
+            ('Total titular A', deductionsA.format()),
+            if (draft.civilStatus != CivilStatus.single)
+              ('Total titular B', deductionsB.format()),
+            ('Educação', 'Apenas cenário standard'),
+          ],
+        ),
+      ],
     );
   }
+}
+
+final class _ReviewSection extends StatelessWidget {
+  const _ReviewSection({
+    required this.title,
+    required this.rows,
+    required this.onEdit,
+  });
+
+  final String title;
+  final List<(String, String)> rows;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(18, 12, 10, 14),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined, size: 17),
+                label: const Text('Editar'),
+              ),
+            ],
+          ),
+          for (final row in rows) _ReviewRow(row.$1, row.$2),
+        ],
+      ),
+    ),
+  );
 }
 
 final class _ReviewRow extends StatelessWidget {
@@ -2524,14 +2816,17 @@ final class _PreviewCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text(
-              'A tua estimativa',
-              style: TextStyle(
-                color: Colors.white70,
-                fontWeight: FontWeight.w700,
+            const Expanded(
+              child: Text(
+                'A tua estimativa',
+                maxLines: 2,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             Container(
               width: 34,
               height: 34,
@@ -2819,7 +3114,7 @@ final class _TrustRow extends StatelessWidget {
     children: [
       Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
       const SizedBox(width: 10),
-      Text(text),
+      Flexible(child: Text(text)),
     ],
   );
 }

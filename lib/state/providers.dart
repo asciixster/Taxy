@@ -29,3 +29,7 @@ final rulesProvider = FutureProvider<TaxRuleSet>(
 final simulationsProvider = FutureProvider<List<TaxSimulation>>(
   (ref) => ref.watch(repositoryProvider).list(),
 );
+
+final simulationDraftProvider = FutureProvider<Map<String, Object?>?>(
+  (ref) => ref.watch(repositoryProvider).loadDraft(),
+);

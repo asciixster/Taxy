@@ -10,9 +10,9 @@ final class ModuleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = TaxyModuleRegistry.byId('irs');
-    final coming = TaxyModuleRegistry.modules.where(
-      (module) => !module.isActive,
-    );
+    final comingCount = TaxyModuleRegistry.modules
+        .where((module) => !module.isActive)
+        .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -34,15 +34,20 @@ final class ModuleSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 42,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: coming.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (context, index) => Chip(
-              avatar: const Icon(Icons.schedule_rounded, size: 16),
-              label: Text('${coming.elementAt(index).title} · Em breve'),
+        Semantics(
+          label: '$comingCount simuladores futuros em preparação',
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.schedule_rounded, size: 18),
+                SizedBox(width: 9),
+                Expanded(child: Text('Outros simuladores · Em breve')),
+              ],
             ),
           ),
         ),

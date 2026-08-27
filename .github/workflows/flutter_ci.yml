@@ -15,6 +15,8 @@ jobs:
           cache: true
       - name: Install dependencies
         run: flutter pub get
+      - name: Generate AT validation report
+        run: dart run tool/generate_at_validation_report.dart
       - name: Analyze
         run: flutter analyze
       - name: Test

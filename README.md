@@ -1,10 +1,21 @@
-# taxy.pt — 0.4 IRS Jovem + Official Validation
+# taxy.pt — 0.5 AT Validation + Product Polish
 
 Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
 
 A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
-## O que a 0.4 entrega
+## O que a 0.5 acrescenta
+
+- schema v2 robusto para liquidações oficiais AT anonimizadas;
+- comparação exata campo a campo e classificação auditável de diferenças;
+- validação de privacidade fail-closed, sem anonimização automática;
+- relatório com contagens absolutas: **0 casos oficiais** e **21 cálculos de
+  referência manual** nesta versão;
+- política explícita de arredondamentos e changelog de validação;
+- Validation Lab com Taxy / AT / diferença e export de fixture oficial;
+- polimento do fluxo sem alargar as regras fiscais suportadas.
+
+## Base funcional preservada da 0.4
 
 - shell multi-módulo com registo explícito `TaxyModule`; só IRS está ativo;
 - IRS 2025 Continente e IRS 2026 Continente, Madeira e Açores;
@@ -18,7 +29,7 @@ A aplicação é Android-first, determinística e privada: guarda simulações n
   em tributação separada e conjunta;
 - scope check inicial, badge de âmbito e Validation Lab com exportação JSON;
 - runner automático para futuras liquidações oficiais anonimizadas;
-- mais de 300 testes determinísticos e 12 referências IRS Jovem auditadas.
+- 349 testes determinísticos e 21 referências manuais auditadas.
 
 O IRS Jovem continua dentro do módulo IRS. A liquidação normal permanece
 disponível quando o titular não é elegível; dados insuficientes nunca originam
@@ -58,7 +69,8 @@ flutter analyze
 flutter test
 ```
 
-A única GitHub Action executa `flutter pub get`, `flutter analyze` e `flutter test`. Não gera APK nem AAB.
+A única GitHub Action executa `flutter pub get`, regenera o relatório AT,
+`flutter analyze` e `flutter test`. Não gera APK nem AAB.
 
 ## Adicionar ano ou região
 
@@ -70,8 +82,17 @@ A única GitHub Action executa `flutter pub get`, `flutter analyze` e `flutter t
 
 ## Liquidações oficiais
 
-O loader em `test/official_assessment_fixture_test.dart` descobre os JSON em `test/fixtures/official_assessments/`. A tolerância é zero cêntimos por defeito. Não foram inventadas liquidações oficiais.
+O loader em `test/official_assessment_fixture_test.dart` descobre os JSON em
+`test/fixtures/official_assessments/`. A tolerância é sempre zero cêntimos. Não
+foram inventadas liquidações oficiais. O relatório é regenerado com:
+
+```text
+dart run tool/generate_at_validation_report.dart
+```
 
 Os casos em `test/fixtures/reference_calculations/` são referências manuais independentes, identificadas como tal, e não liquidações da AT. A subpasta `irs_jovem/` contém casos com cálculos e expectativas fixas ao cêntimo. Não existem liquidações oficiais reais incluídas nesta release.
 
-Esta tarefa não gera APK ou AAB. Consulte [ROADMAP.md](ROADMAP.md).
+Consulte [AT_VALIDATION.md](AT_VALIDATION.md),
+[AT_VALIDATION_REPORT.md](AT_VALIDATION_REPORT.md),
+[ROUNDING_POLICY.md](ROUNDING_POLICY.md), [SUPPORTED_SCOPE.md](SUPPORTED_SCOPE.md)
+e [ROADMAP.md](ROADMAP.md). Esta tarefa não gera APK ou AAB.

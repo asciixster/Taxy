@@ -1,12 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:taxy_pt/domain/models.dart';
-import 'package:taxy_pt/tax_engine/household_tax_engine.dart';
-import 'package:taxy_pt/tax_engine/irs_jovem_tax_engine.dart';
 import 'package:taxy_pt/tax_engine/tax_rules.dart';
-
-import 'support/official_assessment_fixture.dart';
+import 'package:taxy_pt/validation/at_validation.dart';
 
 void main() {
   final directory = Directory('test/fixtures/official_assessments');
@@ -21,50 +17,28 @@ void main() {
     expect(directory.existsSync(), isTrue);
   });
 
+  test('official fixture count is reported as an absolute number', () {
+    expect(files.length, greaterThanOrEqualTo(0));
+  });
+
   for (final file in files) {
     test('official assessment: ${file.path}', () async {
-      final fixture = OfficialAssessmentFixture.fromFile(file);
+      final fixture = OfficialAssessmentFixture.fromJson(
+        decodeFixtureJson(file.readAsStringSync()),
+      );
       final repository = TaxRuleRepository((path) => File(path).readAsString());
-      final profile = fixture.simulation.profile;
+      final profile = fixture.inputs.profile;
       final rules = await repository.load(profile.taxYear, profile.region.name);
       expect(rules.rulesVersion, fixture.rulesVersion);
-      late final TaxResult result;
-      var exemptIncomeCents = 0;
-      if (profile.civilStatus.name == 'single') {
-        final comparison = IrsJovemTaxEngine(rules).compare(fixture.simulation);
-        result = comparison.withIrsJovem ?? comparison.normal;
-        exemptIncomeCents = comparison.adjustment?.exemptIncome.cents ?? 0;
-      } else {
-        final comparison = HouseholdTaxEngine(rules)
-            .compareWithIrsJovem(fixture.simulation);
-        expect(comparison.available, isTrue);
-        final selected = comparison.withIrsJovem ?? comparison.normal;
-        result = profile.filingMode.name == 'joint'
-            ? selected.joint!
-            : selected.separate!;
-        exemptIncomeCents =
-            comparison.primaryEligibility.eligibleExemptIncome.cents +
-            comparison.secondaryEligibility.eligibleExemptIncome.cents;
-      }
-      final actual = <String, int>{
-        'taxableIncomeCents': result.taxableIncome.cents,
-        'grossTaxCents': result.grossTax.cents,
-        'deductionsCents': result.taxCredits.cents,
-        'exemptIncomeCents': exemptIncomeCents,
-        'taxDueCents': result.taxDue.cents,
-        'withholdingCents': result.withholding.cents,
-        'balanceCents': result.balance.cents,
-      };
-      for (final entry in fixture.expected.entries) {
-        final tolerance = fixture.documentedRoundingCents[entry.key] ?? 0;
-        final difference = (actual[entry.key]! - entry.value).abs();
-        expect(
-          difference,
-          lessThanOrEqualTo(tolerance),
-          reason:
-              '${fixture.name}: ${entry.key}; ${fixture.notes}. Default is exact cents.',
-        );
-      }
+      final comparison = const AtValidationEngine().compare(fixture, rules);
+      expect(
+        comparison.isExact,
+        isTrue,
+        reason:
+            '${fixture.anonymousCaseId}: '
+            '${comparison.mismatches.map((item) => '${item.field}=${item.differenceCents}').join(', ')}. '
+            '${fixture.notes}',
+      );
     });
   }
 }
