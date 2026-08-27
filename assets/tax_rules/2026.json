@@ -1,23 +1,23 @@
 {
   "schemaVersion": 2,
   "taxYear": 2026,
-  "rulesVersion": "2026.2.0",
+  "rulesVersion": "2026.3.1-base",
   "verifiedAt": "2026-08-27",
   "status": "VERIFIED_FOR_MVP_SCOPE",
   "supportedScope": {
     "jurisdiction": "CONTINENT",
     "residency": "FULL_YEAR_PORTUGAL",
     "incomeCategories": ["A"],
-    "civilStatus": ["SINGLE"],
-    "filingModes": ["SEPARATE_SINGLE_TAXPAYER"],
-    "householdsWithDependents": ["DECLARED_SINGLE_PARENT_STANDARD"]
+    "civilStatus": ["SINGLE", "MARRIED", "DE_FACTO"],
+    "filingModes": ["SEPARATE", "JOINT"],
+    "householdTypes": [
+      "SINGLE_NO_DEPENDENTS",
+      "SINGLE_PARENT_STANDARD",
+      "COUPLE_STANDARD",
+      "COUPLE_WITH_DEPENDENTS_STANDARD"
+    ]
   },
   "unsupported": {
-    "MADEIRA": "NEEDS_VERIFICATION",
-    "AZORES": "NEEDS_VERIFICATION",
-    "MARRIED": "NEEDS_VERIFICATION",
-    "DE_FACTO": "NEEDS_VERIFICATION",
-    "JOINT_FILING": "NEEDS_VERIFICATION",
     "PARTIAL_RESIDENCE": "NEEDS_VERIFICATION",
     "IRS_JOVEM": "NEEDS_VERIFICATION",
     "CATEGORY_B": "NEEDS_VERIFICATION",
@@ -59,6 +59,20 @@
     "firstRatePpm": 25000,
     "secondRatePpm": 50000
   },
+  "household": {
+    "jointDivisor": 2,
+    "separateDependentExpenseSharePpm": 500000,
+    "familyLimitDivisor": 2
+  },
+  "irsJovem": {
+    "maximumAge": 35,
+    "maximumYears": 10,
+    "exemptionLimitIasMultiplier": 55,
+    "year1RatePpm": 1000000,
+    "years2To4RatePpm": 750000,
+    "years5To7RatePpm": 500000,
+    "years8To10RatePpm": 250000
+  },
   "deductions": {
     "dependentBaseCents": 60000,
     "dependentUnderThreeExtraCents": 12600,
@@ -83,9 +97,9 @@
     "ppr35To50CapCents": 35000,
     "pprOver50CapCents": 30000,
     "rentRatePpm": 150000,
-    "rent2026FloorCapCents": 90000,
-    "rentTransitionLowCapCents": 102500,
-    "rentTransitionBaseCapCents": 72550,
+    "rentFloorCapCents": 90000,
+    "rentTransitionLowCapCents": 105000,
+    "rentTransitionBaseCapCents": 75000,
     "rentTransitionUpperIncomeCents": 3000000,
     "overallLowIncomeCapCents": 250000,
     "overallHighIncomeCapCents": 100000,
@@ -99,6 +113,55 @@
       "source": "CIRS artigo 78.º-B, n.º 9",
       "comment": "Aplicável apenas após declaração explícita de agregado monoparental standard.",
       "version": "2026.2.0"
+    },
+    "jointDivisor": {
+      "name": "Quociente conjugal",
+      "unit": "integer_divisor",
+      "source": "CIRS artigo 69.º",
+      "comment": "Na tributação conjunta as taxas aplicam-se a metade do rendimento coletável e a coleta é multiplicada por dois.",
+      "version": "2026.3.1"
+    },
+    "separateDependentExpenseSharePpm": {
+      "name": "Quota de despesas dos dependentes por titular",
+      "unit": "parts_per_million",
+      "source": "CIRS artigo 78.º, n.º 14, alínea b)",
+      "comment": "Cada titular considera 50% das despesas dos dependentes na tributação separada standard.",
+      "version": "2026.3.1"
+    },
+    "familyLimitDivisor": {
+      "name": "Redução de limites familiares na separada",
+      "unit": "integer_divisor",
+      "source": "CIRS artigo 78.º, n.º 14, alínea a)",
+      "comment": "Limites determinados por referência ao agregado são reduzidos a metade.",
+      "version": "2026.3.1"
+    },
+    "irsJovemRates": {
+      "name": "Taxas e duração do IRS Jovem",
+      "unit": "parts_per_million_and_years",
+      "source": "CIRS artigo 12.º-B, n.os 1, 3 e 5",
+      "comment": "Até 35 anos, dez anos de rendimentos, taxas 100%, 75%, 50% e 25%, limite 55 IAS.",
+      "version": "2026.3.1"
+    },
+    "rentFloorCapCents": {
+      "name": "Limite mínimo da dedução de rendas em 2026",
+      "unit": "euro_cents",
+      "source": "CIRS artigo 78.º-E, n.º 10, e artigo 15.º do Decreto-Lei n.º 97/2026",
+      "comment": "Em 2026 o limite geral mínimo é 900 euros, sem prejuízo do limite transitório superior do n.º 4.",
+      "version": "2026.3.1"
+    },
+    "rentTransitionCaps": {
+      "name": "Limites transitórios de rendas em 2026",
+      "unit": "euro_cents",
+      "source": "CIRS artigo 78.º-E, n.º 4, e artigo 3.º da Lei n.º 36/2024",
+      "comment": "Aplicação a 75% do aumento: base 750 euros e limite de baixo rendimento 1050 euros.",
+      "version": "2026.3.1"
+    },
+    "pprCapsPerTaxpayer": {
+      "name": "Limites individuais da dedução PPR",
+      "unit": "euro_cents_per_taxpayer",
+      "source": "EBF artigo 21.º, n.º 2",
+      "comment": "Os limites por idade são aplicados individualmente a cada sujeito passivo, incluindo na tributação conjunta.",
+      "version": "2026.3.1"
     },
     "generalSingleParentCapCents": {
       "name": "Limite de despesas gerais para família monoparental",
@@ -149,6 +212,12 @@
     {"rule": "minimumExistence", "legalReference": "CIRS artigo 70.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx"},
     {"rule": "deductions", "legalReference": "CIRS artigos 78.º a 84.º; EBF artigo 21.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/pages/codigo-do-irs-indice.aspx"},
     {"rule": "singleParentGeneralExpenses", "legalReference": "CIRS artigo 78.º-B, n.º 9", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78b.aspx"},
-    {"rule": "invoiceVatCategories", "legalReference": "CIRS artigo 78.º-F", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78f.aspx"}
+    {"rule": "invoiceVatCategories", "legalReference": "CIRS artigo 78.º-F", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78f.aspx"},
+    {"rule": "separateFiling", "legalReference": "CIRS artigo 59.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs59.aspx"},
+    {"rule": "jointQuotient", "legalReference": "CIRS artigo 69.º", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs69.aspx"},
+    {"rule": "jointSolidarity", "legalReference": "CIRS artigo 68.º-A, n.º 3", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68a.aspx"},
+    {"rule": "separateDeductions", "legalReference": "CIRS artigo 78.º, n.º 14", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78.aspx"},
+    {"rule": "rent2026", "legalReference": "CIRS artigo 78.º-E e Decreto-Lei n.º 97/2026", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78e.aspx"},
+    {"rule": "irsJovem", "legalReference": "CIRS artigo 12.º-B", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx"}
   ]
 }

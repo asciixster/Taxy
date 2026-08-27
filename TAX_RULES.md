@@ -1,98 +1,59 @@
-# Regras fiscais — 2026.2.0
+# Tax rules — Taxy 0.3
 
-Validado em **27/08/2026** para o âmbito de `SUPPORTED_SCOPE.md`. Os valores
-executáveis residem exclusivamente em `assets/tax_rules/2026.json`.
+Todos os valores executáveis são carregados de ficheiros versionados. Cêntimos e `ppm` são as únicas unidades do motor.
 
-Cada valor monetário é guardado em cêntimos e cada taxa em partes por milhão
-(`ppm`). O motor não usa `double`.
+| Ano | Jurisdição | Versão | Estado |
+|---|---|---|---|
+| 2025 | Continente | `2025.3.1` | SUPPORTED |
+| 2026 | Continente | `2026.3.1` | SUPPORTED |
+| 2026 | Madeira | `2026.3.1-M` | SUPPORTED |
+| 2026 | Açores | `2026.3.1-A` | SUPPORTED |
 
-## Rendimentos e taxas gerais
+`TaxRuleRepository` resolve exclusivamente `year + jurisdiction`, normaliza a jurisdição e recusa schema/status, ano, jurisdição, base ou override incompatível. Não existe fallback regional. A base 2025 é fisicamente independente de 2026, impedindo herança acidental de parâmetros futuros.
 
-- IAS: 537,13 €.
-- dedução específica de Categoria A: 4.587,09 €, ou contribuições obrigatórias
-  superiores, sem exceder o rendimento.
-- mínimo de existência: parâmetros do artigo 70.º, todos no JSON.
-- nove escalões gerais: artigo 68.º, redação da Lei n.º 73-A/2025.
-- adicional de solidariedade: 2,5% acima de 80.000 € e 5% acima de 250.000 €.
+## 2025 Continente
 
-Fontes oficiais:
+- escalões nacionais publicados pela AT para rendimentos de 2025;
+- IAS 522,50 € e dedução específica 8,54 IAS = 4.462,15 €;
+- mínimo de existência de referência 12.180 €;
+- renda standard 15%, limite base 700 € e transição até 1.000 €.
 
-- https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs25.aspx
-- https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx
-- https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx
+Fontes: [AT — Deduções, benefícios e taxas 2025](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/Deducoes_beneficios_taxas/Paginas/default.aspx), [CIRS artigo 68.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx) e [artigo 70.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx).
 
-## Dependentes
+## 2026 regiões
 
-- base: 600 € por dependente;
-- dependente único/mais velho até 3 anos: majoração de 126 €;
-- segundo dependente e seguintes até 6 anos: majoração de 300 €;
-- as majorações não são cumulativas.
+Continente usa o artigo 68.º vigente para 2026. Madeira usa a tabela expressa do artigo 18.º do [DLR n.º 8/2025/M](https://diariodarepublica.pt/dr/detalhe/decreto-legislativo-regional/8-2025-993031451), sem derivação aproximada. Açores aplica a redução de 30% às taxas nacionais prevista no artigo 4.º do [DLR n.º 2/99/A consolidado](https://diariodarepublica.pt/dr/legislacao-consolidada/decreto-legislativo-regional/1999-164477580-164477062). As listas fixas de taxas são verificadas nos testes.
 
-O motor ordena uma cópia das idades do mais velho para o mais novo antes de
-aplicar a regra. A ordem de introdução nunca altera o resultado, incluindo listas
-com três ou mais dependentes. Idades iguais produzem o mesmo total qualquer que
-seja a ordem.
+## Casados e unidos de facto
 
-Fonte: CIRS artigo 78.º-A:
-https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78a.aspx
+Parâmetros JSON:
 
-## Deduções implementadas
+- `jointDivisor = 2` — CIRS artigo 69.º;
+- `separateDependentExpenseSharePpm = 500000` — artigo 78.º, n.º 14;
+- `familyLimitDivisor = 2` — limites familiares reduzidos na separada.
 
-| Categoria | Taxa | Limite individual/específico |
+Na separada, os rendimentos próprios são liquidados individualmente e 50% dos rendimentos dos dependentes são imputados a cada titular ([artigo 59.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs59.aspx)). As deduções usam despesas próprias mais 50% das despesas dos dependentes e os limites referidos ao agregado são reduzidos para metade ([artigo 78.º, n.º 14](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78.aspx)).
+
+Na conjunta, o quociente é 2 e a coleta é multiplicada por dois ([artigo 69.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs69.aspx)). O adicional de solidariedade também usa metade do rendimento e multiplica o resultado por dois ([artigo 68.º-A, n.º 3](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68a.aspx)). O mínimo de existência é apurado por titular, aplicando-se o corte conjunto previsto no artigo 70.º.
+
+## Deduções
+
+Mantêm-se base 600 € por dependente, majoração 126 € até 3 anos ou 300 € para segundo e seguintes até 6 anos, sem cumulação.
+
+| Dedução | Taxa | Limite |
 |---|---:|---:|
-| Despesas gerais standard | 35% | 250 € |
-| Despesas gerais monoparental | 45% | 335 € |
-| Saúde standard | 15% | 1.000 € |
+| Gerais | 35% | 250 € por titular |
+| Monoparental | 45% | 335 € |
+| Saúde | 15% | 1.000 € |
 | Educação standard | 30% | 800 € |
 | Lares | 25% | 403,75 € |
-| PPR, idade < 35 | 20% | 400 € |
-| PPR, 35–50 | 20% | 350 € |
-| PPR, > 50 | 20% | 300 € |
-| Rendas | 15% | limite transitório configurado, piso 2026 de 900 € |
+| PPR | 20% | 400/350/300 € por titular |
+| IVA | 15/30/35/100% | global 250 € |
 
-As situações especiais de educação (estudante deslocado e majorações
-territoriais) não são calculadas.
+O limite de PPR é sempre apurado por titular segundo a sua idade, inclusive na tributação conjunta; não existe partilha do limite não utilizado. Em 2026, a renda standard usa o limite mínimo de 900 € e os limites transitórios configurados de 750 €/1.050 €, conforme o [artigo 78.º-E](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78e.aspx). Em 2025 permanecem isolados os valores de 700 €/1.000 €.
 
-## IVA por exigência de fatura
+## IRS Jovem
 
-O input é o **IVA suportado**, não o total da fatura.
+Idade máxima, dez anos, limite 55 IAS e taxas 100/75/50/25% estão no JSON. Fontes: [artigo 12.º-B](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx) e folheto oficial IRS Jovem 2025. O motor atual determina elegibilidade com histórico anual; não liquida o benefício.
 
-| Campo | Taxa | Âmbito suportado |
-|---|---:|---|
-| `invoiceVat15` | 15% | setores enumerados no artigo 78.º-F, n.º 1 |
-| `invoiceVat30` | 30% | ensino desportivo/recreativo, clubes e ginásios elegíveis |
-| `invoiceVat35` | 35% | medicamentos de uso veterinário elegíveis |
-| `invoiceVat100` | 100% | transportes públicos e assinaturas elegíveis de periódicos |
-
-As quatro categorias concorrem para um único limite global de **250 €**. O JSON
-contém taxa, unidade, fonte, comentário e versão para cada parâmetro.
-
-Fonte: CIRS artigo 78.º-F:
-https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78f.aspx
-
-## Limite global de deduções
-
-- sem limite deste artigo até ao limite do primeiro escalão;
-- transição configurada entre 2.500 € e 1.000 €;
-- 1.000 € a partir de 80.000 €;
-- em agregados com três ou mais dependentes, majoração de 5% por dependente.
-
-O detalhe de cada crédito, o ajuste do limite do IVA, o ajuste do limite global e
-o limite pela coleta ficam disponíveis no `TaxResult.creditBreakdown` e no Tax
-Validation Lab.
-
-## Regras removidas ou bloqueadas
-
-`otherEligibleTaxCredit` foi removido do modelo, serialização, UI, cenários e
-testes. Nenhum crédito genérico pode ser somado. Consulte `SUPPORTED_SCOPE.md`
-para todos os módulos `NEEDS_VERIFICATION`.
-
-## Versionamento e rollback
-
-- `schemaVersion`: compatibilidade estrutural; o parser rejeita versões antigas.
-- `rulesVersion`: versão semântica do conjunto fiscal.
-- `verifiedAt`: data apresentada na UI.
-- `ruleMetadata`: auditoria dos parâmetros novos.
-
-Rollback significa repor o JSON e o código compatível através de Git; uma regra
-incompleta ou com status diferente de `VERIFIED_FOR_MVP_SCOPE` não carrega.
+URLs completas residem nos descritores. Alterações exigem versão, data, testes e revisão humana.

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 3,
+  "taxYear": 2026,
+  "jurisdiction": "MADEIRA",
+  "rulesVersion": "2026.3.1-M",
+  "verifiedAt": "2026-08-27",
+  "status": "VERIFIED",
+  "baseAsset": "assets/tax_rules/2026.json",
+  "brackets": [
+    {"upperCents": 834200, "marginalRatePpm": 87500, "averageRatePpm": 87500},
+    {"upperCents": 1258700, "marginalRatePpm": 109900, "averageRatePpm": 95050},
+    {"upperCents": 1783800, "marginalRatePpm": 148400, "averageRatePpm": 110760},
+    {"upperCents": 2308900, "marginalRatePpm": 168700, "averageRatePpm": 123940},
+    {"upperCents": 2939700, "marginalRatePpm": 217700, "averageRatePpm": 144060},
+    {"upperCents": 4309000, "marginalRatePpm": 244300, "averageRatePpm": 175910},
+    {"upperCents": 4656600, "marginalRatePpm": 301700, "averageRatePpm": 185300},
+    {"upperCents": 8663400, "marginalRatePpm": 312200, "averageRatePpm": 243990},
+    {"upperCents": null, "marginalRatePpm": 336000, "averageRatePpm": null}
+  ],
+  "overrides": {},
+  "calculationNote": "Tabela regional expressamente publicada no artigo 18.º do DLR n.º 8/2025/M; não derivada por aproximação.",
+  "sources": [
+    "https://diariodarepublica.pt/dr/detalhe/decreto-legislativo-regional/8-2025-993031451"
+  ]
+}

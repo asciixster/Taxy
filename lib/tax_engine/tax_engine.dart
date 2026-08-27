@@ -11,36 +11,73 @@ final class TaxEngine {
   Money grossTaxForTaxableIncome(Money taxableIncome) =>
       _generalTaxDetail(taxableIncome).tax;
 
+  ({Money tax, Money baseTax, Money excess, int ratePpm}) generalTaxDetailFor(
+    Money taxableIncome,
+  ) => _generalTaxDetail(taxableIncome);
+
+  Money specificDeductionFor(EmploymentIncome income) => moneyMax(
+    Money.fromCents(rules.employmentSpecificDeductionCents),
+    income.socialSecurity,
+  ).min(income.gross);
+
+  Money minimumExistenceAllowanceFor(
+    EmploymentIncome income,
+    Money specificDeduction,
+  ) => _minimumExistenceAllowance(income.gross, specificDeduction);
+
+  Money solidarityTaxForTaxableIncome(Money taxableIncome) =>
+      _solidarityTax(taxableIncome);
+
+  ({Money total, List<TaxBreakdown> breakdown, Money? overallCap})
+  creditsForSimulation(
+    TaxSimulation simulation,
+    Money taxableIncome,
+    Money grossTax,
+    List<String> warnings, {
+    Money? pprCreditOverride,
+  }) => _credits(
+    simulation,
+    taxableIncome,
+    grossTax,
+    warnings,
+    pprCreditOverride: pprCreditOverride,
+  );
+
   /// Exposto para auditoria das fronteiras do limite global de deduções.
   Money? overallCreditCapForTaxableIncome(
     Money taxableIncome, {
     int dependents = 0,
   }) => _overallCreditCap(taxableIncome, dependents);
 
-  TaxResult calculate(TaxSimulation simulation) {
+  /// Exposto para validação independente da transição dos limites de rendas.
+  Money rentCreditCapForTaxableIncome(Money taxableIncome) =>
+      Money.fromCents(_rentCap(taxableIncome));
+
+  TaxResult calculate(TaxSimulation simulation, {bool validateScope = true}) {
     final warnings = <String>[];
     final assumptions = <String>[
       'Apenas rendimentos de trabalho dependente (Categoria A).',
       'Residente fiscal em Portugal durante todo o ano.',
-      'Regras do Continente para ${rules.taxYear}, versão ${rules.rulesVersion}.',
+      'Regras ${rules.jurisdiction} para ${rules.taxYear}, versão ${rules.rulesVersion}.',
       'Despesas introduzidas são elegíveis, documentadas e não reembolsadas.',
       'Educação limitada ao regime standard; estudante deslocado e majorações territoriais estão excluídos.',
       'Não inclui IRS Jovem, deficiência, pensões de alimentos ou rendimentos não indicados.',
     ];
     final input = simulation.income;
-    final scopeIssues = SupportedScopeValidator(rules.taxYear)
-        .validate(simulation);
-    if (scopeIssues.isNotEmpty) {
-      return _unavailable(
-        simulation,
-        scopeIssues.map((issue) => issue.message).toList(growable: false),
-      );
+    final scopeIssues = validateScope
+        ? SupportedScopeValidator(rules).validate(simulation)
+        : const <ScopeValidationIssue>[];
+    final expectedJurisdiction = simulation.profile.region.name.toUpperCase();
+    if (scopeIssues.isNotEmpty ||
+        (validateScope && rules.jurisdiction != expectedJurisdiction)) {
+      return _unavailable(simulation, [
+        ...scopeIssues.map((issue) => issue.message),
+        if (rules.jurisdiction != expectedJurisdiction)
+          'As regras carregadas (${rules.jurisdiction}) não correspondem à região $expectedJurisdiction.',
+      ]);
     }
 
-    final specific = moneyMax(
-      Money.fromCents(rules.employmentSpecificDeductionCents),
-      input.socialSecurity,
-    ).min(input.gross);
+    final specific = specificDeductionFor(input);
     final minimumAllowance = _minimumExistenceAllowance(input.gross, specific);
     final taxable = (input.gross - specific - minimumAllowance).max(Money.zero);
     final bracket = _generalTaxDetail(taxable);
@@ -96,7 +133,7 @@ final class TaxEngine {
         TaxBreakdown(
           'Imposto antes de deduções',
           grossTax,
-          'Resultado da aplicação progressiva das taxas gerais de 2026.',
+          'Resultado da aplicação progressiva das taxas gerais de ${rules.taxYear}.',
         ),
         TaxBreakdown(
           'Deduções à coleta',
@@ -221,8 +258,9 @@ final class TaxEngine {
     TaxSimulation simulation,
     Money taxable,
     Money grossTax,
-    List<String> warnings,
-  ) {
+    List<String> warnings, {
+    Money? pprCreditOverride,
+  }) {
     final p = simulation.profile;
     final d = simulation.deductions;
     var dependentCredit = Money.zero;
@@ -299,7 +337,9 @@ final class TaxEngine {
         : (p.age <= 50
               ? rules.d('ppr35To50CapCents')
               : rules.d('pprOver50CapCents'));
-    final ppr = _limited(d.ppr, rules.d('pprRatePpm'), pprCap, 'PPR', warnings);
+    final ppr =
+        pprCreditOverride ??
+        _limited(d.ppr, rules.d('pprRatePpm'), pprCap, 'PPR', warnings);
 
     final limitedGroupRaw = health + education + care + vat + rent + ppr;
     final overallCap = _overallCreditCap(taxable, p.dependents);
@@ -413,7 +453,7 @@ final class TaxEngine {
     } else {
       transitional = transitionBase;
     }
-    return intMax(transitional, rules.d('rent2026FloorCapCents'));
+    return intMax(transitional, rules.d('rentFloorCapCents'));
   }
 
   Money? _overallCreditCap(Money taxable, int dependents) {

@@ -28,9 +28,12 @@ void main() {
     expect(ids, containsAllInOrder(['dependentAges', 'singleParent']));
   });
 
-  test('casado nunca recebe opção de tributação como válida', () {
+  test('casado recebe comparação de modo e dados do segundo titular', () {
     final draft = TaxDraft()..civilStatus = CivilStatus.married;
-    expect(engine.steps(draft).map((e) => e.id), isNot(contains('filingMode')));
+    expect(
+      engine.steps(draft).map((e) => e.id),
+      containsAll(['filingMode', 'secondaryAge', 'secondaryGross']),
+    );
   });
 
   test('as quatro categorias IVA aparecem', () {

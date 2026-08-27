@@ -1,7 +1,7 @@
 import '../domain/models.dart';
 import '../domain/money.dart';
 
-enum QuestionSection { profile, income, deductions, review }
+enum QuestionSection { eligibility, profile, income, deductions, review }
 
 final class QuestionStep {
   const QuestionStep(this.id, this.section, this.title, this.helper);
@@ -40,6 +40,23 @@ final class TaxDraft {
     invoiceVat35 = _raw(source.deductions.invoiceVat35);
     invoiceVat100 = _raw(source.deductions.invoiceVat100);
     ppr = _raw(source.deductions.ppr);
+    incomeTypes = {...source.incomeTypes};
+    if (source.secondaryTaxpayer case final secondary?) {
+      secondaryAge = secondary.age;
+      secondaryGross = _raw(secondary.income.gross);
+      secondaryWithholding = _raw(secondary.income.withholding);
+      secondarySocialSecurity = _raw(secondary.income.socialSecurity);
+      secondaryGeneral = _raw(secondary.deductions.general);
+      secondaryHealth = _raw(secondary.deductions.health);
+      secondaryEducation = _raw(secondary.deductions.education);
+      secondaryRent = _raw(secondary.deductions.rent);
+      secondaryCareHomes = _raw(secondary.deductions.careHomes);
+      secondaryPpr = _raw(secondary.deductions.ppr);
+      secondaryVat15 = _raw(secondary.deductions.invoiceVat15);
+      secondaryVat30 = _raw(secondary.deductions.invoiceVat30);
+      secondaryVat35 = _raw(secondary.deductions.invoiceVat35);
+      secondaryVat100 = _raw(secondary.deductions.invoiceVat100);
+    }
   }
 
   static String _raw(Money money) =>
@@ -71,6 +88,22 @@ final class TaxDraft {
   String invoiceVat35 = '';
   String invoiceVat100 = '';
   String ppr = '';
+  Set<IncomeType> incomeTypes = {IncomeType.employment};
+  bool hasSpecialSituation = false;
+  int secondaryAge = 30;
+  String secondaryGross = '';
+  String secondaryWithholding = '';
+  String secondarySocialSecurity = '';
+  String secondaryGeneral = '';
+  String secondaryHealth = '';
+  String secondaryEducation = '';
+  String secondaryRent = '';
+  String secondaryCareHomes = '';
+  String secondaryPpr = '';
+  String secondaryVat15 = '';
+  String secondaryVat30 = '';
+  String secondaryVat35 = '';
+  String secondaryVat100 = '';
 }
 
 final class QuestionEngine {
@@ -79,9 +112,39 @@ final class QuestionEngine {
   List<QuestionStep> steps(TaxDraft draft) => [
     const QuestionStep(
       'taxYear',
-      QuestionSection.profile,
+      QuestionSection.eligibility,
       'Que ano queres simular?',
       'As regras fiscais mudam todos os anos.',
+    ),
+    const QuestionStep(
+      'residency',
+      QuestionSection.eligibility,
+      'Viveste fiscalmente em Portugal todo o ano?',
+      'A residência parcial segue regras diferentes.',
+    ),
+    const QuestionStep(
+      'region',
+      QuestionSection.eligibility,
+      'Onde tens residência fiscal?',
+      'Continente, Madeira e Açores podem ter tabelas diferentes.',
+    ),
+    const QuestionStep(
+      'civilStatus',
+      QuestionSection.eligibility,
+      'Qual é o teu estado civil?',
+      'Casados e unidos de facto podem comparar conjunta e separada.',
+    ),
+    const QuestionStep(
+      'incomeTypes',
+      QuestionSection.eligibility,
+      'Que tipos de rendimento tiveste?',
+      'Se existir um tipo ainda não suportado, avisamos já e não ignoramos rendimentos.',
+    ),
+    const QuestionStep(
+      'specialSituations',
+      QuestionSection.eligibility,
+      'Existe alguma situação fiscal especial?',
+      'Guarda partilhada, deficiência, residência parcial e outros regimes exigem tratamento próprio.',
     ),
     const QuestionStep(
       'age',
@@ -89,24 +152,20 @@ final class QuestionEngine {
       'Qual é a tua idade?',
       'A idade pode alterar benefícios como a dedução do PPR.',
     ),
-    const QuestionStep(
-      'civilStatus',
-      QuestionSection.profile,
-      'Qual é o teu estado civil?',
-      'Usamos esta informação para preparar o agregado familiar.',
-    ),
-    const QuestionStep(
-      'residency',
-      QuestionSection.profile,
-      'Viveste fiscalmente em Portugal todo o ano?',
-      'A residência parcial segue regras diferentes.',
-    ),
-    const QuestionStep(
-      'region',
-      QuestionSection.profile,
-      'Onde tens residência fiscal?',
-      'Continente, Madeira e Açores podem ter tabelas diferentes.',
-    ),
+    if (draft.civilStatus != CivilStatus.single) ...[
+      const QuestionStep(
+        'secondaryAge',
+        QuestionSection.profile,
+        'Qual é a idade do segundo titular?',
+        'Os dois titulares são calculados individualmente e em conjunto.',
+      ),
+      const QuestionStep(
+        'filingMode',
+        QuestionSection.profile,
+        'Que opção queres ver primeiro?',
+        'A Taxy calculará sempre conjunta e separada para comparar.',
+      ),
+    ],
     const QuestionStep(
       'dependents',
       QuestionSection.profile,
@@ -154,6 +213,26 @@ final class QuestionEngine {
       'Quanto descontaste para a Segurança Social?',
       'Indica apenas contribuições obrigatórias do trabalhador.',
     ),
+    if (draft.civilStatus != CivilStatus.single) ...[
+      const QuestionStep(
+        'secondaryGross',
+        QuestionSection.income,
+        'Rendimento bruto anual do segundo titular',
+        'Introduz apenas Categoria A deste titular.',
+      ),
+      const QuestionStep(
+        'secondaryWithholding',
+        QuestionSection.income,
+        'Retenção anual do segundo titular',
+        'Total de IRS já retido.',
+      ),
+      const QuestionStep(
+        'secondarySocialSecurity',
+        QuestionSection.income,
+        'Segurança Social do segundo titular',
+        'Contribuições obrigatórias anuais.',
+      ),
+    ],
     const QuestionStep(
       'general',
       QuestionSection.deductions,
@@ -214,6 +293,13 @@ final class QuestionEngine {
       'Quanto aplicaste num PPR?',
       'O benefício depende da idade e das condições legais de manutenção.',
     ),
+    if (draft.civilStatus != CivilStatus.single)
+      const QuestionStep(
+        'secondaryDeductions',
+        QuestionSection.deductions,
+        'Despesas do segundo titular',
+        'Introduz as despesas tituladas pelo segundo titular; não dividimos automaticamente as despesas próprias.',
+      ),
     const QuestionStep(
       'review',
       QuestionSection.review,

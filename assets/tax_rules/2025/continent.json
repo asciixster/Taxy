@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 3,
+  "taxYear": 2025,
+  "jurisdiction": "CONTINENT",
+  "rulesVersion": "2025.3.1",
+  "verifiedAt": "2026-08-27",
+  "status": "VERIFIED",
+  "baseAsset": "assets/tax_rules/2025/base.json",
+  "overrides": {},
+  "sources": [
+    "https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Cidadaos/Rendimentos/Declaracao/Deducoes_beneficios_taxas/Paginas/default.aspx"
+  ]
+}

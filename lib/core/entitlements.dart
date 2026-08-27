@@ -1,4 +1,9 @@
-enum AppFeature { basicSimulation, unlimitedSimulations, scenarioComparison, advancedModules }
+enum AppFeature {
+  basicSimulation,
+  unlimitedSimulations,
+  scenarioComparison,
+  advancedModules,
+}
 
 enum SubscriptionTier { free, premium }
 

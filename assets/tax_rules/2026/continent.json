@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 3,
+  "taxYear": 2026,
+  "jurisdiction": "CONTINENT",
+  "rulesVersion": "2026.3.1",
+  "verifiedAt": "2026-08-27",
+  "status": "VERIFIED",
+  "baseAsset": "assets/tax_rules/2026.json",
+  "overrides": {},
+  "sources": [
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx"
+  ]
+}

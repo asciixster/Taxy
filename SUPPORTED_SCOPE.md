@@ -1,61 +1,36 @@
-# Taxy 0.2 — Supported Scope
+# Taxy 0.3 — Supported Scope
 
-O motor segue uma política **fail closed**: só calcula o que está explicitamente
-validado. A validação está centralizada em
-`lib/tax_engine/supported_scope.dart`.
+O scope check ocorre antes do questionário completo. O contrato declarativo está no `supportedScope` da base fiscal de cada ano; `lib/tax_engine/supported_scope.dart` aplica esse contrato e as exclusões especiais fail-closed.
 
 ## SUPPORTED
 
-- ano fiscal 2026, regras `2026.2.0`;
-- Continente;
 - residência fiscal em Portugal durante todo o ano;
-- um único sujeito passivo;
-- não casado e não unido de facto;
-- Categoria A (trabalho dependente), sem outras categorias;
-- tributação do único sujeito passivo;
-- agregado sem dependentes; ou agregado com dependentes declarado explicitamente
-  como família monoparental standard;
-- despesas gerais standard;
-- saúde standard;
-- educação standard;
-- rendas elegíveis de habitação permanente no caso standard;
-- lares standard;
-- PPR standard;
-- IVA por exigência de fatura nas categorias explícitas de 15%, 30%, 35% e 100%.
+- Categoria A exclusiva;
+- 2025: Continente;
+- 2026: Continente, Madeira e Açores;
+- titular individual ou família monoparental standard confirmada;
+- casado ou unido de facto com dois titulares completos;
+- tributação separada e conjunta standard, com comparação;
+- dependentes sem guarda partilhada, residência alternada ou alocação especial;
+- despesas gerais, saúde, educação standard, rendas, lares, PPR e IVA explícito a 15%, 30%, 35% e 100%;
+- elegibilidade IRS Jovem para 2025+, sem aplicar a isenção à liquidação.
+
+Na separada, cada titular recebe despesas próprias mais 50% das despesas dos dependentes e os limites referidos ao agregado são reduzidos a metade. O limite de despesas gerais e o PPR permanecem individuais. Na conjunta, as despesas do agregado são somadas, mas o PPR continua limitado pela idade de cada titular; as taxas incidem sobre metade do rendimento coletável e a coleta é multiplicada por dois.
 
 ## NOT SUPPORTED / NEEDS_VERIFICATION
 
-- casados e unidos de facto, em tributação separada ou conjunta;
-- tributação conjunta;
-- residência parcial;
-- Madeira e Açores;
-- dependentes sem confirmação de agregado monoparental standard;
-- residência alternada/guarda ou responsabilidades parentais partilhadas;
-- IRS Jovem;
-- Categoria B;
-- pensões;
-- rendimentos estrangeiros;
-- rendimentos de capitais;
-- rendimentos prediais;
-- mais-valias mobiliárias, imobiliárias ou criptoativos;
-- deficiência fiscalmente relevante;
-- estudante deslocado;
-- majorações territoriais de educação;
-- qualquer outra situação especial sem módulo explícito.
+- Madeira e Açores em 2025;
+- residência parcial ou não residência;
+- aplicação da isenção IRS Jovem e comparação com/sem benefício;
+- Categoria B, pensões, rendas recebidas, capitais, ações/ETF, cripto, rendimentos estrangeiros e outros;
+- guarda partilhada, residência alternada ou percentagem especial de despesas;
+- dependentes com rendimentos próprios ou situações especiais;
+- deficiência, estudante deslocado e majorações territoriais;
+- pensões de alimentos, ascendentes, ex-residentes, RNH/IFICI;
+- qualquer módulo ou benefício não explicitamente tipado.
 
-Nestes casos o resultado tem `available: false`, valores fiscais a zero, lista de
-motivos e o pressuposto de que o cálculo foi bloqueado para evitar um resultado
-não validado.
+Selecionar rendimento não suportado termina cedo o fluxo. O motor nunca calcula apenas Categoria A ignorando o restante.
 
-## Decisão sobre famílias monoparentais
+## IRS Jovem
 
-O perfil inclui `isSingleParentHousehold`. Quando existem dependentes, a Taxy só
-continua se esta condição for afirmada. Aplica então 45% das despesas gerais com
-limite de 335 €, conforme o artigo 78.º-B, n.º 9 do CIRS. Uma resposta negativa
-ou incerta bloqueia o cálculo; não é convertida no regime standard de 35%/250 €.
-
-## Educação
-
-O input representa exclusivamente educação standard. Estudante deslocado e
-majorações territoriais são recusados por flag e recordados nos pressupostos do
-resultado.
+O motor de elegibilidade usa idade, qualidade de dependente, histórico anual de rendimentos A/B como sujeito passivo, situação tributária e regimes incompatíveis. Anos sem rendimento e anos como dependente não consomem o período. Devolve `ELIGIBLE`, `NOT_ELIGIBLE` ou `NEEDS_MORE_INFORMATION`, com percentagem e limite 55 IAS. O campo antigo `qualifyingIncomeYears` é apenas compatibilidade transitória; novos casos devem usar `incomeHistory`. A liquidação continua bloqueada até validar englobamento e dedução específica com casos oficiais.
