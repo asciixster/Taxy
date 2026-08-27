@@ -1,4 +1,4 @@
-# Tax rules — Taxy 0.5
+# Tax rules — Taxy 0.6
 
 Todos os valores executáveis são carregados de ficheiros versionados. Cêntimos e `ppm` são as únicas unidades do motor.
 
@@ -63,7 +63,8 @@ Fontes: [artigo 12.º-B](https://info.portaldasfinancas.gov.pt/pt/informacao_fis
 
 URLs completas residem nos descritores. Alterações exigem versão, data, testes e revisão humana.
 
-A 0.5 não altera valores nem expande o scope fiscal. Formaliza a validação
-externa e a sequência de cálculo documentada em
-[ROUNDING_POLICY.md](ROUNDING_POLICY.md). A inexistência atual de liquidações AT
-anonimizadas permanece explícita em [AT_VALIDATION_REPORT.md](AT_VALIDATION_REPORT.md).
+A 0.6 não altera valores, `rulesVersion` nem expande o scope fiscal. Torna o
+audit trace e o intake de casos oficiais estruturais, mantendo a sequência de
+cálculo documentada em [ROUNDING_POLICY.md](ROUNDING_POLICY.md). A inexistência
+atual de liquidações AT anonimizadas permanece explícita em
+[AT_VALIDATION_REPORT.md](AT_VALIDATION_REPORT.md).

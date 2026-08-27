@@ -39,7 +39,10 @@ retenções e saldo são obrigatórios. Não existem tolerâncias globais ou loc
 
 Testes adicionais cobrem:
 
-- schema v2 e metadados coerentes com os inputs;
+- schema v3, trace tipado e metadados coerentes com os inputs;
+- independência total entre o runner e os labels do breakdown;
+- casos de trace individual, IRS Jovem, casal separado, conjunto e conjunto
+  com IRS Jovem;
 - fonte/documento oficial e identificador anónimo;
 - rejeição recursiva de NIF, IBAN, email, telefone, morada e identificadores;
 - ausência de mutação/anonimização automática;

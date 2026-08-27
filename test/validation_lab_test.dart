@@ -18,6 +18,16 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
+        find.text('Marital quotient (divisor)'),
+        500,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Taxable income'), findsOneWidget);
+      expect(find.text('Marital quotient (divisor)'), findsOneWidget);
+      expect(find.text('Rate-determining income'), findsOneWidget);
+      expect(find.text('Rate-determining quotient'), findsOneWidget);
+
+      await tester.scrollUntilVisible(
         find.text('Comparação manual com a AT'),
         500,
         scrollable: find.byType(Scrollable).first,
@@ -32,6 +42,10 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Export official fixture template'), findsOneWidget);
+      expect(
+        find.text('Source notes (opcional e sem dados pessoais)'),
+        findsOneWidget,
+      );
     },
   );
 }
