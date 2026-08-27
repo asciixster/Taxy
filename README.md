@@ -1,82 +1,67 @@
-# taxy.pt — 0.2 Fiscal Hardening
+# taxy.pt — 0.3 IRS Expansion + Multi-Module Foundation
 
-Simulador Android-first de IRS português. A Taxy transforma um conjunto
-estritamente limitado de dados fiscais num cálculo determinístico e explicado.
-Não submete declarações, não acede ao Portal das Finanças e mantém as simulações
-no dispositivo.
+Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
 
-> Esta é uma simulação. Não substitui a liquidação oficial da Autoridade
-> Tributária nem aconselhamento fiscal profissional.
+A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
-## Âmbito da release 0.2
+## O que a 0.3 entrega
 
-A Taxy calcula apenas um sujeito passivo não casado e não unido de facto,
-residente fiscal durante todo o ano no Continente, com rendimentos exclusivos de
-Categoria A e situações standard. Com dependentes, exige confirmação explícita
-de agregado monoparental standard. Consulte [SUPPORTED_SCOPE.md](SUPPORTED_SCOPE.md).
+- shell multi-módulo com registo explícito `TaxyModule`; só IRS está ativo;
+- IRS 2025 Continente e IRS 2026 Continente, Madeira e Açores;
+- seleção central de regras por `ano + região` em `TaxRuleRepository`;
+- dois titulares explícitos para casados e unidos de facto;
+- comparação determinística entre tributação separada e conjunta;
+- despesas próprias por titular e despesas dos dependentes repartidas 50/50 na separada;
+- dependentes tipados e motor separado de elegibilidade IRS Jovem;
+- scope check inicial, badge de âmbito e Validation Lab com exportação JSON;
+- runner automático para futuras liquidações oficiais anonimizadas;
+- mais de 200 testes determinísticos.
 
-Qualquer cenário fora deste contrato devolve `available: false`. Não existem
-aproximações silenciosas.
+O cálculo da isenção IRS Jovem ainda não é aplicado à liquidação. A elegibilidade está implementada, mas o englobamento e a imputação da dedução específica ficam `NEEDS_VERIFICATION` até existirem fixtures oficiais. Consulte [SUPPORTED_SCOPE.md](SUPPORTED_SCOPE.md).
 
 ## Arquitetura
 
-- `lib/domain/`: modelos tipados, serialização e `Money` em cêntimos inteiros.
-- `lib/tax_engine/`: motor determinístico, regras e validação central de scope.
-- `lib/question_engine/`: fluxo condicional independente da UI.
-- `lib/state/`: providers Riverpod.
-- `lib/navigation/`: navegação partilhada.
-- `lib/screens/`: ecrãs extraídos e Tax Validation Lab.
-- `lib/widgets/`: componentes reutilizáveis.
-- `lib/data/`: persistência JSON atómica no diretório privado Android.
-- `assets/tax_rules/2026.json`: única fonte de parâmetros fiscais.
+```text
+lib/
+  app/home/              shell e home modular
+  app/modules/           TaxyModule e registry
+  modules/irs/           fronteira pública do módulo IRS
+  domain/                modelos fiscais legados em migração incremental
+  tax_engine/            motores determinísticos e rule repository
+  question_engine/       fluxo guiado e scope check
+  screens/               resultados e Validation Lab
+  state/ navigation/     providers e navegação
+  data/                  persistência local atómica
+assets/tax_rules/
+  2025/continent.json
+  2026/continent.json
+  2026/madeira.json
+  2026/azores.json
+```
 
-O `TaxEngine` não contém valores fiscais novos hardcoded. As regras 2026 usam
-versão `2026.2.0`, data de validação e metadados de fonte/unidade/comentário.
+`lib/modules/irs/irs_module.dart` é a fronteira pública. A migração física do código anterior continua incrementalmente para não introduzir um refactor massivo no motor fiscal. Dinheiro é sempre `Money` em cêntimos inteiros e taxas são `ppm`.
 
-## Executar
-
-Pré-requisitos: Flutter stable compatível com Dart `^3.13.1`.
+## Executar e verificar
 
 ```text
 flutter pub get
 flutter run
-```
-
-## Verificar
-
-```text
 flutter analyze
 flutter test
 ```
 
-A CI executa exatamente estes dois controlos em cada push e Pull Request. Não
-gera APK nem AAB.
+A única GitHub Action executa `flutter pub get`, `flutter analyze` e `flutter test`. Não gera APK nem AAB.
 
-## Tax Validation Lab
+## Adicionar ano ou região
 
-Em modo debug, abra `Como calculamos` e escolha `Abrir Tax Validation Lab`. O
-laboratório permite introduzir todos os inputs suportados e auditar rendimento,
-dedução específica, mínimo de existência, escalão, coleta, cada dedução, limites,
-solidariedade, retenção e saldo em euros/cêntimos. A entrada é protegida por
-`kDebugMode` e não aparece numa build normal de produção.
+1. Criar `assets/tax_rules/<ano>/<região>.json`.
+2. Registar schema, versão, data, jurisdição, fontes e overrides.
+3. Adicionar o asset ao `pubspec.yaml`.
+4. Acrescentar testes de fronteira e scope.
+5. Só usar `status: VERIFIED` após revisão fiscal.
 
-## Regras e novo ano fiscal
+## Liquidações oficiais
 
-1. Copiar `assets/tax_rules/2026.json` para o novo ano.
-2. Atualizar todos os valores apenas com fonte oficial.
-3. Atualizar `taxYear`, `rulesVersion`, `verifiedAt`, metadados e scope.
-4. Fazer o parser rejeitar schemas incompletos.
-5. Criar testes de fronteira e regressão antes de disponibilizar o ano na UI.
+O loader em `test/official_assessment_fixture_test.dart` descobre os JSON em `test/fixtures/official_assessments/`. A tolerância é zero cêntimos por defeito. Não foram inventadas liquidações oficiais.
 
-Valores não confirmados devem permanecer fora do scope com
-`NEEDS_VERIFICATION`; nunca devem ser estimados.
-
-## Fixtures oficiais futuras
-
-`test/fixtures/official_assessments/` contém o esquema e o processo para receber
-liquidações reais anonimizadas. Não existem liquidações oficiais fictícias.
-
-## Distribuição
-
-Esta tarefa deliberadamente não gera APK/AAB. Os comandos de distribuição ficam
-fora do procedimento de hardening fiscal 0.2.
+Esta tarefa não gera APK ou AAB. Consulte [ROADMAP.md](ROADMAP.md).

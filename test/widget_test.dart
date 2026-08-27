@@ -22,19 +22,21 @@ void main() {
     expect(find.text('Começar simulação'), findsOneWidget);
   });
 
-  testWidgets('UI não oferece casado nem união de facto', (tester) async {
+  testWidgets('UI oferece casado e união de facto no scope check', (
+    tester,
+  ) async {
     await _pumpWizard(tester);
-    await _continue(tester, 2);
+    await _continue(tester, 3);
     expect(find.text('Não casado/a nem unido/a de facto'), findsOneWidget);
-    expect(find.text('Casado/a'), findsNothing);
-    expect(find.text('União de facto'), findsNothing);
+    expect(find.text('Casado/a'), findsOneWidget);
+    expect(find.text('União de facto'), findsOneWidget);
   });
 
   testWidgets('residência parcial é bloqueada antes do cálculo', (
     tester,
   ) async {
     await _pumpWizard(tester);
-    await _continue(tester, 3);
+    await _continue(tester, 1);
     await tester.tap(find.text('Não'));
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
@@ -45,14 +47,15 @@ void main() {
   });
 
   for (final region in ['Madeira', 'Açores']) {
-    testWidgets('$region é bloqueado antes do cálculo', (tester) async {
+    testWidgets('$region 2025 é bloqueado antes do cálculo', (tester) async {
       await _pumpWizard(tester);
-      await _continue(tester, 4);
+      await tester.tap(find.text('2025'));
+      await _continue(tester, 2);
       await tester.tap(find.text(region));
       await tester.tap(find.text('Continuar'));
       await tester.pumpAndSettle();
       expect(
-        find.text('Madeira e Açores ainda não estão validados nesta versão.'),
+        find.text('Para 2025, Madeira e Açores permanecem NEEDS_VERIFICATION.'),
         findsOneWidget,
       );
     });

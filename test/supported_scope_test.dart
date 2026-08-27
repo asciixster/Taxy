@@ -28,7 +28,7 @@ void main() {
     test('${item.$2} falha mesmo em tributação separada', () {
       final result = engine.calculate(_simulation(civilStatus: item.$1));
       expect(result.available, isFalse);
-      expect(result.warnings.join(' '), contains('NEEDS_VERIFICATION'));
+      expect(result.warnings.join(' '), contains('dados completos'));
     });
   }
 

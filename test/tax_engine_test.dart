@@ -19,9 +19,9 @@ void main() {
   });
 
   group('regras e dinheiro exato', () {
-    test('carrega regras 2026.2.0 e data de validação', () {
+    test('carrega regras base 2026.3.0 e data de validação', () {
       expect(rules.taxYear, 2026);
-      expect(rules.rulesVersion, '2026.2.0');
+      expect(rules.rulesVersion, '2026.3.0-base');
       expect(rules.verifiedAt, DateTime(2026, 8, 27));
       expect(rules.brackets, hasLength(9));
     });
@@ -39,7 +39,7 @@ void main() {
         expect(rules.ruleMetadata[key]?.source, isNotEmpty, reason: key);
         expect(
           rules.ruleMetadata[key]?.version,
-          rules.rulesVersion,
+          isNotEmpty,
           reason: key,
         );
       }

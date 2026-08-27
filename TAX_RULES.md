@@ -1,98 +1,55 @@
-# Regras fiscais — 2026.2.0
+# Tax rules — Taxy 0.3
 
-Validado em **27/08/2026** para o âmbito de `SUPPORTED_SCOPE.md`. Os valores
-executáveis residem exclusivamente em `assets/tax_rules/2026.json`.
+Todos os valores executáveis são carregados de ficheiros versionados. Cêntimos e `ppm` são as únicas unidades do motor.
 
-Cada valor monetário é guardado em cêntimos e cada taxa em partes por milhão
-(`ppm`). O motor não usa `double`.
+| Ano | Jurisdição | Versão | Estado |
+|---|---|---|---|
+| 2025 | Continente | `2025.3.0` | SUPPORTED |
+| 2026 | Continente | `2026.3.0` | SUPPORTED |
+| 2026 | Madeira | `2026.3.0-M` | SUPPORTED |
+| 2026 | Açores | `2026.3.0-A` | SUPPORTED |
 
-## Rendimentos e taxas gerais
+`TaxRuleRepository` resolve `year + jurisdiction`. Os descritores schema v3 aplicam overrides declarativos sobre a base validada.
 
-- IAS: 537,13 €.
-- dedução específica de Categoria A: 4.587,09 €, ou contribuições obrigatórias
-  superiores, sem exceder o rendimento.
-- mínimo de existência: parâmetros do artigo 70.º, todos no JSON.
-- nove escalões gerais: artigo 68.º, redação da Lei n.º 73-A/2025.
-- adicional de solidariedade: 2,5% acima de 80.000 € e 5% acima de 250.000 €.
+## 2025 Continente
 
-Fontes oficiais:
+- escalões do artigo 68.º após Lei n.º 55-A/2025;
+- IAS 522,50 € e dedução específica 8,54 IAS = 4.462,15 €;
+- mínimo de existência de referência 12.180 €;
+- renda standard 15%, limite base 700 € e transição até 1.000 €.
 
-- https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs25.aspx
-- https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68.aspx
-- https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx
+Fonte: AT, folheto “IRS — Deduções, benefícios fiscais e taxas para rendimentos do ano de 2025” e artigo 68.º em vigor até dezembro de 2025.
 
-## Dependentes
+## 2026 regiões
 
-- base: 600 € por dependente;
-- dependente único/mais velho até 3 anos: majoração de 126 €;
-- segundo dependente e seguintes até 6 anos: majoração de 300 €;
-- as majorações não são cumulativas.
+Continente usa o artigo 68.º na redação da Lei n.º 73-A/2025. Madeira usa a tabela do artigo 18.º do DLR n.º 8/2025/M. Açores aplica redução de 30% às taxas nacionais pelo artigo 4.º do DLR n.º 2/99/A, redação do DLR n.º 15-A/2021/A.
 
-O motor ordena uma cópia das idades do mais velho para o mais novo antes de
-aplicar a regra. A ordem de introdução nunca altera o resultado, incluindo listas
-com três ou mais dependentes. Idades iguais produzem o mesmo total qualquer que
-seja a ordem.
+## Casados e unidos de facto
 
-Fonte: CIRS artigo 78.º-A:
-https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78a.aspx
+Parâmetros JSON:
 
-## Deduções implementadas
+- `jointDivisor = 2` — CIRS artigo 69.º;
+- `separateDependentExpenseSharePpm = 500000` — artigo 78.º, n.º 14;
+- `familyLimitDivisor = 2` — limites familiares reduzidos na separada.
 
-| Categoria | Taxa | Limite individual/específico |
+O adicional de solidariedade conjunto também usa metade do rendimento e multiplica o resultado por dois (artigo 68.º-A, n.º 3). O mínimo de existência considera os dois titulares.
+
+## Deduções
+
+Mantêm-se base 600 € por dependente, majoração 126 € até 3 anos ou 300 € para segundo e seguintes até 6 anos, sem cumulação.
+
+| Dedução | Taxa | Limite |
 |---|---:|---:|
-| Despesas gerais standard | 35% | 250 € |
-| Despesas gerais monoparental | 45% | 335 € |
-| Saúde standard | 15% | 1.000 € |
+| Gerais | 35% | 250 € por titular |
+| Monoparental | 45% | 335 € |
+| Saúde | 15% | 1.000 € |
 | Educação standard | 30% | 800 € |
 | Lares | 25% | 403,75 € |
-| PPR, idade < 35 | 20% | 400 € |
-| PPR, 35–50 | 20% | 350 € |
-| PPR, > 50 | 20% | 300 € |
-| Rendas | 15% | limite transitório configurado, piso 2026 de 900 € |
+| PPR | 20% | 400/350/300 € por titular |
+| IVA | 15/30/35/100% | global 250 € |
 
-As situações especiais de educação (estudante deslocado e majorações
-territoriais) não são calculadas.
+## IRS Jovem
 
-## IVA por exigência de fatura
+Idade máxima, dez anos, limite 55 IAS e taxas 100/75/50/25% estão no JSON. Fontes: artigo 12.º-B e folheto oficial IRS Jovem 2025. O motor atual determina elegibilidade; não liquida o benefício.
 
-O input é o **IVA suportado**, não o total da fatura.
-
-| Campo | Taxa | Âmbito suportado |
-|---|---:|---|
-| `invoiceVat15` | 15% | setores enumerados no artigo 78.º-F, n.º 1 |
-| `invoiceVat30` | 30% | ensino desportivo/recreativo, clubes e ginásios elegíveis |
-| `invoiceVat35` | 35% | medicamentos de uso veterinário elegíveis |
-| `invoiceVat100` | 100% | transportes públicos e assinaturas elegíveis de periódicos |
-
-As quatro categorias concorrem para um único limite global de **250 €**. O JSON
-contém taxa, unidade, fonte, comentário e versão para cada parâmetro.
-
-Fonte: CIRS artigo 78.º-F:
-https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78f.aspx
-
-## Limite global de deduções
-
-- sem limite deste artigo até ao limite do primeiro escalão;
-- transição configurada entre 2.500 € e 1.000 €;
-- 1.000 € a partir de 80.000 €;
-- em agregados com três ou mais dependentes, majoração de 5% por dependente.
-
-O detalhe de cada crédito, o ajuste do limite do IVA, o ajuste do limite global e
-o limite pela coleta ficam disponíveis no `TaxResult.creditBreakdown` e no Tax
-Validation Lab.
-
-## Regras removidas ou bloqueadas
-
-`otherEligibleTaxCredit` foi removido do modelo, serialização, UI, cenários e
-testes. Nenhum crédito genérico pode ser somado. Consulte `SUPPORTED_SCOPE.md`
-para todos os módulos `NEEDS_VERIFICATION`.
-
-## Versionamento e rollback
-
-- `schemaVersion`: compatibilidade estrutural; o parser rejeita versões antigas.
-- `rulesVersion`: versão semântica do conjunto fiscal.
-- `verifiedAt`: data apresentada na UI.
-- `ruleMetadata`: auditoria dos parâmetros novos.
-
-Rollback significa repor o JSON e o código compatível através de Git; uma regra
-incompleta ou com status diferente de `VERIFIED_FOR_MVP_SCOPE` não carrega.
+URLs completas residem nos descritores. Alterações exigem versão, data, testes e revisão humana.
