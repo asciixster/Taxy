@@ -22,7 +22,7 @@ void main() {
     expect(document['taxYear'], 2026);
     expect(document['region'], 'CONTINENT');
     expect(document['civilStatus'], 'MARRIED');
-    expect(document['rulesVersion'], '2026.3.1');
+    expect(document['rulesVersion'], '2026.4.0');
     expect((document['sources'] as List), hasLength(greaterThanOrEqualTo(4)));
     expect(cases, hasLength(9));
     for (final fixture in cases) {

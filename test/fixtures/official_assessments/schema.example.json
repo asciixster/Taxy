@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "name": "REPLACE_WITH_ANONYMOUS_ID",
   "source": "OFFICIAL_AT_ASSESSMENT",
-  "rulesVersion": "2026.3.1",
+  "rulesVersion": "2026.4.0",
   "inputs": {
     "id": "anonymous",
     "name": "Official assessment",
@@ -22,6 +22,7 @@
     "taxableIncomeCents": "REPLACE_WITH_INTEGER",
     "grossTaxCents": "REPLACE_WITH_INTEGER",
     "deductionsCents": "REPLACE_WITH_INTEGER",
+    "exemptIncomeCents": "REPLACE_WITH_INTEGER",
     "taxDueCents": "REPLACE_WITH_INTEGER",
     "withholdingCents": "REPLACE_WITH_INTEGER",
     "balanceCents": "REPLACE_WITH_INTEGER"

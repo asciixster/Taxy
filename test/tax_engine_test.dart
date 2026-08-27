@@ -19,9 +19,9 @@ void main() {
   });
 
   group('regras e dinheiro exato', () {
-    test('carrega regras base 2026.3.1 e data de validação', () {
+    test('carrega regras base 2026.4.0 e data de validação', () {
       expect(rules.taxYear, 2026);
-      expect(rules.rulesVersion, '2026.3.1-base');
+      expect(rules.rulesVersion, '2026.4.0-base');
       expect(rules.verifiedAt, DateTime(2026, 8, 27));
       expect(rules.brackets, hasLength(9));
     });
@@ -393,6 +393,33 @@ void main() {
       expect(input.invoiceVat30, Money.zero);
       expect(input.invoiceVat35, Money.zero);
       expect(input.invoiceVat100, Money.zero);
+    });
+
+    test('serialização preserva histórico objetivo IRS Jovem', () {
+      final source = _simulation(gross: 3000000).copyWith(
+        primaryIrsJovem: const IrsJovemAnswers(
+          requested: true,
+          taxSituationRegularized: true,
+          historyConfirmedComplete: true,
+          incomeHistory: [
+            IrsJovemIncomeYear(
+              year: 2026,
+              hadCategoryAIncome: true,
+              hadCategoryBIncome: false,
+              wasDependent: false,
+              residentInPortugal: true,
+              usedIncompatibleRegime: false,
+            ),
+          ],
+        ),
+      );
+      final restored = TaxSimulation.decode(source.encode());
+      expect(restored.primaryIrsJovem.historyConfirmedComplete, isTrue);
+      expect(restored.primaryIrsJovem.incomeHistory.single.year, 2026);
+      expect(
+        restored.primaryIrsJovem.incomeHistory.single.hadCategoryAIncome,
+        isTrue,
+      );
     });
   });
 }

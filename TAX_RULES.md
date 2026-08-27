@@ -1,13 +1,13 @@
-# Tax rules — Taxy 0.3
+# Tax rules — Taxy 0.4
 
 Todos os valores executáveis são carregados de ficheiros versionados. Cêntimos e `ppm` são as únicas unidades do motor.
 
 | Ano | Jurisdição | Versão | Estado |
 |---|---|---|---|
-| 2025 | Continente | `2025.3.1` | SUPPORTED |
-| 2026 | Continente | `2026.3.1` | SUPPORTED |
-| 2026 | Madeira | `2026.3.1-M` | SUPPORTED |
-| 2026 | Açores | `2026.3.1-A` | SUPPORTED |
+| 2025 | Continente | `2025.4.0` | SUPPORTED |
+| 2026 | Continente | `2026.4.0` | SUPPORTED |
+| 2026 | Madeira | `2026.4.0-M` | SUPPORTED |
+| 2026 | Açores | `2026.4.0-A` | SUPPORTED |
 
 `TaxRuleRepository` resolve exclusivamente `year + jurisdiction`, normaliza a jurisdição e recusa schema/status, ano, jurisdição, base ou override incompatível. Não existe fallback regional. A base 2025 é fisicamente independente de 2026, impedindo herança acidental de parâmetros futuros.
 
@@ -54,6 +54,11 @@ O limite de PPR é sempre apurado por titular segundo a sua idade, inclusive na 
 
 ## IRS Jovem
 
-Idade máxima, dez anos, limite 55 IAS e taxas 100/75/50/25% estão no JSON. Fontes: [artigo 12.º-B](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx) e folheto oficial IRS Jovem 2025. O motor atual determina elegibilidade com histórico anual; não liquida o benefício.
+Idade máxima, dez anos, limite 55 IAS, taxas 100/75/50/25%, opção anual e
+englobamento para taxa estão no JSON de cada ano. Em 2025 o limite é 28.737,50
+€; em 2026 é 29.542,15 €. O rendimento isento entra sem deduções na
+determinação da taxa e a coleta correspondente é retirada proporcionalmente.
+
+Fontes: [artigo 12.º-B](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx), [artigo 22.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs22.aspx), [folheto AT IRS Jovem 2025](https://info.portaldasfinancas.gov.pt/pt/apoio_contribuinte/Folhetos_informativos/Documents/Folheto_IRS_jovem_2025.pdf) e [Newsletter AT janeiro 2026](https://info.portaldasfinancas.gov.pt/pt/at/Divulgacao/publicacoes_internas/Newsletter_AT/Documents/Newsletter-39-janeiro-2026.pdf).
 
 URLs completas residem nos descritores. Alterações exigem versão, data, testes e revisão humana.

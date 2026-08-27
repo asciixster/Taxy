@@ -1,4 +1,4 @@
-# Tax Engine — matriz de testes 0.3
+# Tax Engine — matriz de testes 0.4
 
 A suite executa mais de 200 testes e compara cêntimos inteiros.
 
@@ -22,7 +22,10 @@ Para 2025 Continente e 2026 Continente/Madeira/Açores, cada limite finito tem t
 - período fora do regime, dependente, irregularidade e regimes incompatíveis;
 - respostas em falta, histórico sem o ano atual, anos sem rendimento, anos como dependente e limite 55 IAS.
 
-Os testes cobrem elegibilidade, não liquidação do benefício.
+Cobrem também histórico duplicado/interrompido, confirmação do histórico,
+Categoria B apenas para contagem, aplicação integral à liquidação, retenções,
+saúde, educação, PPR, limite 55 IAS a ±0,01 €, rendimentos altos e mínimo de
+existência. Casais cobrem nenhum/A/B/ambos em separada e conjunta.
 
 ## Regressão e UI
 
@@ -30,12 +33,16 @@ Continuam cobertos mínimo de existência, dedução específica, solidariedade,
 
 ## Fixtures oficiais
 
-O runner descobre fixtures automaticamente e exige zero cêntimos de diferença por defeito em rendimento coletável, coleta, deduções, imposto, retenções e saldo. Uma exceção de arredondamento é local ao campo e exige nota; não existe tolerância global.
+O runner descobre fixtures automaticamente e exige zero cêntimos de diferença por defeito em rendimento coletável, coleta, deduções, rendimento isento, imposto, retenções e saldo. Uma exceção de arredondamento é local ao campo e exige nota; não existe tolerância global.
 
 O loader só aceita `source: OFFICIAL_AT_ASSESSMENT` e rejeita fixtures incompletas. O exemplo não é executado como liquidação real.
 
 ## Referências independentes
 
-`test/fixtures/reference_calculations/couples_2026_continent.json` contém nove casos manualmente auditados, com expectativas fixas para separada e conjunta: rendimentos iguais e diferentes, um e dois dependentes, saúde, educação, despesas do dependente, PPR por idade e mínimo de existência. São referências de revisão, não liquidações oficiais, e estão claramente marcadas como `MANUALLY_AUDITED_REFERENCE`.
+Além das nove referências conjugais 2026 existentes,
+`test/fixtures/reference_calculations/irs_jovem/cases_2025_continent.json`
+contém 12 casos ao cêntimo: anos 1/2/5/8, limite 55 IAS, rendimento elevado e
+as combinações conjugais A/B/ambos. São referências de revisão, não
+liquidações oficiais, e usam `MANUALLY_AUDITED_REFERENCE`.
 
 O repositório de regras também é testado contra ano/base divergente, descriptor não verificado, schema incompatível, override desconhecido, ficheiro ausente e tentativa de carregar regiões 2025 não existentes. Não existe fallback silencioso.

@@ -184,6 +184,29 @@ void main() {
     expect(result.exemptionLimit.cents, 53713 * 55);
   });
 
+  test('um cêntimo de Categoria A é rendimento elegível', () {
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: const Money.fromCents(1),
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        historyConfirmedComplete: true,
+        incomeHistory: [
+          IrsJovemIncomeYear(
+            year: 2026,
+            hadCategoryAIncome: true,
+            hadCategoryBIncome: false,
+            wasDependent: false,
+            residentInPortugal: true,
+          ),
+        ],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.eligible);
+    expect(result.eligibleExemptIncome, const Money.fromCents(1));
+  });
+
   test(
     'histórico objetivo ignora anos sem rendimento e anos como dependente',
     () {
@@ -193,26 +216,42 @@ void main() {
         answers: const IrsJovemAnswers(
           requested: true,
           taxSituationRegularized: true,
+          historyConfirmedComplete: true,
           incomeHistory: [
             IrsJovemIncomeYear(
               year: 2022,
-              hadCategoryAOrBIncome: true,
+              hadCategoryAIncome: true,
+              hadCategoryBIncome: false,
               wasDependent: true,
+              residentInPortugal: true,
             ),
             IrsJovemIncomeYear(
               year: 2023,
-              hadCategoryAOrBIncome: true,
+              hadCategoryAIncome: true,
+              hadCategoryBIncome: false,
               wasDependent: false,
+              residentInPortugal: true,
             ),
             IrsJovemIncomeYear(
               year: 2024,
-              hadCategoryAOrBIncome: false,
+              hadCategoryAIncome: false,
+              hadCategoryBIncome: false,
               wasDependent: false,
+              residentInPortugal: true,
+            ),
+            IrsJovemIncomeYear(
+              year: 2025,
+              hadCategoryAIncome: false,
+              hadCategoryBIncome: false,
+              wasDependent: false,
+              residentInPortugal: true,
             ),
             IrsJovemIncomeYear(
               year: 2026,
-              hadCategoryAOrBIncome: true,
+              hadCategoryAIncome: true,
+              hadCategoryBIncome: false,
               wasDependent: false,
+              residentInPortugal: true,
             ),
           ],
         ),
@@ -230,11 +269,14 @@ void main() {
       answers: const IrsJovemAnswers(
         requested: true,
         taxSituationRegularized: true,
+        historyConfirmedComplete: true,
         incomeHistory: [
           IrsJovemIncomeYear(
             year: 2026,
-            hadCategoryAOrBIncome: false,
+            hadCategoryAIncome: false,
+            hadCategoryBIncome: false,
             wasDependent: false,
+            residentInPortugal: true,
           ),
         ],
       ),
@@ -249,16 +291,166 @@ void main() {
       answers: const IrsJovemAnswers(
         requested: true,
         taxSituationRegularized: true,
+        historyConfirmedComplete: true,
         incomeHistory: [
           IrsJovemIncomeYear(
             year: 2025,
-            hadCategoryAOrBIncome: true,
+            hadCategoryAIncome: true,
+            hadCategoryBIncome: false,
             wasDependent: false,
+            residentInPortugal: true,
           ),
         ],
       ),
     );
     expect(result.status, IrsJovemEligibility.needsMoreInformation);
+  });
+
+  test('histórico objetivo não confirmado pede mais informação', () {
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: const Money.fromCents(1),
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        incomeHistory: [
+          IrsJovemIncomeYear(
+            year: 2026,
+            hadCategoryAIncome: true,
+            hadCategoryBIncome: false,
+            wasDependent: false,
+            residentInPortugal: true,
+          ),
+        ],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.needsMoreInformation);
+  });
+
+  test('ano em falta no histórico interrompido pede mais informação', () {
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: const Money.fromCents(100000),
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        historyConfirmedComplete: true,
+        incomeHistory: [
+          IrsJovemIncomeYear(
+            year: 2024,
+            hadCategoryAIncome: true,
+            hadCategoryBIncome: false,
+            wasDependent: false,
+            residentInPortugal: true,
+          ),
+          IrsJovemIncomeYear(
+            year: 2026,
+            hadCategoryAIncome: true,
+            hadCategoryBIncome: false,
+            wasDependent: false,
+            residentInPortugal: true,
+          ),
+        ],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.needsMoreInformation);
+    expect(result.reasons.single, contains('2025'));
+  });
+
+  test('ano duplicado pede mais informação', () {
+    const duplicate = IrsJovemIncomeYear(
+      year: 2026,
+      hadCategoryAIncome: true,
+      hadCategoryBIncome: false,
+      wasDependent: false,
+      residentInPortugal: true,
+    );
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: const Money.fromCents(100000),
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        historyConfirmedComplete: true,
+        incomeHistory: [duplicate, duplicate],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.needsMoreInformation);
+  });
+
+  test('regime incompatível num ano histórico torna o titular inelegível', () {
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: const Money.fromCents(100000),
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        historyConfirmedComplete: true,
+        incomeHistory: [
+          IrsJovemIncomeYear(
+            year: 2026,
+            hadCategoryAIncome: true,
+            hadCategoryBIncome: false,
+            wasDependent: false,
+            residentInPortugal: true,
+            usedIncompatibleRegime: true,
+          ),
+        ],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.notEligible);
+  });
+
+  test('A/B em ano anterior de não residência pede validação adicional', () {
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: const Money.fromCents(100000),
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        historyConfirmedComplete: true,
+        incomeHistory: [
+          IrsJovemIncomeYear(
+            year: 2025,
+            hadCategoryAIncome: true,
+            hadCategoryBIncome: false,
+            wasDependent: false,
+            residentInPortugal: false,
+          ),
+          IrsJovemIncomeYear(
+            year: 2026,
+            hadCategoryAIncome: true,
+            hadCategoryBIncome: false,
+            wasDependent: false,
+            residentInPortugal: true,
+          ),
+        ],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.needsMoreInformation);
+  });
+
+  test('Categoria B é contada na elegibilidade mas não liquidada como A', () {
+    final result = engine.evaluate(
+      ageAtYearEnd: 30,
+      categoryAIncome: Money.zero,
+      answers: const IrsJovemAnswers(
+        requested: true,
+        taxSituationRegularized: true,
+        historyConfirmedComplete: true,
+        incomeHistory: [
+          IrsJovemIncomeYear(
+            year: 2026,
+            hadCategoryAIncome: false,
+            hadCategoryBIncome: true,
+            wasDependent: false,
+            residentInPortugal: true,
+          ),
+        ],
+      ),
+    );
+    expect(result.status, IrsJovemEligibility.eligible);
+    expect(result.eligibleExemptIncome, Money.zero);
   });
 }
 

@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "taxYear": 2026,
   "jurisdiction": "MADEIRA",
-  "rulesVersion": "2026.3.1-M",
+  "rulesVersion": "2026.4.0-M",
   "verifiedAt": "2026-08-27",
   "status": "VERIFIED",
   "baseAsset": "assets/tax_rules/2026.json",

@@ -8,6 +8,7 @@ import '../domain/money.dart';
 import '../tax_engine/tax_engine.dart';
 import '../tax_engine/household_tax_engine.dart';
 import '../tax_engine/irs_jovem_eligibility_engine.dart';
+import '../tax_engine/irs_jovem_tax_engine.dart';
 import '../tax_engine/tax_rules.dart';
 
 /// Ferramenta developer-only. A navegação para este ecrã é protegida por
@@ -41,6 +42,8 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
     'vat30': TextEditingController(),
     'vat35': TextEditingController(),
     'vat100': TextEditingController(),
+    'jovemHistoryA': TextEditingController(text: '2026,A,false,true,false'),
+    'jovemHistoryB': TextEditingController(text: '2026,A,false,true,false'),
   };
   bool _singleParent = false;
   late TaxRuleSet _rules = widget.rules;
@@ -51,7 +54,10 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
   CivilStatus _civilStatus = CivilStatus.single;
   FilingMode _filingMode = FilingMode.separate;
   bool _irsJovem = false;
-  int _irsJovemYear = 1;
+  bool _historyCompleteA = true;
+  bool _historyCompleteB = true;
+  bool _regularizedA = true;
+  bool _regularizedB = true;
 
   @override
   void dispose() {
@@ -74,6 +80,35 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
       .map((value) => int.tryParse(value.trim()))
       .whereType<int>()
       .toList(growable: false);
+
+  List<IrsJovemIncomeYear> _history(String key) {
+    final result = <IrsJovemIncomeYear>[];
+    for (final rawLine in _values[key]!.text.split('\n')) {
+      final line = rawLine.trim();
+      if (line.isEmpty) continue;
+      final values = line.split(',').map((value) => value.trim()).toList();
+      if (values.length != 5 || int.tryParse(values[0]) == null) continue;
+      final income = values[1].toUpperCase();
+      result.add(
+        IrsJovemIncomeYear(
+          year: int.parse(values[0]),
+          hadCategoryAIncome: income.contains('A'),
+          hadCategoryBIncome: income.contains('B'),
+          wasDependent: values[2].toLowerCase() == 'true',
+          residentInPortugal: values[3].toLowerCase() == 'true',
+          usedIncompatibleRegime: values[4].toLowerCase() == 'true',
+        ),
+      );
+    }
+    return result;
+  }
+
+  IrsJovemAnswers _jovemAnswers({required bool secondary}) => IrsJovemAnswers(
+    requested: _irsJovem,
+    taxSituationRegularized: secondary ? _regularizedB : _regularizedA,
+    historyConfirmedComplete: secondary ? _historyCompleteB : _historyCompleteA,
+    incomeHistory: _history(secondary ? 'jovemHistoryB' : 'jovemHistoryA'),
+  );
 
   TaxSimulation get _simulation => TaxSimulation(
     id: 'validation-lab',
@@ -113,6 +148,7 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
       for (var i = 0; i < _dependentAges.length; i++)
         Dependent(id: 'lab-$i', ageAtYearEnd: _dependentAges[i]),
     ],
+    primaryIrsJovem: _jovemAnswers(secondary: false),
     secondaryTaxpayer: _civilStatus == CivilStatus.single
         ? null
         : TaxpayerInput(
@@ -125,29 +161,41 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
               socialSecurity: _money('socialSecurityB'),
             ),
             deductions: const DeductionInput(),
+            irsJovem: _jovemAnswers(secondary: true),
           ),
   );
 
   @override
   Widget build(BuildContext context) {
-    final household = _civilStatus == CivilStatus.single
+    final normalHousehold = _civilStatus == CivilStatus.single
         ? null
         : HouseholdTaxEngine(_rules).compare(_simulation);
-    final result = household?.available ?? false
+    final jovemHousehold = _civilStatus == CivilStatus.single || !_irsJovem
+        ? null
+        : HouseholdTaxEngine(_rules).compareWithIrsJovem(_simulation);
+    final singleComparison = _civilStatus != CivilStatus.single || !_irsJovem
+        ? null
+        : IrsJovemTaxEngine(_rules).compare(_simulation);
+    final result = normalHousehold?.available ?? false
         ? (_filingMode == FilingMode.joint
-              ? household!.joint!
-              : household!.separate!)
+              ? normalHousehold!.joint!
+              : normalHousehold!.separate!)
         : TaxEngine(_rules).calculate(_simulation);
-    final jovem = IrsJovemEligibilityEngine(_rules).evaluate(
-      ageAtYearEnd: int.tryParse(_values['age']!.text) ?? 30,
-      categoryAIncome: _money('gross'),
-      answers: IrsJovemAnswers(
-        requested: _irsJovem,
-        wasDependentAtYearEnd: false,
-        qualifyingIncomeYears: _irsJovemYear,
-        taxSituationRegularized: true,
-      ),
-    );
+    final jovem =
+        singleComparison?.eligibility ??
+        jovemHousehold?.primaryEligibility ??
+        IrsJovemEligibilityEngine(_rules).evaluate(
+          ageAtYearEnd: int.tryParse(_values['age']!.text) ?? 30,
+          categoryAIncome: _money('gross'),
+          answers: _jovemAnswers(secondary: false),
+        );
+    final jovemResult =
+        singleComparison?.withIrsJovem ??
+        (jovemHousehold?.withIrsJovem == null
+            ? null
+            : _filingMode == FilingMode.joint
+            ? jovemHousehold!.withIrsJovem!.joint
+            : jovemHousehold!.withIrsJovem!.separate);
     return Scaffold(
       appBar: AppBar(title: const Text('Tax Validation Lab')),
       body: ListView(
@@ -248,16 +296,40 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
             value: _irsJovem,
             onChanged: (value) => setState(() => _irsJovem = value),
           ),
-          if (_irsJovem)
-            DropdownButtonFormField<int>(
-              initialValue: _irsJovemYear,
-              decoration: const InputDecoration(labelText: 'Ano do regime'),
-              items: [
-                for (var year = 1; year <= 10; year++)
-                  DropdownMenuItem(value: year, child: Text('$year.º')),
-              ],
-              onChanged: (value) => setState(() => _irsJovemYear = value ?? 1),
+          if (_irsJovem) ...[
+            _historyInput('Histórico anual A', 'jovemHistoryA'),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Histórico A completo'),
+              value: _historyCompleteA,
+              onChanged: (value) => setState(() => _historyCompleteA = value),
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Situação tributária A regularizada'),
+              value: _regularizedA,
+              onChanged: (value) => setState(() => _regularizedA = value),
+            ),
+            if (_civilStatus != CivilStatus.single) ...[
+              _historyInput('Histórico anual B', 'jovemHistoryB'),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Histórico B completo'),
+                value: _historyCompleteB,
+                onChanged: (value) => setState(() => _historyCompleteB = value),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Situação tributária B regularizada'),
+                value: _regularizedB,
+                onChanged: (value) => setState(() => _regularizedB = value),
+              ),
+            ],
+            Text(
+              'Formato por linha: ano,A|B|AB|N,dependente,residente,regimeIncompatível',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: 20),
           _section(result.available ? 'Audit trail' : 'Blocked safely'),
           if (!result.available)
@@ -288,9 +360,49 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
             _moneyRow('Withholding', result.withholding),
             _moneyRow('Final balance', result.balance),
           ],
+          if (_irsJovem) ...[
+            const SizedBox(height: 20),
+            _section('IRS Jovem audit'),
+            _row('Eligibility', jovem.status.name),
+            _row('Reason', jovem.reasons.join(' · ')),
+            _row(
+              'Relevant income year',
+              jovem.relevantIncomeYear?.toString() ?? '—',
+            ),
+            _row('Exemption rate', '${jovem.exemptionRatePpm / 10000}%'),
+            _moneyRow('55 IAS limit', jovem.exemptionLimit),
+            _moneyRow('Eligible exempt income A', jovem.eligibleExemptIncome),
+            if (singleComparison?.adjustment case final adjustment?) ...[
+              _moneyRow('Taxable after exemption', adjustment.taxableIncome),
+              _moneyRow(
+                'Income determining rate',
+                adjustment.rateDeterminingIncome,
+              ),
+              _moneyRow(
+                'Tax allocated to exempt income',
+                adjustment.taxOnExemptIncome,
+              ),
+            ],
+            _moneyRow('Normal tax due', result.taxDue),
+            if (jovemResult != null)
+              _moneyRow('IRS Jovem tax due', jovemResult.taxDue),
+            if (singleComparison != null)
+              _moneyRow('Estimated benefit', singleComparison.estimatedBenefit)
+            else if (jovemHousehold != null)
+              _moneyRow(
+                'Estimated best-case benefit',
+                jovemHousehold.estimatedBenefit,
+              ),
+          ],
           const SizedBox(height: 20),
           FilledButton.icon(
-            onPressed: () => _export(result, jovem),
+            onPressed: () => _export(
+              result,
+              jovemResult,
+              jovem,
+              singleComparison?.adjustment,
+              jovemHousehold,
+            ),
             icon: const Icon(Icons.copy_all_rounded),
             label: const Text('Export validation case'),
           ),
@@ -320,7 +432,10 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
 
   Future<void> _export(
     TaxResult result,
+    TaxResult? jovemResult,
     IrsJovemEligibilityResult jovem,
+    IrsJovemTaxAdjustment? adjustment,
+    HouseholdIrsJovemComparison? household,
   ) async {
     final payload = const JsonEncoder.withIndent('  ').convert({
       'schemaVersion': 1,
@@ -334,6 +449,17 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
         'withholdingCents': result.withholding.cents,
         'balanceCents': result.balance.cents,
         'irsJovemEligibility': jovem.status.name,
+        'irsJovemRelevantYear': jovem.relevantIncomeYear,
+        'irsJovemRatePpm': jovem.exemptionRatePpm,
+        'irsJovemLimitCents': jovem.exemptionLimit.cents,
+        'irsJovemExemptIncomeCents':
+            adjustment?.exemptIncome.cents ?? jovem.eligibleExemptIncome.cents,
+        'irsJovemTaxableIncomeCents': jovemResult?.taxableIncome.cents,
+        'irsJovemTaxDueCents': jovemResult?.taxDue.cents,
+        'irsJovemBenefitCents': jovemResult == null
+            ? null
+            : (result.taxDue - jovemResult.taxDue).max(Money.zero).cents,
+        'householdBestBenefitCents': household?.estimatedBenefit.cents,
       },
       'breakdown': [
         for (final row in result.breakdown)
@@ -358,6 +484,18 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
         labelText: label,
         suffixText: money ? '€' : null,
       ),
+      onChanged: (_) => setState(() {}),
+    ),
+  );
+
+  Widget _historyInput(String label, String key) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: TextField(
+      controller: _values[key],
+      minLines: 2,
+      maxLines: 6,
+      keyboardType: TextInputType.multiline,
+      decoration: InputDecoration(labelText: label),
       onChanged: (_) => setState(() {}),
     ),
   );

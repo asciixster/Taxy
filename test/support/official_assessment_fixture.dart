@@ -37,6 +37,7 @@ final class OfficialAssessmentFixture {
       'taxableIncomeCents',
       'grossTaxCents',
       'deductionsCents',
+      'exemptIncomeCents',
       'taxDueCents',
       'withholdingCents',
       'balanceCents',

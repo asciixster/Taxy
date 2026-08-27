@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "taxYear": 2026,
-  "rulesVersion": "2026.3.1-base",
+  "rulesVersion": "2026.4.0-base",
   "verifiedAt": "2026-08-27",
   "status": "VERIFIED_FOR_MVP_SCOPE",
   "supportedScope": {
@@ -19,7 +19,6 @@
   },
   "unsupported": {
     "PARTIAL_RESIDENCE": "NEEDS_VERIFICATION",
-    "IRS_JOVEM": "NEEDS_VERIFICATION",
     "CATEGORY_B": "NEEDS_VERIFICATION",
     "PENSIONS": "NEEDS_VERIFICATION",
     "FOREIGN_INCOME": "NEEDS_VERIFICATION",
@@ -71,7 +70,9 @@
     "year1RatePpm": 1000000,
     "years2To4RatePpm": 750000,
     "years5To7RatePpm": 500000,
-    "years8To10RatePpm": 250000
+    "years8To10RatePpm": 250000,
+    "annualOptionRequired": 1,
+    "exemptIncomeIncludedForRate": 1
   },
   "deductions": {
     "dependentBaseCents": 60000,
@@ -140,7 +141,28 @@
       "unit": "parts_per_million_and_years",
       "source": "CIRS artigo 12.º-B, n.os 1, 3 e 5",
       "comment": "Até 35 anos, dez anos de rendimentos, taxas 100%, 75%, 50% e 25%, limite 55 IAS.",
-      "version": "2026.3.1"
+      "version": "2026.4.0"
+    },
+    "irsJovemHistory": {
+      "name": "Contagem objetiva dos anos IRS Jovem",
+      "unit": "annual_history",
+      "source": "CIRS artigo 12.º-B, n.os 1, 2 e 4; Folheto AT IRS Jovem 2025",
+      "comment": "Anos sem A/B e anos como dependente não consomem o benefício; exige histórico anual completo.",
+      "version": "2026.4.0"
+    },
+    "irsJovemEnglobement": {
+      "name": "Englobamento para determinação da taxa",
+      "unit": "boolean_and_proportional_allocation",
+      "source": "CIRS artigo 22.º, n.º 4; AT Fórmula da taxa de tributação efetiva",
+      "comment": "O rendimento isento entra sem deduções para determinar a taxa e a coleta correspondente é imputada proporcionalmente.",
+      "version": "2026.4.0"
+    },
+    "irsJovemIncompatibilities": {
+      "name": "Regimes incompatíveis com IRS Jovem",
+      "unit": "eligibility_conditions",
+      "source": "CIRS artigo 12.º-B, n.º 6",
+      "comment": "RNH, IFICI, programa Regressar e situação tributária não regularizada impedem a aplicação.",
+      "version": "2026.4.0"
     },
     "rentFloorCapCents": {
       "name": "Limite mínimo da dedução de rendas em 2026",
@@ -218,6 +240,8 @@
     {"rule": "jointSolidarity", "legalReference": "CIRS artigo 68.º-A, n.º 3", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs68a.aspx"},
     {"rule": "separateDeductions", "legalReference": "CIRS artigo 78.º, n.º 14", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78.aspx"},
     {"rule": "rent2026", "legalReference": "CIRS artigo 78.º-E e Decreto-Lei n.º 97/2026", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78e.aspx"},
-    {"rule": "irsJovem", "legalReference": "CIRS artigo 12.º-B", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx"}
+    {"rule": "irsJovem", "legalReference": "CIRS artigo 12.º-B", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx"},
+    {"rule": "irsJovemEnglobement", "legalReference": "CIRS artigo 22.º, n.º 4", "url": "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs22.aspx"},
+    {"rule": "irsJovem2026Limit", "legalReference": "55 IAS 2026 = 29 542,15 euros", "url": "https://info.portaldasfinancas.gov.pt/pt/at/Divulgacao/publicacoes_internas/Newsletter_AT/Documents/Newsletter-39-janeiro-2026.pdf"}
   ]
 }

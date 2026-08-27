@@ -41,6 +41,11 @@ final class TaxDraft {
     invoiceVat100 = _raw(source.deductions.invoiceVat100);
     ppr = _raw(source.deductions.ppr);
     incomeTypes = {...source.incomeTypes};
+    wantsIrsJovemA = source.primaryIrsJovem.requested;
+    irsJovemRegularizedA =
+        source.primaryIrsJovem.taxSituationRegularized ?? true;
+    irsJovemHistoryA = _historyRaw(source.primaryIrsJovem.incomeHistory);
+    irsJovemHistoryCompleteA = source.primaryIrsJovem.historyConfirmedComplete;
     if (source.secondaryTaxpayer case final secondary?) {
       secondaryAge = secondary.age;
       secondaryGross = _raw(secondary.income.gross);
@@ -56,11 +61,22 @@ final class TaxDraft {
       secondaryVat30 = _raw(secondary.deductions.invoiceVat30);
       secondaryVat35 = _raw(secondary.deductions.invoiceVat35);
       secondaryVat100 = _raw(secondary.deductions.invoiceVat100);
+      wantsIrsJovemB = secondary.irsJovem.requested;
+      irsJovemRegularizedB = secondary.irsJovem.taxSituationRegularized ?? true;
+      irsJovemHistoryB = _historyRaw(secondary.irsJovem.incomeHistory);
+      irsJovemHistoryCompleteB = secondary.irsJovem.historyConfirmedComplete;
     }
   }
 
   static String _raw(Money money) =>
       '${money.cents ~/ 100},${(money.cents.abs() % 100).toString().padLeft(2, '0')}';
+
+  static String _historyRaw(List<IrsJovemIncomeYear> history) => history
+      .map(
+        (entry) =>
+            '${entry.year},${entry.hadCategoryAIncome ? 'A' : ''}${entry.hadCategoryBIncome ? 'B' : ''},${entry.wasDependent},${entry.residentInPortugal},${entry.usedIncompatibleRegime}',
+      )
+      .join('\n');
 
   String? id;
   String name = 'Simulação principal';
@@ -90,6 +106,14 @@ final class TaxDraft {
   String ppr = '';
   Set<IncomeType> incomeTypes = {IncomeType.employment};
   bool hasSpecialSituation = false;
+  bool wantsIrsJovemA = false;
+  bool wantsIrsJovemB = false;
+  String irsJovemHistoryA = '';
+  String irsJovemHistoryB = '';
+  bool irsJovemHistoryCompleteA = false;
+  bool irsJovemHistoryCompleteB = false;
+  bool irsJovemRegularizedA = true;
+  bool irsJovemRegularizedB = true;
   int secondaryAge = 30;
   String secondaryGross = '';
   String secondaryWithholding = '';
@@ -146,6 +170,19 @@ final class QuestionEngine {
       'Existe alguma situação fiscal especial?',
       'Guarda partilhada, deficiência, residência parcial e outros regimes exigem tratamento próprio.',
     ),
+    const QuestionStep(
+      'irsJovemInterest',
+      QuestionSection.eligibility,
+      'Queres verificar o IRS Jovem?',
+      'Se não fores elegível, continuamos a calcular o IRS normal.',
+    ),
+    if (draft.wantsIrsJovemA || draft.wantsIrsJovemB)
+      const QuestionStep(
+        'irsJovemHistory',
+        QuestionSection.eligibility,
+        'Confirma o histórico anual de trabalho',
+        'Cada ano é descrito objetivamente; anos como dependente ou sem rendimentos A/B não consomem o benefício.',
+      ),
     const QuestionStep(
       'age',
       QuestionSection.profile,
