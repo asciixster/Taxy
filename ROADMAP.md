@@ -10,7 +10,8 @@
 - IRS Jovem end-to-end: histórico, elegibilidade, liquidação e comparação;
 - referências IRS Jovem manualmente auditadas e loader oficial com rendimento
   isento;
-- schema AT v2, comparação exata, privacidade e relatório absoluto;
+- schema AT v3, audit trace tipado, intake/triage developer-only, comparação
+  exata, privacidade e relatório absoluto;
 - persistência local, rascunho retomável, cenários, breakdown e Validation Lab.
 
 ## NEXT

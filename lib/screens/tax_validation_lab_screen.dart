@@ -49,6 +49,8 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
   final _officialValues = <String, TextEditingController>{
     for (final field in AtValidationField.all) field: TextEditingController(),
   };
+  final _sourceNotes = TextEditingController();
+  final _triageNotes = TextEditingController();
   bool _singleParent = false;
   late TaxRuleSet _rules = widget.rules;
   late int _year = widget.rules.taxYear;
@@ -62,6 +64,7 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
   bool _historyCompleteB = true;
   bool _regularizedA = true;
   bool _regularizedB = true;
+  FixtureFailureCategory _triageCategory = FixtureFailureCategory.unknown;
 
   @override
   void dispose() {
@@ -71,6 +74,8 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
     for (final controller in _officialValues.values) {
       controller.dispose();
     }
+    _sourceNotes.dispose();
+    _triageNotes.dispose();
     super.dispose();
   }
 
@@ -204,12 +209,12 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
             ? jovemHousehold!.withIrsJovem!.joint
             : jovemHousehold!.withIrsJovem!.separate);
     Map<String, int>? comparable;
+    TaxCalculationTrace? trace;
     FixtureFailure? comparableFailure;
     try {
-      comparable = const AtValidationEngine().calculateComparable(
-        _simulation,
-        _rules,
-      );
+      final validation = const AtValidationEngine();
+      trace = validation.calculateTrace(_simulation, _rules);
+      comparable = validation.comparableFromTrace(trace);
     } on AtFixtureValidationException catch (error) {
       comparableFailure = error.failure;
     }
@@ -352,30 +357,51 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
           if (!result.available)
             for (final warning in result.warnings)
               _row('Scope validation', warning)
-          else ...[
-            _moneyRow('Gross income', result.grossIncome),
-            _moneyRow('Specific deduction', result.specificDeduction),
+          else if (trace != null) ...[
+            _moneyRow('Gross income', trace.grossIncome),
+            _moneyRow('Specific deduction', trace.specificDeduction),
             _moneyRow(
               'Minimum existence allowance',
-              result.minimumExistenceAllowance,
+              trace.minimumExistenceAllowance,
             ),
-            _moneyRow('Taxable income', result.taxableIncome),
-            _moneyRow('Bracket base tax', result.bracketBaseTax),
-            _moneyRow('Bracket excess', result.bracketExcess),
-            _row('Marginal rate', '${result.marginalRatePpm / 10000}%'),
-            _moneyRow('Gross tax', result.grossTax),
+            _moneyRow('Taxable income', trace.taxableIncome),
+            _row('Marital quotient (divisor)', '${trace.maritalQuotient}'),
+            _moneyRow('Rate-determining income', trace.rateDeterminingIncome),
+            _moneyRow(
+              'Rate-determining quotient',
+              trace.rateDeterminingQuotient,
+            ),
+            _moneyRow('Bracket base tax', trace.bracketBaseTax),
+            _moneyRow('Bracket excess', trace.bracketExcess),
+            _row('Marginal rate', '${trace.marginalRatePpm / 10000}%'),
+            _moneyRow('Tax before exemption', trace.taxBeforeExemption),
+            _moneyRow('Exempt income', trace.exemptIncome),
+            _moneyRow(
+              'Tax allocated to exempt income',
+              trace.taxAllocatedToExemptIncome,
+            ),
+            _moneyRow(
+              'Gross tax after exemption',
+              trace.grossTaxAfterExemption,
+            ),
             const Divider(height: 28),
-            for (final credit in result.creditBreakdown)
-              _moneyRow(credit.label, credit.amount),
+            _moneyRow('Dependent credits', trace.dependentCredits),
+            _moneyRow('General expense credit', trace.generalExpenseCredit),
+            _moneyRow('Health credit', trace.healthCredit),
+            _moneyRow('Education credit', trace.educationCredit),
+            _moneyRow('Care-home credit', trace.careHomeCredit),
+            _moneyRow('Rent credit', trace.rentCredit),
+            _moneyRow('Invoice VAT credit', trace.invoiceVatCredit),
+            _moneyRow('PPR credit', trace.pprCredit),
             _row(
               'Overall deductions cap',
-              result.overallDeductionsCap?.format() ?? 'Not applicable',
+              trace.overallDeductionsCap?.format() ?? 'Not applicable',
             ),
-            _moneyRow('Tax credits applied', result.taxCredits),
-            _moneyRow('Solidarity tax', result.solidarityTax),
-            _moneyRow('Final tax due', result.taxDue),
-            _moneyRow('Withholding', result.withholding),
-            _moneyRow('Final balance', result.balance),
+            _moneyRow('Tax credits applied', trace.totalTaxCredits),
+            _moneyRow('Solidarity tax', trace.solidarityTax),
+            _moneyRow('Final tax due', trace.finalTaxDue),
+            _moneyRow('Withholding', trace.withholding),
+            _moneyRow('Final balance', trace.balance),
           ],
           if (_irsJovem) ...[
             const SizedBox(height: 20),
@@ -429,12 +455,51 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
               children: [
                 for (final field in AtValidationField.all) ...[
                   _officialInput(field),
-                  if (_officialMoney(field) case final official?)
-                    _comparisonRow(field, comparable![field]!, official.cents),
+                  if (_officialValue(field) case final official?)
+                    _comparisonRow(field, comparable![field]!, official),
                 ],
               ],
             ),
+          if (comparable != null && _hasManualMismatch(comparable)) ...[
+            const SizedBox(height: 12),
+            DropdownButtonFormField<FixtureFailureCategory>(
+              initialValue: _triageCategory,
+              decoration: const InputDecoration(
+                labelText: 'Classificação manual da divergência',
+              ),
+              items: [
+                for (final category in FixtureFailureCategory.values)
+                  DropdownMenuItem(value: category, child: Text(category.code)),
+              ],
+              onChanged: (value) => setState(
+                () => _triageCategory = value ?? FixtureFailureCategory.unknown,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _triageNotes,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Notas de triage (não altera o cálculo)',
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => _exportTriage(comparable!),
+              icon: const Icon(Icons.bug_report_outlined),
+              label: const Text('Copy divergence triage'),
+            ),
+          ],
           const SizedBox(height: 20),
+          TextField(
+            controller: _sourceNotes,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'Source notes (opcional e sem dados pessoais)',
+              hintText: 'Indica a linha/área da demonstração usada.',
+            ),
+          ),
+          const SizedBox(height: 10),
           FilledButton.icon(
             onPressed: () => _export(
               result,
@@ -483,10 +548,15 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
     IrsJovemTaxAdjustment? adjustment,
     HouseholdIrsJovemComparison? household,
   ) async {
+    final typedTrace = const AtValidationEngine().calculateComparable(
+      _simulation,
+      _rules,
+    );
     final payload = const JsonEncoder.withIndent('  ').convert({
-      'schemaVersion': 1,
+      'schemaVersion': 2,
       'rulesVersion': _rules.rulesVersion,
       'inputs': _simulation.toJson(),
+      'typedAuditTrace': typedTrace,
       'outputs': {
         'taxableIncomeCents': result.taxableIncome.cents,
         'grossTaxCents': result.grossTax.cents,
@@ -519,21 +589,71 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
     );
   }
 
-  Money? _officialMoney(String field) {
+  int? _officialValue(String field) {
     final raw = _officialValues[field]!.text.trim();
     if (raw.isEmpty) return null;
+    if (AtValidationField.scalar.contains(field)) return int.tryParse(raw);
     try {
-      return Money.parseEuros(raw);
+      return Money.parseEuros(raw).cents;
     } on FormatException {
       return null;
     }
+  }
+
+  bool _hasManualMismatch(Map<String, int> comparable) {
+    for (final field in AtValidationField.all) {
+      final official = _officialValue(field);
+      if (official != null && comparable[field] != official) return true;
+    }
+    return false;
+  }
+
+  AtFieldComparison? _firstManualMismatch(Map<String, int> comparable) {
+    for (final field in AtValidationField.all) {
+      final official = _officialValue(field);
+      if (official != null && comparable[field] != official) {
+        return AtFieldComparison(
+          field: field,
+          taxyCents: comparable[field]!,
+          officialCents: official,
+        );
+      }
+    }
+    return null;
+  }
+
+  Future<void> _exportTriage(Map<String, int> comparable) async {
+    final mismatch = _firstManualMismatch(comparable);
+    if (mismatch == null) return;
+    final failure = FixtureTriage.classify(
+      mismatch,
+      category: _triageCategory,
+      notes: _triageNotes.text.trim(),
+    );
+    final payload = const JsonEncoder.withIndent('  ').convert({
+      'category': failure.category.code,
+      'field': failure.field,
+      'expected': failure.expected,
+      'actual': failure.actual,
+      'difference': failure.difference,
+      'probableStage': failure.probableStage,
+      'notes': failure.notes,
+      'automaticCorrectionApplied': false,
+    });
+    await Clipboard.setData(ClipboardData(text: payload));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Triage copiado; nenhuma correção aplicada.'),
+      ),
+    );
   }
 
   Future<void> _exportOfficialTemplate() async {
     final inputs = Map<String, Object?>.from(_simulation.toJson())
       ..['id'] = 'anonymous'
       ..['name'] = 'Official assessment';
-    final payload = const JsonEncoder.withIndent('  ').convert({
+    final fixtureJson = <String, Object?>{
       'fixtureSchemaVersion': OfficialAssessmentFixture.currentSchemaVersion,
       'source': 'OFFICIAL_AT_ASSESSMENT',
       'sourceDocumentType': 'IRS_ASSESSMENT_DEMONSTRATION',
@@ -545,11 +665,22 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
       'rulesVersion': _rules.rulesVersion,
       'inputs': inputs,
       'officialResults': {
-        for (final field in AtValidationField.all)
-          field: _officialMoney(field)?.cents,
+        for (final field in AtValidationField.all) field: _officialValue(field),
       },
       'notes': 'REVIEWED_ANONYMISED_OFFICIAL_AT_DOCUMENT',
-    });
+      if (_sourceNotes.text.trim().isNotEmpty)
+        'sourceNotes': _sourceNotes.text.trim(),
+    };
+    try {
+      OfficialAssessmentFixture.fromJson(fixtureJson, allowTemplate: true);
+    } on AtFixtureValidationException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export bloqueado: ${error.failure.message}')),
+      );
+      return;
+    }
+    final payload = const JsonEncoder.withIndent('  ').convert(fixtureJson);
     await Clipboard.setData(ClipboardData(text: payload));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -592,13 +723,12 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
     padding: const EdgeInsets.only(bottom: 6),
     child: TextField(
       controller: _officialValues[field],
-      keyboardType: const TextInputType.numberWithOptions(
-        decimal: true,
-        signed: true,
-      ),
+      keyboardType: AtValidationField.scalar.contains(field)
+          ? TextInputType.number
+          : const TextInputType.numberWithOptions(decimal: true, signed: true),
       decoration: InputDecoration(
         labelText: '${AtValidationField.labels[field]} · AT',
-        suffixText: '€',
+        suffixText: AtValidationField.scalar.contains(field) ? null : '€',
       ),
       onChanged: (_) => setState(() {}),
     ),
@@ -606,9 +736,15 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
 
   Widget _comparisonRow(String field, int taxyCents, int officialCents) {
     final difference = taxyCents - officialCents;
+    final scalar = AtValidationField.scalar.contains(field);
+    String display(int value, {bool signed = false}) => scalar
+        ? '${signed && value > 0 ? '+' : ''}$value'
+        : Money.fromCents(value).format(signed: signed);
     return Semantics(
       label:
-          '${AtValidationField.labels[field]}. Taxy ${Money.fromCents(taxyCents).format()}. AT ${Money.fromCents(officialCents).format()}. Diferença ${Money.fromCents(difference).format(signed: true)}.',
+          '${AtValidationField.labels[field]}. Taxy ${display(taxyCents)}. '
+          'AT ${display(officialCents)}. Diferença '
+          '${display(difference, signed: true)}.',
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(10),
@@ -625,9 +761,13 @@ final class _TaxValidationLabScreenState extends State<TaxValidationLabScreen> {
               AtValidationField.labels[field] ?? field,
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-            _row('Taxy', Money.fromCents(taxyCents).format()),
-            _row('AT', Money.fromCents(officialCents).format()),
-            _row('Diferença', Money.fromCents(difference).format(signed: true)),
+            _row('Taxy', display(taxyCents)),
+            _row('AT', display(officialCents)),
+            _row('Diferença', display(difference, signed: true)),
+            _row(
+              'Etapa provável',
+              AtValidationField.probableStages[field] ?? 'UNKNOWN',
+            ),
           ],
         ),
       ),

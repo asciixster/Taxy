@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taxy_pt/domain/models.dart';
 import 'package:taxy_pt/domain/money.dart';
+import 'package:taxy_pt/tax_engine/tax_engine.dart';
 import 'package:taxy_pt/tax_engine/tax_rules.dart';
 import 'package:taxy_pt/validation/at_validation.dart';
 
@@ -43,6 +44,11 @@ void main() {
     expect(comparison.isExact, isFalse);
     expect(comparison.mismatches.single.differenceCents, -1);
     expect(comparison.failure?.category, FixtureFailureCategory.unknown);
+    expect(comparison.failure?.field, AtValidationField.taxDue);
+    expect(comparison.failure?.expected, expected[AtValidationField.taxDue]);
+    expect(comparison.failure?.actual, actual[AtValidationField.taxDue]);
+    expect(comparison.failure?.difference, -1);
+    expect(comparison.failure?.probableStage, 'FINAL_SETTLEMENT');
   });
 
   test(
@@ -124,6 +130,35 @@ void main() {
     }
   });
 
+  test('sourceNotes is optional but receives the same privacy checks', () {
+    final safe = _fixture(simulation, rules, actual)
+      ..['sourceNotes'] = 'Linha Rendimento coletável da demonstração.';
+    expect(
+      OfficialAssessmentFixture.fromJson(safe).sourceNotes,
+      contains('Rendimento coletável'),
+    );
+
+    final unsafe = _fixture(simulation, rules, actual)
+      ..['sourceNotes'] = 'NIF 123456789';
+    expect(
+      () => OfficialAssessmentFixture.fromJson(unsafe),
+      throwsA(isA<AtFixtureValidationException>()),
+    );
+  });
+
+  test('marital quotient accepts only structural divisors one or two', () {
+    final invalid = _fixture(simulation, rules, actual);
+    final results = Map<String, int>.from(
+      invalid['officialResults']! as Map<String, int>,
+    )..[AtValidationField.maritalQuotient] = 3;
+    invalid['officialResults'] = results;
+
+    expect(
+      () => OfficialAssessmentFixture.fromJson(invalid),
+      throwsA(isA<AtFixtureValidationException>()),
+    );
+  });
+
   test('personal name labels and non-anonymous taxpayer ids are rejected', () {
     final named = _fixture(simulation, rules, actual)
       ..['notes'] = 'Nome: João da Silva';
@@ -178,6 +213,13 @@ void main() {
     expect(coverage.exactCases, 1);
     expect(coverage.failedCases, 0);
     expect(coverage.casesByScope.values.single, 1);
+    expect(coverage.totalFieldComparisons, AtValidationField.all.length);
+    expect(coverage.exactFieldComparisons, AtValidationField.all.length);
+    expect(coverage.mismatchedFields, 0);
+    expect(coverage.casesByYear, {'2026': 1});
+    expect(coverage.casesByRegion, {'continent': 1});
+    expect(coverage.casesByFilingMode, {'separate': 1});
+    expect(coverage.casesByIrsJovem, {'nao': 1});
   });
 
   test('empty validation report says zero and does not claim coverage', () {
@@ -188,6 +230,34 @@ void main() {
     expect(report, contains('Casos oficiais executados: 0'));
     expect(report, contains('Nenhum caso oficial foi inventado'));
     expect(report, contains('Tolerancia global: 0 centimos'));
+  });
+
+  test('validation report counts exact and mismatched fields absolutely', () {
+    final expected = Map<String, int>.from(actual)
+      ..[AtValidationField.balance] = actual[AtValidationField.balance]! + 1;
+    final fixture = OfficialAssessmentFixture.fromJson(
+      _fixture(simulation, rules, expected),
+    );
+    final comparison = const AtValidationEngine().compare(fixture, rules);
+    final report = const AtValidationReport().render(
+      ValidationCoverage(comparisons: [comparison]),
+      generatedAt: DateTime.utc(2026, 8, 27),
+    );
+
+    expect(
+      report,
+      contains(
+        'Comparacoes de campos executadas: ${AtValidationField.all.length}',
+      ),
+    );
+    expect(
+      report,
+      contains(
+        'Comparacoes de campos exatas: ${AtValidationField.all.length - 1}',
+      ),
+    );
+    expect(report, contains('Campos divergentes: 1'));
+    expect(report, isNot(contains('%')));
   });
 
   test('all failure categories have stable audit codes', () {
@@ -203,6 +273,69 @@ void main() {
       ]),
     );
   });
+
+  test('typed trace exposes the four distinct quotient concepts', () {
+    final trace = const AtValidationEngine().calculateTrace(simulation, rules);
+
+    expect(trace.taxableIncome, isNot(Money.zero));
+    expect(trace.maritalQuotient, 1);
+    expect(trace.rateDeterminingIncome, trace.taxableIncome);
+    expect(trace.rateDeterminingQuotient, trace.taxableIncome);
+  });
+
+  test('validation output is independent of all UI breakdown labels', () {
+    final trace = const AtValidationEngine().calculateTrace(simulation, rules);
+    final before = const AtValidationEngine().comparableFromTrace(trace);
+    final renamedUiRows = [
+      for (final row in TaxEngine(rules).calculate(simulation).breakdown)
+        TaxBreakdown('RENAMED ${row.label}', row.amount, 'changed UI copy'),
+    ];
+
+    expect(
+      renamedUiRows.every((row) => row.label.startsWith('RENAMED')),
+      isTrue,
+    );
+    expect(const AtValidationEngine().comparableFromTrace(trace), before);
+  });
+
+  test('manual triage records evidence without changing the comparison', () {
+    final comparison = const AtFieldComparison(
+      field: AtValidationField.grossTax,
+      taxyCents: 123454,
+      officialCents: 123456,
+    );
+    final failure = FixtureTriage.classify(
+      comparison,
+      category: FixtureFailureCategory.roundingError,
+      notes: 'Legal stage must be confirmed.',
+    );
+
+    expect(failure.expected, 123456);
+    expect(failure.actual, 123454);
+    expect(failure.difference, -2);
+    expect(failure.probableStage, 'GROSS_TAX');
+    expect(comparison.differenceCents, -2);
+  });
+
+  test('validation changelog helper renders every mandatory audit field', () {
+    const entry = ValidationChangelogEntry(
+      caseId: 'AT-2025-CASE-001',
+      field: 'grossTaxAfterExemptionCents',
+      expected: 123456,
+      actual: 123454,
+      cause: FixtureFailureCategory.roundingError,
+      rootCause: 'Confirmed legal rounding stage.',
+      fix: 'Round at the confirmed stage.',
+      regressionTest: 'at_2025_case_001_test.dart',
+      rulesVersionBefore: '2025.4.0',
+      rulesVersionAfter: '2025.4.1',
+    );
+    final rendered = ValidationChangelogFormatter.renderEntry(entry);
+
+    expect(rendered, contains('Difference:\n-2 cents'));
+    expect(rendered, contains('Cause:\nROUNDING_ERROR'));
+    expect(rendered, contains('Rules version after:\n2025.4.1'));
+  });
 }
 
 Map<String, Object?> _fixture(
@@ -210,7 +343,7 @@ Map<String, Object?> _fixture(
   TaxRuleSet rules,
   Map<String, int> expected,
 ) => <String, Object?>{
-  'fixtureSchemaVersion': 2,
+  'fixtureSchemaVersion': OfficialAssessmentFixture.currentSchemaVersion,
   'source': 'OFFICIAL_AT_ASSESSMENT',
   'sourceDocumentType': 'IRS_ASSESSMENT_DEMONSTRATION',
   'anonymousCaseId': 'AT-2026-CASE-001',
@@ -222,6 +355,7 @@ Map<String, Object?> _fixture(
   'inputs': simulation.toJson(),
   'officialResults': expected,
   'notes': 'Anonymous unit-test fixture, not an official assessment.',
+  'sourceNotes': 'Values copied from generic AT result lines.',
 };
 
 TaxSimulation _simulation() => TaxSimulation(

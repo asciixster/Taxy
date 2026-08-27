@@ -620,6 +620,76 @@ final class TaxBreakdown {
   final String explanation;
 }
 
+/// Structural, presentation-independent audit data for one IRS calculation.
+///
+/// Monetary values use integer cents through [Money]. Human-readable labels
+/// remain in [TaxBreakdown] and must never be used to reconstruct this trace.
+final class TaxCalculationTrace {
+  const TaxCalculationTrace({
+    required this.grossIncome,
+    required this.specificDeduction,
+    required this.minimumExistenceAllowance,
+    required this.taxableIncome,
+    required this.maritalQuotient,
+    required this.rateDeterminingIncome,
+    required this.rateDeterminingQuotient,
+    required this.bracketBaseTax,
+    required this.bracketExcess,
+    required this.marginalRatePpm,
+    required this.taxBeforeExemption,
+    required this.exemptIncome,
+    required this.taxAllocatedToExemptIncome,
+    required this.grossTaxAfterExemption,
+    required this.dependentCredits,
+    required this.generalExpenseCredit,
+    required this.healthCredit,
+    required this.educationCredit,
+    required this.careHomeCredit,
+    required this.rentCredit,
+    required this.invoiceVatCredit,
+    required this.pprCredit,
+    required this.overallDeductionsCap,
+    required this.totalTaxCredits,
+    required this.solidarityTax,
+    required this.finalTaxDue,
+    required this.withholding,
+    required this.balance,
+  }) : assert(maritalQuotient == 1 || maritalQuotient == 2);
+
+  final Money grossIncome;
+  final Money specificDeduction;
+  final Money minimumExistenceAllowance;
+  final Money taxableIncome;
+
+  /// Divisor fiscal: 1 for individual/separate calculations, 2 for joint.
+  final int maritalQuotient;
+  final Money rateDeterminingIncome;
+  final Money rateDeterminingQuotient;
+  final Money bracketBaseTax;
+  final Money bracketExcess;
+  final int marginalRatePpm;
+  final Money taxBeforeExemption;
+  final Money exemptIncome;
+  final Money taxAllocatedToExemptIncome;
+  final Money grossTaxAfterExemption;
+  final Money dependentCredits;
+  final Money generalExpenseCredit;
+  final Money healthCredit;
+  final Money educationCredit;
+  final Money careHomeCredit;
+  final Money rentCredit;
+  final Money invoiceVatCredit;
+  final Money pprCredit;
+  final Money? overallDeductionsCap;
+  final Money totalTaxCredits;
+  final Money solidarityTax;
+  final Money finalTaxDue;
+  final Money withholding;
+  final Money balance;
+
+  Money get netIncome => grossIncome - specificDeduction;
+}
+
 final class TaxResult {
   const TaxResult({
     required this.available,
@@ -641,6 +711,7 @@ final class TaxResult {
     required this.bracketExcess,
     required this.marginalRatePpm,
     required this.overallDeductionsCap,
+    required this.trace,
   });
 
   final bool available;
@@ -664,6 +735,7 @@ final class TaxResult {
   final Money bracketExcess;
   final int marginalRatePpm;
   final Money? overallDeductionsCap;
+  final TaxCalculationTrace trace;
 
   bool get isRefund => balance.cents >= 0;
 }

@@ -4,6 +4,15 @@ Registo append-only de alterações motivadas por evidência fiscal. Cada entrad
 futura deve incluir data, caso anónimo, classificação, causa, ficheiros/regras
 afetados, testes adicionados, revisor e decisão. Nunca incluir dados pessoais.
 
+## 0.6.0 — infraestrutura de intake e triage
+
+- audit trace tipado; o runner deixou de ler labels de UI;
+- schema oficial v3 com conceitos de quociente separados;
+- falhas com esperado, atual, diferença, etapa provável e notas;
+- helper `ValidationChangelogFormatter` para gerar o formato abaixo;
+- bugs confirmados por liquidações oficiais nesta release: **0**;
+- liquidações oficiais incluídas: **0**.
+
 ## 0.5.0 — 2026-08-27
 
 - criado schema oficial v2 com metadados, coerência e resultados por fase;
@@ -20,11 +29,39 @@ afetados, testes adicionados, revisor e decisão. Nunca incluir dados pessoais.
 ## Modelo para futuras entradas
 
 ```text
-YYYY-MM-DD · AT-YYYY-CASE-NNN · CATEGORY
-Causa:
-Alteração:
-Regras/ficheiros:
-Teste de regressão:
-Revisor:
-Decisão:
+Case:
+AT-YYYY-CASE-NNN
+
+Field:
+fieldNameCents
+
+Expected:
+123456
+
+Actual:
+123454
+
+Difference:
+-2 cents
+
+Cause:
+ROUNDING_ERROR
+
+Root cause:
+...
+
+Fix:
+...
+
+Regression test:
+...
+
+Rules version before:
+...
+
+Rules version after:
+...
 ```
+
+O bloco é adicionado apenas depois de a divergência ter sido confirmada com um
+caso real anónimo. O template acima não representa uma liquidação existente.

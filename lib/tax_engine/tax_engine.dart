@@ -3,6 +3,36 @@ import '../domain/money.dart';
 import 'tax_rules.dart';
 import 'supported_scope.dart';
 
+/// Typed result of the deductions phase. Values are kept separate from the
+/// human-readable [TaxBreakdown] rows so validation never depends on labels.
+final class TaxCreditCalculation {
+  const TaxCreditCalculation({
+    required this.total,
+    required this.breakdown,
+    required this.overallCap,
+    required this.dependent,
+    required this.general,
+    required this.health,
+    required this.education,
+    required this.careHome,
+    required this.rent,
+    required this.invoiceVat,
+    required this.ppr,
+  });
+
+  final Money total;
+  final List<TaxBreakdown> breakdown;
+  final Money? overallCap;
+  final Money dependent;
+  final Money general;
+  final Money health;
+  final Money education;
+  final Money careHome;
+  final Money rent;
+  final Money invoiceVat;
+  final Money ppr;
+}
+
 final class TaxEngine {
   const TaxEngine(this.rules);
   final TaxRuleSet rules;
@@ -28,8 +58,7 @@ final class TaxEngine {
   Money solidarityTaxForTaxableIncome(Money taxableIncome) =>
       _solidarityTax(taxableIncome);
 
-  ({Money total, List<TaxBreakdown> breakdown, Money? overallCap})
-  creditsForSimulation(
+  TaxCreditCalculation creditsForSimulation(
     TaxSimulation simulation,
     Money taxableIncome,
     Money grossTax,
@@ -108,6 +137,36 @@ final class TaxEngine {
       bracketExcess: bracket.excess,
       marginalRatePpm: bracket.ratePpm,
       overallDeductionsCap: credits.overallCap,
+      trace: TaxCalculationTrace(
+        grossIncome: input.gross,
+        specificDeduction: specific,
+        minimumExistenceAllowance: minimumAllowance,
+        taxableIncome: taxable,
+        maritalQuotient: 1,
+        rateDeterminingIncome: taxable,
+        rateDeterminingQuotient: taxable,
+        bracketBaseTax: bracket.baseTax,
+        bracketExcess: bracket.excess,
+        marginalRatePpm: bracket.ratePpm,
+        taxBeforeExemption: grossTax,
+        exemptIncome: Money.zero,
+        taxAllocatedToExemptIncome: Money.zero,
+        grossTaxAfterExemption: grossTax,
+        dependentCredits: credits.dependent,
+        generalExpenseCredit: credits.general,
+        healthCredit: credits.health,
+        educationCredit: credits.education,
+        careHomeCredit: credits.careHome,
+        rentCredit: credits.rent,
+        invoiceVatCredit: credits.invoiceVat,
+        pprCredit: credits.ppr,
+        overallDeductionsCap: credits.overallCap,
+        totalTaxCredits: credits.total,
+        solidarityTax: solidarity,
+        finalTaxDue: taxDue,
+        withholding: input.withholding,
+        balance: balance,
+      ),
       breakdown: [
         TaxBreakdown(
           'Rendimento bruto',
@@ -254,7 +313,7 @@ final class TaxEngine {
     return firstSlice + secondSlice;
   }
 
-  ({Money total, List<TaxBreakdown> breakdown, Money? overallCap}) _credits(
+  TaxCreditCalculation _credits(
     TaxSimulation simulation,
     Money taxable,
     Money grossTax,
@@ -414,7 +473,19 @@ final class TaxEngine {
           'As deduções não podem exceder a coleta disponível.',
         ),
     ];
-    return (total: total, breakdown: breakdown, overallCap: overallCap);
+    return TaxCreditCalculation(
+      total: total,
+      breakdown: breakdown,
+      overallCap: overallCap,
+      dependent: dependentCredit,
+      general: general,
+      health: health,
+      education: education,
+      careHome: care,
+      rent: rent,
+      invoiceVat: vat,
+      ppr: ppr,
+    );
   }
 
   Money _limited(
@@ -505,5 +576,35 @@ final class TaxEngine {
     bracketExcess: Money.zero,
     marginalRatePpm: 0,
     overallDeductionsCap: null,
+    trace: TaxCalculationTrace(
+      grossIncome: simulation.income.gross,
+      specificDeduction: Money.zero,
+      minimumExistenceAllowance: Money.zero,
+      taxableIncome: Money.zero,
+      maritalQuotient: 1,
+      rateDeterminingIncome: Money.zero,
+      rateDeterminingQuotient: Money.zero,
+      bracketBaseTax: Money.zero,
+      bracketExcess: Money.zero,
+      marginalRatePpm: 0,
+      taxBeforeExemption: Money.zero,
+      exemptIncome: Money.zero,
+      taxAllocatedToExemptIncome: Money.zero,
+      grossTaxAfterExemption: Money.zero,
+      dependentCredits: Money.zero,
+      generalExpenseCredit: Money.zero,
+      healthCredit: Money.zero,
+      educationCredit: Money.zero,
+      careHomeCredit: Money.zero,
+      rentCredit: Money.zero,
+      invoiceVatCredit: Money.zero,
+      pprCredit: Money.zero,
+      overallDeductionsCap: null,
+      totalTaxCredits: Money.zero,
+      solidarityTax: Money.zero,
+      finalTaxDue: Money.zero,
+      withholding: simulation.income.withholding,
+      balance: Money.zero,
+    ),
   );
 }

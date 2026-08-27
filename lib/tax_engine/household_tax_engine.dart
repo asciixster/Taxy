@@ -344,6 +344,36 @@ final class HouseholdTaxEngine {
       bracketExcess: adjustment.bracketExcess,
       marginalRatePpm: adjustment.marginalRatePpm,
       overallDeductionsCap: credits.overallCap,
+      trace: TaxCalculationTrace(
+        grossIncome: source.income.gross + secondary.income.gross,
+        specificDeduction: specificA + specificB,
+        minimumExistenceAllowance: minimumA + minimumB,
+        taxableIncome: taxable,
+        maritalQuotient: jointDivisor,
+        rateDeterminingIncome: adjustment.rateDeterminingIncome,
+        rateDeterminingQuotient: adjustment.rateDeterminingQuotient,
+        bracketBaseTax: adjustment.bracketBaseTax,
+        bracketExcess: adjustment.bracketExcess,
+        marginalRatePpm: adjustment.marginalRatePpm,
+        taxBeforeExemption: adjustment.taxBeforeExemptAllocation,
+        exemptIncome: adjustment.exemptIncome,
+        taxAllocatedToExemptIncome: adjustment.taxOnExemptIncome,
+        grossTaxAfterExemption: grossTax,
+        dependentCredits: credits.dependent,
+        generalExpenseCredit: credits.general,
+        healthCredit: credits.health,
+        educationCredit: credits.education,
+        careHomeCredit: credits.careHome,
+        rentCredit: credits.rent,
+        invoiceVatCredit: credits.invoiceVat,
+        pprCredit: credits.ppr,
+        overallDeductionsCap: credits.overallCap,
+        totalTaxCredits: credits.total,
+        solidarityTax: solidarity,
+        finalTaxDue: taxDue,
+        withholding: withholding,
+        balance: withholding - taxDue,
+      ),
     );
   }
 
@@ -431,6 +461,36 @@ final class HouseholdTaxEngine {
       bracketExcess: adjustment.bracketExcess,
       marginalRatePpm: adjustment.marginalRatePpm,
       overallDeductionsCap: credits.overallCap,
+      trace: TaxCalculationTrace(
+        grossIncome: income.gross,
+        specificDeduction: specific,
+        minimumExistenceAllowance: minimum,
+        taxableIncome: taxable,
+        maritalQuotient: 1,
+        rateDeterminingIncome: adjustment.rateDeterminingIncome,
+        rateDeterminingQuotient: adjustment.rateDeterminingQuotient,
+        bracketBaseTax: adjustment.bracketBaseTax,
+        bracketExcess: adjustment.bracketExcess,
+        marginalRatePpm: adjustment.marginalRatePpm,
+        taxBeforeExemption: adjustment.taxBeforeExemptAllocation,
+        exemptIncome: adjustment.exemptIncome,
+        taxAllocatedToExemptIncome: adjustment.taxOnExemptIncome,
+        grossTaxAfterExemption: adjustment.adjustedGrossTax,
+        dependentCredits: credits.dependent,
+        generalExpenseCredit: credits.general,
+        healthCredit: credits.health,
+        educationCredit: credits.education,
+        careHomeCredit: credits.careHome,
+        rentCredit: credits.rent,
+        invoiceVatCredit: credits.invoiceVat,
+        pprCredit: credits.ppr,
+        overallDeductionsCap: credits.overallCap,
+        totalTaxCredits: credits.total,
+        solidarityTax: solidarity,
+        finalTaxDue: due,
+        withholding: income.withholding,
+        balance: income.withholding - due,
+      ),
     );
   }
 
@@ -460,6 +520,50 @@ final class HouseholdTaxEngine {
         a.overallDeductionsCap != null && b.overallDeductionsCap != null
         ? a.overallDeductionsCap! + b.overallDeductionsCap!
         : null,
+    trace: TaxCalculationTrace(
+      grossIncome: a.trace.grossIncome + b.trace.grossIncome,
+      specificDeduction: a.trace.specificDeduction + b.trace.specificDeduction,
+      minimumExistenceAllowance:
+          a.trace.minimumExistenceAllowance + b.trace.minimumExistenceAllowance,
+      taxableIncome: a.trace.taxableIncome + b.trace.taxableIncome,
+      maritalQuotient: 1,
+      rateDeterminingIncome:
+          a.trace.rateDeterminingIncome + b.trace.rateDeterminingIncome,
+      rateDeterminingQuotient:
+          a.trace.rateDeterminingQuotient + b.trace.rateDeterminingQuotient,
+      bracketBaseTax: a.trace.bracketBaseTax + b.trace.bracketBaseTax,
+      bracketExcess: a.trace.bracketExcess + b.trace.bracketExcess,
+      marginalRatePpm: a.trace.marginalRatePpm > b.trace.marginalRatePpm
+          ? a.trace.marginalRatePpm
+          : b.trace.marginalRatePpm,
+      taxBeforeExemption:
+          a.trace.taxBeforeExemption + b.trace.taxBeforeExemption,
+      exemptIncome: a.trace.exemptIncome + b.trace.exemptIncome,
+      taxAllocatedToExemptIncome:
+          a.trace.taxAllocatedToExemptIncome +
+          b.trace.taxAllocatedToExemptIncome,
+      grossTaxAfterExemption:
+          a.trace.grossTaxAfterExemption + b.trace.grossTaxAfterExemption,
+      dependentCredits: a.trace.dependentCredits + b.trace.dependentCredits,
+      generalExpenseCredit:
+          a.trace.generalExpenseCredit + b.trace.generalExpenseCredit,
+      healthCredit: a.trace.healthCredit + b.trace.healthCredit,
+      educationCredit: a.trace.educationCredit + b.trace.educationCredit,
+      careHomeCredit: a.trace.careHomeCredit + b.trace.careHomeCredit,
+      rentCredit: a.trace.rentCredit + b.trace.rentCredit,
+      invoiceVatCredit: a.trace.invoiceVatCredit + b.trace.invoiceVatCredit,
+      pprCredit: a.trace.pprCredit + b.trace.pprCredit,
+      overallDeductionsCap:
+          a.trace.overallDeductionsCap != null &&
+              b.trace.overallDeductionsCap != null
+          ? a.trace.overallDeductionsCap! + b.trace.overallDeductionsCap!
+          : null,
+      totalTaxCredits: a.trace.totalTaxCredits + b.trace.totalTaxCredits,
+      solidarityTax: a.trace.solidarityTax + b.trace.solidarityTax,
+      finalTaxDue: a.trace.finalTaxDue + b.trace.finalTaxDue,
+      withholding: a.trace.withholding + b.trace.withholding,
+      balance: a.trace.balance + b.trace.balance,
+    ),
   );
 
   TaxSimulation _creditSimulation(

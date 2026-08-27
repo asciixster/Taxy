@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import '../domain/models.dart';
-import '../domain/money.dart';
 import '../tax_engine/household_tax_engine.dart';
 import '../tax_engine/irs_jovem_tax_engine.dart';
 import '../tax_engine/tax_rules.dart';
@@ -15,17 +14,37 @@ abstract final class AtValidationField {
   static const grossIncome = 'grossIncomeCents';
   static const specificDeduction = 'specificDeductionCents';
   static const netIncome = 'netIncomeCents';
-  static const minimumExistence = 'minimumExistenceCents';
+  static const minimumExistence = 'minimumExistenceAllowanceCents';
   static const taxableIncome = 'taxableIncomeCents';
-  static const quotient = 'quotientCents';
-  static const grossTax = 'grossTaxCents';
+  static const maritalQuotient = 'maritalQuotient';
+  static const rateDeterminingIncome = 'rateDeterminingIncomeCents';
+  static const rateDeterminingQuotient = 'rateDeterminingQuotientCents';
+  static const bracketBaseTax = 'bracketBaseTaxCents';
+  static const bracketExcess = 'bracketExcessCents';
+  static const marginalRate = 'marginalRatePpm';
+  static const taxBeforeExemption = 'taxBeforeExemptionCents';
   static const exemptIncome = 'exemptIncomeCents';
-  static const exemptTax = 'exemptTaxCents';
+  static const taxAllocatedToExemptIncome = 'taxAllocatedToExemptIncomeCents';
+  static const grossTaxAfterExemption = 'grossTaxAfterExemptionCents';
+  static const dependentCredits = 'dependentCreditsCents';
+  static const generalExpenseCredit = 'generalExpenseCreditCents';
+  static const healthCredit = 'healthCreditCents';
+  static const educationCredit = 'educationCreditCents';
+  static const careHomeCredit = 'careHomeCreditCents';
+  static const rentCredit = 'rentCreditCents';
+  static const invoiceVatCredit = 'invoiceVatCreditCents';
+  static const pprCredit = 'pprCreditCents';
+  static const overallDeductionsCap = 'overallDeductionsCapCents';
+  static const totalTaxCredits = 'totalTaxCreditsCents';
   static const solidarityTax = 'solidarityTaxCents';
-  static const taxCredits = 'taxCreditsCents';
-  static const taxDue = 'taxDueCents';
+  static const finalTaxDue = 'finalTaxDueCents';
   static const withholding = 'withholdingCents';
   static const balance = 'balanceCents';
+
+  // Source compatibility for call sites written against schema v2 names.
+  static const grossTax = grossTaxAfterExemption;
+  static const taxCredits = totalTaxCredits;
+  static const taxDue = finalTaxDue;
 
   static const all = <String>[
     grossIncome,
@@ -33,25 +52,42 @@ abstract final class AtValidationField {
     netIncome,
     minimumExistence,
     taxableIncome,
-    quotient,
-    grossTax,
+    maritalQuotient,
+    rateDeterminingIncome,
+    rateDeterminingQuotient,
+    bracketBaseTax,
+    bracketExcess,
+    marginalRate,
+    taxBeforeExemption,
     exemptIncome,
-    exemptTax,
+    taxAllocatedToExemptIncome,
+    grossTaxAfterExemption,
+    dependentCredits,
+    generalExpenseCredit,
+    healthCredit,
+    educationCredit,
+    careHomeCredit,
+    rentCredit,
+    invoiceVatCredit,
+    pprCredit,
+    overallDeductionsCap,
+    totalTaxCredits,
     solidarityTax,
-    taxCredits,
-    taxDue,
+    finalTaxDue,
     withholding,
     balance,
   ];
 
   static const required = <String>{
     taxableIncome,
-    grossTax,
-    taxCredits,
-    taxDue,
+    grossTaxAfterExemption,
+    totalTaxCredits,
+    finalTaxDue,
     withholding,
     balance,
   };
+
+  static const scalar = <String>{maritalQuotient, marginalRate};
 
   static const labels = <String, String>{
     grossIncome: 'Rendimento bruto',
@@ -59,15 +95,62 @@ abstract final class AtValidationField {
     netIncome: 'Rendimento liquido da categoria',
     minimumExistence: 'Reducao por minimo de existencia',
     taxableIncome: 'Rendimento coletavel',
-    quotient: 'Quociente',
-    grossTax: 'Coleta antes de deducoes',
+    maritalQuotient: 'Quociente conjugal (divisor)',
+    rateDeterminingIncome: 'Rendimento para determinação da taxa',
+    rateDeterminingQuotient: 'Quociente para determinação da taxa',
+    bracketBaseTax: 'Coleta da parcela a abater/base do escalão',
+    bracketExcess: 'Excesso no escalão marginal',
+    marginalRate: 'Taxa marginal (ppm)',
+    taxBeforeExemption: 'Coleta antes da imputação da isenção',
     exemptIncome: 'Rendimento isento',
-    exemptTax: 'Coleta associada a isencao',
+    taxAllocatedToExemptIncome: 'Coleta imputada ao rendimento isento',
+    grossTaxAfterExemption: 'Coleta após isenção',
+    dependentCredits: 'Dedução por dependentes',
+    generalExpenseCredit: 'Dedução de despesas gerais',
+    healthCredit: 'Dedução de saúde',
+    educationCredit: 'Dedução de educação',
+    careHomeCredit: 'Dedução de lares',
+    rentCredit: 'Dedução de rendas',
+    invoiceVatCredit: 'Dedução de IVA por fatura',
+    pprCredit: 'Dedução de PPR',
+    overallDeductionsCap: 'Limite global de deduções',
+    totalTaxCredits: 'Deduções à coleta aplicadas',
     solidarityTax: 'Taxa adicional de solidariedade',
-    taxCredits: 'Deducoes a coleta',
-    taxDue: 'Imposto apurado',
+    finalTaxDue: 'Imposto apurado',
     withholding: 'Retencoes',
     balance: 'Saldo final',
+  };
+
+  static const probableStages = <String, String>{
+    grossIncome: 'INPUTS',
+    specificDeduction: 'SPECIFIC_DEDUCTION',
+    netIncome: 'SPECIFIC_DEDUCTION',
+    minimumExistence: 'MINIMUM_EXISTENCE',
+    taxableIncome: 'TAXABLE_INCOME',
+    maritalQuotient: 'FILING_MODE',
+    rateDeterminingIncome: 'RATE_DETERMINATION',
+    rateDeterminingQuotient: 'RATE_DETERMINATION',
+    bracketBaseTax: 'BRACKETS',
+    bracketExcess: 'BRACKETS',
+    marginalRate: 'BRACKETS',
+    taxBeforeExemption: 'IRS_JOVEM_EXEMPTION',
+    exemptIncome: 'IRS_JOVEM_EXEMPTION',
+    taxAllocatedToExemptIncome: 'IRS_JOVEM_EXEMPTION',
+    grossTaxAfterExemption: 'GROSS_TAX',
+    dependentCredits: 'TAX_CREDITS',
+    generalExpenseCredit: 'TAX_CREDITS',
+    healthCredit: 'TAX_CREDITS',
+    educationCredit: 'TAX_CREDITS',
+    careHomeCredit: 'TAX_CREDITS',
+    rentCredit: 'TAX_CREDITS',
+    invoiceVatCredit: 'TAX_CREDITS',
+    pprCredit: 'TAX_CREDITS',
+    overallDeductionsCap: 'DEDUCTIONS_CAP',
+    totalTaxCredits: 'TAX_CREDITS',
+    solidarityTax: 'SOLIDARITY_TAX',
+    finalTaxDue: 'FINAL_SETTLEMENT',
+    withholding: 'WITHHOLDING',
+    balance: 'FINAL_SETTLEMENT',
   };
 }
 
@@ -88,11 +171,105 @@ class FixtureFailure {
     required this.category,
     required this.message,
     this.field,
+    this.expected,
+    this.actual,
+    this.difference,
+    this.probableStage,
+    this.notes = '',
   });
 
   final FixtureFailureCategory category;
   final String message;
   final String? field;
+  final int? expected;
+  final int? actual;
+  final int? difference;
+  final String? probableStage;
+  final String notes;
+}
+
+/// Explicit human triage helper. It records a decision but never changes a
+/// fixture, a result or a tolerance automatically.
+abstract final class FixtureTriage {
+  static FixtureFailure classify(
+    AtFieldComparison comparison, {
+    required FixtureFailureCategory category,
+    String? probableStage,
+    String notes = '',
+  }) => FixtureFailure(
+    category: category,
+    message: 'Divergência classificada manualmente.',
+    field: comparison.field,
+    expected: comparison.officialCents,
+    actual: comparison.taxyCents,
+    difference: comparison.differenceCents,
+    probableStage:
+        probableStage ?? AtValidationField.probableStages[comparison.field],
+    notes: notes,
+  );
+}
+
+final class ValidationChangelogEntry {
+  const ValidationChangelogEntry({
+    required this.caseId,
+    required this.field,
+    required this.expected,
+    required this.actual,
+    required this.cause,
+    required this.rootCause,
+    required this.fix,
+    required this.regressionTest,
+    required this.rulesVersionBefore,
+    required this.rulesVersionAfter,
+  });
+
+  final String caseId;
+  final String field;
+  final int expected;
+  final int actual;
+  final FixtureFailureCategory cause;
+  final String rootCause;
+  final String fix;
+  final String regressionTest;
+  final String rulesVersionBefore;
+  final String rulesVersionAfter;
+  int get difference => actual - expected;
+}
+
+abstract final class ValidationChangelogFormatter {
+  static String renderEntry(ValidationChangelogEntry entry) =>
+      '''Case:
+${entry.caseId}
+
+Field:
+${entry.field}
+
+Expected:
+${entry.expected}
+
+Actual:
+${entry.actual}
+
+Difference:
+${entry.difference >= 0 ? '+' : ''}${entry.difference} cents
+
+Cause:
+${entry.cause.code}
+
+Root cause:
+${entry.rootCause}
+
+Fix:
+${entry.fix}
+
+Regression test:
+${entry.regressionTest}
+
+Rules version before:
+${entry.rulesVersionBefore}
+
+Rules version after:
+${entry.rulesVersionAfter}''';
 }
 
 class AtFixtureValidationException implements Exception {
@@ -117,9 +294,10 @@ class OfficialAssessmentFixture {
     required this.inputs,
     required this.officialResults,
     required this.notes,
+    required this.sourceNotes,
   });
 
-  static const currentSchemaVersion = 2;
+  static const currentSchemaVersion = 3;
   static const officialSources = <String>{'OFFICIAL_AT_ASSESSMENT'};
   static const officialDocumentTypes = <String>{
     'IRS_ASSESSMENT_DEMONSTRATION',
@@ -138,6 +316,7 @@ class OfficialAssessmentFixture {
   final TaxSimulation inputs;
   final Map<String, int> officialResults;
   final String notes;
+  final String sourceNotes;
 
   bool get usesIrsJovem =>
       inputs.primaryIrsJovem.requested ||
@@ -195,6 +374,9 @@ class OfficialAssessmentFixture {
     );
     final rulesVersion = _requiredString(json, 'rulesVersion');
     final notes = json['notes'] == null ? '' : json['notes'].toString();
+    final sourceNotes = json['sourceNotes'] == null
+        ? ''
+        : json['sourceNotes'].toString();
 
     final inputJson = _requiredMap(json, 'inputs');
     final simulation = TaxSimulation.fromJson(inputJson);
@@ -246,11 +428,16 @@ class OfficialAssessmentFixture {
       }
       if (entry.value == null && allowTemplate) continue;
       if (entry.value is! int) {
-        throw _fixtureError('${entry.key} deve conter centimos inteiros.');
+        throw _fixtureError('${entry.key} deve conter um inteiro.');
       }
       final value = entry.value! as int;
       if (entry.key != AtValidationField.balance && value < 0) {
         throw _fixtureError('${entry.key} nao pode ser negativo.');
+      }
+      if (entry.key == AtValidationField.maritalQuotient &&
+          value != 1 &&
+          value != 2) {
+        throw _fixtureError('maritalQuotient deve ser 1 ou 2.');
       }
       results[entry.key] = value;
     }
@@ -278,6 +465,7 @@ class OfficialAssessmentFixture {
       inputs: simulation,
       officialResults: Map.unmodifiable(results),
       notes: notes,
+      sourceNotes: sourceNotes,
     );
   }
 }
@@ -344,14 +532,23 @@ class AtValidationEngine {
         )
         .toList(growable: false);
     final mismatch = fields.any((field) => !field.isExact);
+    final firstMismatch = mismatch
+        ? fields.firstWhere((field) => !field.isExact)
+        : null;
     return AtFixtureComparison(
       fixture: fixture,
       actualResults: actual,
       fields: fields,
       failure: mismatch
-          ? const FixtureFailure(
+          ? FixtureFailure(
               category: FixtureFailureCategory.unknown,
               message: 'Diferenca por classificar; requer analise humana.',
+              field: firstMismatch!.field,
+              expected: firstMismatch.officialCents,
+              actual: firstMismatch.taxyCents,
+              difference: firstMismatch.differenceCents,
+              probableStage:
+                  AtValidationField.probableStages[firstMismatch.field],
             )
           : null,
     );
@@ -360,47 +557,53 @@ class AtValidationEngine {
   Map<String, int> calculateComparable(
     TaxSimulation simulation,
     TaxRuleSet rules,
-  ) {
-    final selected = _calculateSelected(simulation, rules);
-    final result = selected.result;
-    final exemptTax = result.breakdown
-        .where((line) {
-          final label = line.label.toLowerCase();
-          return label.contains('isento') &&
-              (label.contains('imposto') || label.contains('coleta'));
-        })
-        .fold<int>(0, (total, line) => total + line.amount.cents.abs());
-    final netIncome = result.grossIncome - result.specificDeduction;
-    final isJoint =
-        simulation.secondaryTaxpayer != null &&
-        simulation.profile.filingMode == FilingMode.joint;
-    final quotient = isJoint
-        ? Money.fromCents(_roundHalfUp(result.taxableIncome.cents, 2))
-        : result.taxableIncome;
+  ) => comparableFromTrace(calculateTrace(simulation, rules));
 
-    return Map.unmodifiable(<String, int>{
-      AtValidationField.grossIncome: result.grossIncome.cents,
-      AtValidationField.specificDeduction: result.specificDeduction.cents,
-      AtValidationField.netIncome: netIncome.cents,
-      AtValidationField.minimumExistence:
-          result.minimumExistenceAllowance.cents,
-      AtValidationField.taxableIncome: result.taxableIncome.cents,
-      AtValidationField.quotient: quotient.cents,
-      AtValidationField.grossTax: result.grossTax.cents,
-      AtValidationField.exemptIncome: selected.exemptIncome.cents,
-      AtValidationField.exemptTax: exemptTax,
-      AtValidationField.solidarityTax: result.solidarityTax.cents,
-      AtValidationField.taxCredits: result.taxCredits.cents,
-      AtValidationField.taxDue: result.taxDue.cents,
-      AtValidationField.withholding: result.withholding.cents,
-      AtValidationField.balance: result.balance.cents,
-    });
-  }
-
-  _SelectedCalculation _calculateSelected(
+  TaxCalculationTrace calculateTrace(
     TaxSimulation simulation,
     TaxRuleSet rules,
-  ) {
+  ) => _calculateSelected(simulation, rules).trace;
+
+  /// Converts only typed fields. UI breakdown labels are intentionally absent.
+  Map<String, int> comparableFromTrace(
+    TaxCalculationTrace trace,
+  ) => Map.unmodifiable(<String, int>{
+    AtValidationField.grossIncome: trace.grossIncome.cents,
+    AtValidationField.specificDeduction: trace.specificDeduction.cents,
+    AtValidationField.netIncome: trace.netIncome.cents,
+    AtValidationField.minimumExistence: trace.minimumExistenceAllowance.cents,
+    AtValidationField.taxableIncome: trace.taxableIncome.cents,
+    AtValidationField.maritalQuotient: trace.maritalQuotient,
+    AtValidationField.rateDeterminingIncome: trace.rateDeterminingIncome.cents,
+    AtValidationField.rateDeterminingQuotient:
+        trace.rateDeterminingQuotient.cents,
+    AtValidationField.bracketBaseTax: trace.bracketBaseTax.cents,
+    AtValidationField.bracketExcess: trace.bracketExcess.cents,
+    AtValidationField.marginalRate: trace.marginalRatePpm,
+    AtValidationField.taxBeforeExemption: trace.taxBeforeExemption.cents,
+    AtValidationField.exemptIncome: trace.exemptIncome.cents,
+    AtValidationField.taxAllocatedToExemptIncome:
+        trace.taxAllocatedToExemptIncome.cents,
+    AtValidationField.grossTaxAfterExemption:
+        trace.grossTaxAfterExemption.cents,
+    AtValidationField.dependentCredits: trace.dependentCredits.cents,
+    AtValidationField.generalExpenseCredit: trace.generalExpenseCredit.cents,
+    AtValidationField.healthCredit: trace.healthCredit.cents,
+    AtValidationField.educationCredit: trace.educationCredit.cents,
+    AtValidationField.careHomeCredit: trace.careHomeCredit.cents,
+    AtValidationField.rentCredit: trace.rentCredit.cents,
+    AtValidationField.invoiceVatCredit: trace.invoiceVatCredit.cents,
+    AtValidationField.pprCredit: trace.pprCredit.cents,
+    AtValidationField.overallDeductionsCap:
+        trace.overallDeductionsCap?.cents ?? 0,
+    AtValidationField.totalTaxCredits: trace.totalTaxCredits.cents,
+    AtValidationField.solidarityTax: trace.solidarityTax.cents,
+    AtValidationField.finalTaxDue: trace.finalTaxDue.cents,
+    AtValidationField.withholding: trace.withholding.cents,
+    AtValidationField.balance: trace.balance.cents,
+  });
+
+  TaxResult _calculateSelected(TaxSimulation simulation, TaxRuleSet rules) {
     if (simulation.secondaryTaxpayer != null) {
       final comparison = HouseholdTaxEngine(rules)
           .compareWithIrsJovem(simulation);
@@ -418,18 +621,7 @@ class AtValidationEngine {
       final result = simulation.profile.filingMode == FilingMode.joint
           ? selected.joint!
           : selected.separate!;
-      var exempt = Money.zero;
-      if (useJovem) {
-        if (comparison.primaryEligibility.status ==
-            IrsJovemEligibility.eligible) {
-          exempt += comparison.primaryEligibility.eligibleExemptIncome;
-        }
-        if (comparison.secondaryEligibility.status ==
-            IrsJovemEligibility.eligible) {
-          exempt += comparison.secondaryEligibility.eligibleExemptIncome;
-        }
-      }
-      return _SelectedCalculation(result, exempt);
+      return result;
     }
 
     final comparison = IrsJovemTaxEngine(rules).compare(simulation);
@@ -444,22 +636,13 @@ class AtValidationEngine {
     final useJovem =
         simulation.primaryIrsJovem.requested &&
         comparison.withIrsJovem?.available == true;
-    return _SelectedCalculation(
-      useJovem ? comparison.withIrsJovem! : comparison.normal,
-      useJovem ? comparison.adjustment?.exemptIncome ?? Money.zero : Money.zero,
-    );
+    return useJovem ? comparison.withIrsJovem! : comparison.normal;
   }
 }
 
 bool usesIrsJovem(TaxSimulation simulation) =>
     simulation.primaryIrsJovem.requested ||
     (simulation.secondaryTaxpayer?.irsJovem.requested ?? false);
-
-class _SelectedCalculation {
-  const _SelectedCalculation(this.result, this.exemptIncome);
-  final TaxResult result;
-  final Money exemptIncome;
-}
 
 class ValidationCoverage {
   const ValidationCoverage({
@@ -472,6 +655,16 @@ class ValidationCoverage {
   int get totalCases => comparisons.length;
   int get exactCases => comparisons.where((item) => item.isExact).length;
   int get failedCases => totalCases - exactCases;
+  int get totalFieldComparisons => comparisons.fold(
+    0,
+    (total, comparison) => total + comparison.fields.length,
+  );
+  int get exactFieldComparisons => comparisons.fold(
+    0,
+    (total, comparison) =>
+        total + comparison.fields.where((field) => field.isExact).length,
+  );
+  int get mismatchedFields => totalFieldComparisons - exactFieldComparisons;
 
   Map<String, int> get casesByScope {
     final grouped = <String, int>{};
@@ -485,6 +678,21 @@ class ValidationCoverage {
     }
     return Map.unmodifiable(grouped);
   }
+
+  Map<String, int> get casesByYear => _groupBy(
+    comparisons,
+    (comparison) => comparison.fixture.taxYear.toString(),
+  );
+  Map<String, int> get casesByRegion => _groupBy(
+    comparisons,
+    (comparison) => comparison.fixture.jurisdiction.name,
+  );
+  Map<String, int> get casesByFilingMode =>
+      _groupBy(comparisons, (comparison) => comparison.fixture.filingMode.name);
+  Map<String, int> get casesByIrsJovem => _groupBy(
+    comparisons,
+    (comparison) => comparison.fixture.usesIrsJovem ? 'sim' : 'nao',
+  );
 
   Map<String, int> get failuresByCategory {
     final grouped = <String, int>{};
@@ -521,6 +729,14 @@ class AtValidationReport {
       )
       ..writeln('- Correspondencias exatas: ${coverage.exactCases}')
       ..writeln('- Casos com diferencas: ${coverage.failedCases}')
+      ..writeln(
+        '- Comparacoes de campos executadas: '
+        '${coverage.totalFieldComparisons}',
+      )
+      ..writeln(
+        '- Comparacoes de campos exatas: ${coverage.exactFieldComparisons}',
+      )
+      ..writeln('- Campos divergentes: ${coverage.mismatchedFields}')
       ..writeln('- Tolerancia global: 0 centimos')
       ..writeln()
       ..writeln('## Cobertura absoluta')
@@ -532,6 +748,10 @@ class AtValidationReport {
         buffer.writeln('- ${entry.key}: ${entry.value} caso(s)');
       }
     }
+    _writeGroup(buffer, 'Por ano', coverage.casesByYear);
+    _writeGroup(buffer, 'Por regiao', coverage.casesByRegion);
+    _writeGroup(buffer, 'Por modo de tributacao', coverage.casesByFilingMode);
+    _writeGroup(buffer, 'Por IRS Jovem', coverage.casesByIrsJovem);
     buffer
       ..writeln()
       ..writeln('## Falhas por categoria')
@@ -558,6 +778,31 @@ class AtValidationReport {
       }
     }
     return buffer.toString();
+  }
+}
+
+Map<String, int> _groupBy(
+  Iterable<AtFixtureComparison> comparisons,
+  String Function(AtFixtureComparison) keyOf,
+) {
+  final grouped = <String, int>{};
+  for (final comparison in comparisons) {
+    grouped.update(keyOf(comparison), (value) => value + 1, ifAbsent: () => 1);
+  }
+  return Map.unmodifiable(grouped);
+}
+
+void _writeGroup(StringBuffer buffer, String title, Map<String, int> values) {
+  buffer
+    ..writeln()
+    ..writeln('### $title')
+    ..writeln();
+  if (values.isEmpty) {
+    buffer.writeln('- 0 casos');
+    return;
+  }
+  for (final entry in values.entries) {
+    buffer.writeln('- ${entry.key}: ${entry.value} caso(s)');
   }
 }
 
@@ -677,12 +922,6 @@ bool _isValidPortugueseNif(String value) {
   final remainder = sum % 11;
   final check = remainder < 2 ? 0 : 11 - remainder;
   return digits[8] == check;
-}
-
-int _roundHalfUp(int numerator, int denominator) {
-  if (denominator <= 0) throw ArgumentError.value(denominator, 'denominator');
-  if (numerator >= 0) return (numerator + denominator ~/ 2) ~/ denominator;
-  return -((-numerator + denominator ~/ 2) ~/ denominator);
 }
 
 Map<String, Object?> decodeFixtureJson(String source) {
