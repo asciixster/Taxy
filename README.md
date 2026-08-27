@@ -20,7 +20,7 @@ alterou o motor nem as regras fiscais.
   para taxa auditados separadamente;
 - comparação exata campo a campo e classificação auditável de diferenças;
 - validação de privacidade fail-closed, sem anonimização automática;
-- relatório com contagens absolutas: **1 caso oficial** e **21 cálculos de
+- relatório com contagens absolutas: **1 caso oficial** e **22 cálculos de
   referência manual** nesta versão;
 - política explícita de arredondamentos e changelog de validação;
 - Validation Lab com Taxy / AT / diferença e export de fixture oficial;
@@ -41,7 +41,7 @@ alterou o motor nem as regras fiscais.
   em tributação separada e conjunta;
 - scope check inicial, badge de âmbito e Validation Lab com exportação JSON;
 - runner automático para futuras liquidações oficiais anonimizadas;
-- suite determinística e 21 referências manuais auditadas.
+- suite determinística e 22 referências manuais auditadas.
 
 O IRS Jovem continua dentro do módulo IRS. A liquidação normal permanece
 disponível quando o titular não é elegível; dados insuficientes nunca originam

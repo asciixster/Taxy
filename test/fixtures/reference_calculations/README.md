@@ -14,5 +14,8 @@ O cabeçalho de cada ficheiro fixa ano, região, estado civil, versão e fontes;
 cada caso contém rendimentos, retenções, Segurança Social, dependentes,
 deduções, os dois resultados, modo mais favorável e notas de cálculo.
 
-As referências cobrem apenas casal standard, Categoria A, residência anual no
-Continente, sem guarda partilhada, residência alternada ou situações especiais.
+As referências cobrem casal standard e um sujeito passivo individual com
+coleta positiva, sempre Categoria A, residência anual no Continente e sem
+situações especiais. O caso individual 2025 documenta cada parcela do escalão,
+o arredondamento e as deduções à coleta; valida consistência matemática e
+regressão interna, não valida contra uma liquidação oficial da AT.
