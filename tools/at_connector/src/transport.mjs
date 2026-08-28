@@ -21,6 +21,15 @@ export function buildSoapHeaders(xml, soapAction) {
   return headers;
 }
 
+export function tlsMetadataFromSocket(socket) {
+  return Object.freeze({
+    authorized: socket?.authorized === true,
+    authorizationError: socket?.authorizationError || null,
+    protocol: socket?.getProtocol?.() || null,
+    cipher: socket?.getCipher?.()?.standardName || socket?.getCipher?.()?.name || null,
+  });
+}
+
 export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction, timeoutMs, connectTimeoutMs = timeoutMs ?? 20_000, totalTimeoutMs = timeoutMs ?? 20_000 }) {
   const started = performance.now();
   return new Promise((resolve, reject) => {
@@ -36,6 +45,8 @@ export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction, 
       timeout: connectTimeoutMs,
     }, (response) => {
       const chunks = [];
+      // Capture while Node still associates the response with its TLS socket.
+      const tls = tlsMetadataFromSocket(response.socket);
       response.on('data', (chunk) => chunks.push(chunk));
       response.on('end', () => {
         clearTimeout(totalTimer);
@@ -43,12 +54,7 @@ export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction, 
         statusCode: response.statusCode,
         headers: response.headers,
         body: Buffer.concat(chunks).toString('utf8'),
-        tls: Object.freeze({
-          authorized: response.socket.authorized,
-          authorizationError: response.socket.authorizationError || null,
-          protocol: response.socket.getProtocol?.() || null,
-          cipher: response.socket.getCipher?.()?.standardName || response.socket.getCipher?.()?.name || null,
-        }),
+        tls,
         durationMs: Math.round(performance.now() - started),
         });
       });

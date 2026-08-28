@@ -8,7 +8,7 @@ import { sendMtlsSoap } from './transport.mjs';
 import { AtInvoiceListResponse } from './consultation.mjs';
 import { parseSoapResponse } from './parser.mjs';
 
-export const HISTORICAL_NAMESPACE = 'http://fatshare.at.min_financas.pt/fatshare';
+export const HISTORICAL_NAMESPACE = 'http://factemi.at.min_financas.pt/fatshareInvoices';
 export const HistoricalSource = 'HISTORICAL_CODE_EVIDENCE';
 export const RUNTIME_CONFIRMABLE_FIELDS = Object.freeze([
   'endpoint.test.consultation', 'transport', 'clientCertificate', 'soapVersion',

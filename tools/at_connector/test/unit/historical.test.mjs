@@ -29,6 +29,7 @@ test('CustomerTaxID is derived from primary NIF or subuser base NIF', () => {
 
 test('historical request reproduces exact SOAP contract and timestamp precision', () => {
   const request = buildHistoricalEnvelope(base);
+  assert.equal(HISTORICAL_NAMESPACE, 'http://factemi.at.min_financas.pt/fatshareInvoices');
   assert.equal(request.createdPlaintext, '2026-08-28T11:22:33.000Z');
   assert(request.xml.includes(`xmlns:fat="${HISTORICAL_NAMESPACE}"`));
   assert(request.xml.includes('<fat:InvoicesRequest>'));

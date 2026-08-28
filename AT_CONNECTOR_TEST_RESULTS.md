@@ -12,14 +12,14 @@ Date: 28 August 2026. Environment: AT test only.
 | TLS/mTLS to consultation test endpoint | PASS (`authorized: true`) |
 | Empty SOAP 1.1 connectivity probe | HTTP 500, `env:Client / Internal Error` |
 | Single `?wsdl` discovery request | HTTP 500, SOAP XML, no WSDL definitions |
-| Historical authenticated consultation | HTTP 500 / SOAP fault 33 (`SOAP_PROTOCOL_ERROR`) |
+| Historical authenticated consultation | Experiment 1: HTTP 500 / fault 33; experiment 2: `PARSING_ERROR` after one request |
 | Production request | **BLOCKED** |
 
-One authenticated read-only request was executed with a primary-NIF username. TLS/mTLS completed, but the service rejected the historical application namespace and identified `http://factemi.at.min_financas.pt/fatshareInvoices` as expected. No retry or protocol variant was attempted.
+Experiment 1 established the namespace rejection. Experiment 2 changed only that namespace and made one read-only request, but a local TLS-metadata timing bug prevented capture of the response summary. It was fixed and regression-tested offline; the live request was not repeated.
 
 ## Offline verification
 
-- Connector unit tests: 53 passed; 4 opt-in local integration tests skipped offline.
+- Connector unit tests: 55 passed; 4 opt-in local integration tests skipped offline.
 - Flutter tests: 371 passed; `flutter analyze` reported no issues.
 - Local opt-in certificate/connectivity tests: 4 passed.
 
