@@ -11,9 +11,7 @@ import { parseSoapResponse } from './parser.mjs';
 export const HISTORICAL_NAMESPACE = 'http://factemi.at.min_financas.pt/fatshareInvoices';
 export const HistoricalSource = 'HISTORICAL_CODE_EVIDENCE';
 export const RUNTIME_CONFIRMABLE_FIELDS = Object.freeze([
-  'endpoint.test.consultation', 'transport', 'clientCertificate', 'soapVersion',
-  'aesMode', 'aesPadding', 'rsaPadding', 'timestampPrecision', 'nonceConstruction',
-  'namespace', 'soapAction', 'requestRootElement',
+  'namespace',
 ]);
 
 export function validateSubuserUsername(username) {
@@ -123,13 +121,11 @@ export class HistoricalAtConsultationClient {
     });
     const soap = parseSoapResponse(transport.body, transport.statusCode);
     const result = soap.fault ? null : AtInvoiceListResponse.fromXml(transport.body);
-    const confirmed = result?.operationStatus === 200;
+    const confirmed = transport.statusCode >= 200 && transport.statusCode < 300 && Number.isFinite(result?.operationStatus);
     return Object.freeze({
       transport, soap, result,
       evidenceStatus: confirmed ? EvidenceStatus.RUNTIME_BEHAVIOR_CONFIRMED : EvidenceStatus.HISTORICAL_CODE_EVIDENCE,
-      runtimeConfirmedFields: confirmed
-        ? Object.freeze([...RUNTIME_CONFIRMABLE_FIELDS, this.config.username.includes('/') ? 'usernameFormat.subuser' : 'usernameFormat.primary'])
-        : Object.freeze([]),
+      runtimeConfirmedFields: confirmed ? RUNTIME_CONFIRMABLE_FIELDS : Object.freeze([]),
     });
   }
 }

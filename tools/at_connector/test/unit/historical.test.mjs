@@ -71,13 +71,12 @@ test('client permits at most one request and uses no retry', async () => {
   } });
   const response = await client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-02' });
   assert.equal(response.result.operationStatus, 200);
-  assert(response.runtimeConfirmedFields.includes('rsaPadding'));
-  assert(response.runtimeConfirmedFields.includes('usernameFormat.subuser'));
+  assert.deepEqual(response.runtimeConfirmedFields, ['namespace']);
   await assert.rejects(() => client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-02' }), (error) => error.code === AtErrorCode.RATE_LIMIT_EXCEEDED);
   assert.equal(calls, 1);
 });
 
-test('successful primary login confirms only primary username runtime shape', async () => {
+test('functional primary-login response confirms namespace but not username authorization', async () => {
   const client = new HistoricalAtConsultationClient({
     environment: 'test', username: '123456789', password: base.password,
     cipherCertificatePath: 'unused', pfxPath: 'unused', pfxPassword: 'unused',
@@ -86,6 +85,18 @@ test('successful primary login confirms only primary username runtime shape', as
     transport: async () => ({ statusCode: 200, headers: {}, body: '<InvoicesResponse><EstadoOperacao>200</EstadoOperacao><Desc>OK</Desc></InvoicesResponse>', tls: { authorized: true } }),
   });
   const response = await client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-01' });
-  assert(response.runtimeConfirmedFields.includes('usernameFormat.primary'));
-  assert(!response.runtimeConfirmedFields.includes('usernameFormat.subuser'));
+  assert.deepEqual(response.runtimeConfirmedFields, ['namespace']);
+});
+
+test('parsed empty-list operation status is a functional namespace response', async () => {
+  const client = new HistoricalAtConsultationClient({
+    environment: 'test', username: '123456789', password: base.password,
+    cipherCertificatePath: 'unused', pfxPath: 'unused', pfxPassword: 'unused',
+  }, {
+    envelopeBuilder: (input) => buildHistoricalEnvelope({ ...input, cipherPublicKey: publicKey }),
+    transport: async () => ({ statusCode: 200, headers: {}, body: '<InvoicesResponse><EstadoOperacao>486</EstadoOperacao><Desc>Lista vazia.</Desc></InvoicesResponse>', tls: { authorized: true } }),
+  });
+  const response = await client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-01' });
+  assert.equal(response.evidenceStatus, 'RUNTIME_BEHAVIOR_CONFIRMED');
+  assert.deepEqual(response.runtimeConfirmedFields, ['namespace']);
 });

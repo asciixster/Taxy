@@ -27,3 +27,9 @@ test('primary username capability is historical evidence, not remote authorizati
   assert.equal(historicalEvidenceFor('usernameFormat.primary').status, EvidenceStatus.HISTORICAL_CODE_EVIDENCE);
   assert.match(historicalEvidenceFor('usernameFormat.primary').notes, /authorization.*not inferred/i);
 });
+
+test('only the accepted InvoicesRequest namespace is runtime-confirmed', () => {
+  assert.equal(historicalEvidenceFor('namespace').status, EvidenceStatus.RUNTIME_BEHAVIOR_CONFIRMED);
+  assert.equal(historicalEvidenceFor('rsaPadding').status, EvidenceStatus.HISTORICAL_CODE_EVIDENCE);
+  assert.equal(historicalEvidenceFor('soapAction').status, EvidenceStatus.HISTORICAL_CODE_EVIDENCE);
+});

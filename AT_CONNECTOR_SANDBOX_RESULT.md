@@ -36,3 +36,23 @@ The response reached the Node client, but result collection crashed because the 
 The local metadata timing bug was corrected after the experiment and covered offline. The namespace was not promoted to `RUNTIME_BEHAVIOR_CONFIRMED`. A future test requires separate authorization and exactly one new request.
 
 No NIF, username, password, ciphertext, AES key, nonce, certificate content, raw XML or invoice detail is recorded.
+
+## Experiment 3 — repeat after TLS capture fix
+
+The protocol and one-day interval were unchanged from experiment 2.
+
+| Field | Result |
+|---|---|
+| Network requests | 1 |
+| TLS/mTLS | SUCCESS (`authorized: true`) |
+| HTTP | 200 |
+| SOAP response | YES |
+| Previous fault 33 | NO |
+| Current SOAP fault | NONE |
+| `EstadoOperacao` | 486 |
+| `Desc` | Empty invoice list (sanitized) |
+| `totalPages` | NOT_AVAILABLE |
+| Invoice count | 0 |
+| Classification | `SUCCESS` |
+
+The operation passed SOAP dispatch and produced a typed business response. Only the `InvoicesRequest` namespace was promoted to `RUNTIME_BEHAVIOR_CONFIRMED`. SOAPAction, cryptography, timestamp precision, username authorization and WFA permissions retain their prior evidence status.

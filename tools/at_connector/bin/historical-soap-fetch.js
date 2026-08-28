@@ -19,7 +19,7 @@ function classify(result) {
   if (/permiss|autoriza|acesso/i.test(text)) return 'AUTHORIZATION_ERROR';
   if (result.soap.fault && /protocol|schema|xml|namespace|soapaction/i.test(text)) return 'SOAP_PROTOCOL_ERROR';
   if (result.soap.fault) return 'REMOTE_FAULT';
-  if (result.result?.operationStatus === 200) return 'SUCCESS';
+  if (Number.isFinite(result.result?.operationStatus)) return 'SUCCESS';
   return 'UNKNOWN';
 }
 
