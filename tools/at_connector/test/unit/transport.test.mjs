@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { tlsMetadataFromSocket } from '../../src/transport.mjs';
+import { sendMtlsSoap, tlsMetadataFromSocket } from '../../src/transport.mjs';
 
 test('TLS metadata is captured before the response releases its socket', () => {
   const metadata = tlsMetadataFromSocket({
@@ -18,4 +18,13 @@ test('released TLS socket is handled without throwing or exposing internals', ()
   assert.deepEqual(tlsMetadataFromSocket(null), {
     authorized: false, authorizationError: null, protocol: null, cipher: null,
   });
+});
+
+test('local certificate read failures do not count as network requests', async () => {
+  let networkRequests = 0;
+  await assert.rejects(() => sendMtlsSoap({
+    endpoint: 'https://127.0.0.1:1/', pfxPath: 'definitely-not-present.pfx', pfxPassword: '', xml: '<x/>',
+    onRequestStart: () => { networkRequests += 1; },
+  }), (error) => error.code === 'TLS_ERROR');
+  assert.equal(networkRequests, 0);
 });

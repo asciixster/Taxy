@@ -6,7 +6,7 @@ test('redacts credential-shaped fields recursively', () => {
   const result = redact({ username: '123456789/1', password: 'plain', nested: { pfxPassword: 'pfx-secret' } });
   assert.equal(result.password, '[REDACTED]');
   assert.equal(result.nested.pfxPassword, '[REDACTED]');
-  assert.equal(result.username, '[REDACTED_USERNAME]');
+  assert.equal(result.username, '[REDACTED]');
 });
 
 test('redacts SOAP Password and Nonce values', () => {

@@ -1,6 +1,6 @@
-# AT Connector Test Results — Taxy 0.7.2
+# AT Connector Test Results — Taxy 0.7.3
 
-Date: 28 August 2026. Environment: AT test only.
+Updated: 29 August 2026. Environment: AT test only.
 
 ## Confirmed by local execution
 
@@ -13,6 +13,7 @@ Date: 28 August 2026. Environment: AT test only.
 | Empty SOAP 1.1 connectivity probe | HTTP 500, `env:Client / Internal Error` |
 | Single `?wsdl` discovery request | HTTP 500, SOAP XML, no WSDL definitions |
 | Historical authenticated consultation | Experiment 3: HTTP 200, no fault, EstadoOperacao 486, empty list |
+| Real invoice parsing 0.7.3 | One authorized attempt; local PKCS#12 verification failed before network (`TLS_ERROR`, 0 requests). No runtime invoice evidence claimed. |
 | Production request | **BLOCKED** |
 
 Experiment 1 established the namespace rejection. Experiment 2 changed only that namespace and made one read-only request, but a local TLS-metadata timing bug prevented capture of the response summary. It was fixed and regression-tested offline; the live request was not repeated.
@@ -21,7 +22,7 @@ Experiment 3 repeated the same request once after the capture fix. The namespace
 
 ## Offline verification
 
-- Connector unit tests: 57 passed; 4 opt-in local integration tests skipped offline.
+- Connector tests: 68 passed; 4 opt-in local integration tests skipped offline.
 - Flutter tests: 371 passed; `flutter analyze` reported no issues.
 - Local opt-in certificate/connectivity tests: 4 passed.
 

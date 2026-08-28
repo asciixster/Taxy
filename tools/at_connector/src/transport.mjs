@@ -30,35 +30,43 @@ export function tlsMetadataFromSocket(socket) {
   });
 }
 
-export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction, timeoutMs, connectTimeoutMs = timeoutMs ?? 20_000, totalTimeoutMs = timeoutMs ?? 20_000 }) {
+export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction, timeoutMs, connectTimeoutMs = timeoutMs ?? 20_000, totalTimeoutMs = timeoutMs ?? 20_000, onRequestStart = null }) {
   const started = performance.now();
   return new Promise((resolve, reject) => {
     let pfx;
     try { pfx = readFileSync(pfxPath); } catch (error) { reject(new AtTransportError('Unable to read client certificate', error)); return; }
-    const request = https.request(endpoint, {
-      method: 'POST',
-      pfx,
-      passphrase: pfxPassword,
-      rejectUnauthorized: true,
-      minVersion: 'TLSv1.2',
-      headers: buildSoapHeaders(xml, soapAction),
-      timeout: connectTimeoutMs,
-    }, (response) => {
-      const chunks = [];
-      // Capture while Node still associates the response with its TLS socket.
-      const tls = tlsMetadataFromSocket(response.socket);
-      response.on('data', (chunk) => chunks.push(chunk));
-      response.on('end', () => {
-        clearTimeout(totalTimer);
-        resolve({
-        statusCode: response.statusCode,
-        headers: response.headers,
-        body: Buffer.concat(chunks).toString('utf8'),
-        tls,
-        durationMs: Math.round(performance.now() - started),
+    let request;
+    try {
+      request = https.request(endpoint, {
+        method: 'POST',
+        pfx,
+        passphrase: pfxPassword,
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2',
+        headers: buildSoapHeaders(xml, soapAction),
+        timeout: connectTimeoutMs,
+      }, (response) => {
+        const chunks = [];
+        // Capture while Node still associates the response with its TLS socket.
+        const tls = tlsMetadataFromSocket(response.socket);
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => {
+          clearTimeout(totalTimer);
+          resolve({
+            statusCode: response.statusCode,
+            headers: response.headers,
+            body: Buffer.concat(chunks).toString('utf8'),
+            tls,
+            durationMs: Math.round(performance.now() - started),
+          });
         });
       });
-    });
+    } catch (error) {
+      pfx.fill(0);
+      reject(new AtTransportError('AT TLS/HTTP request failed', error));
+      return;
+    }
+    onRequestStart?.();
     const totalTimer = setTimeout(() => request.destroy(new Error('AT request total timeout exceeded')), totalTimeoutMs);
     request.on('timeout', () => request.destroy(new Error('AT connection timeout exceeded')));
     request.on('error', (error) => {

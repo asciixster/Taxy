@@ -62,10 +62,12 @@ test('sanitized envelope contains no credentials, NIF, ciphertext or key materia
 
 test('client permits at most one request and uses no retry', async () => {
   let calls = 0;
+  let countedNetworkRequests = 0;
   const client = new HistoricalAtConsultationClient({
     environment: 'test', username: base.username, password: base.password,
     cipherCertificatePath: 'unused', pfxPath: 'unused', pfxPassword: 'unused',
-  }, { envelopeBuilder: (input) => buildHistoricalEnvelope({ ...input, cipherPublicKey: publicKey }), transport: async () => {
+  }, { envelopeBuilder: (input) => buildHistoricalEnvelope({ ...input, cipherPublicKey: publicKey }), onNetworkRequest: () => { countedNetworkRequests += 1; }, transport: async ({ onRequestStart }) => {
+    onRequestStart();
     calls += 1;
     return { statusCode: 200, headers: {}, body: '<InvoicesResponse><EstadoOperacao>200</EstadoOperacao><Desc>OK</Desc><totalPages>0</totalPages></InvoicesResponse>', tls: { authorized: true } };
   } });
@@ -74,6 +76,7 @@ test('client permits at most one request and uses no retry', async () => {
   assert.deepEqual(response.runtimeConfirmedFields, ['namespace']);
   await assert.rejects(() => client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-02' }), (error) => error.code === AtErrorCode.RATE_LIMIT_EXCEEDED);
   assert.equal(calls, 1);
+  assert.equal(countedNetworkRequests, 1);
 });
 
 test('functional primary-login response confirms namespace but not username authorization', async () => {

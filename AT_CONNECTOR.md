@@ -1,4 +1,4 @@
-# Taxy 0.7.2 — Historical SOAP Reproduction
+# Taxy 0.7.3 — Real invoice parsing foundation
 
 The AT connector is a developer-only Node.js CLI under `tools/at_connector`. It is deliberately separate from Flutter and from the deterministic IRS engine. It does not place credentials in the mobile application and does not feed AT data into `TaxEngine`.
 
@@ -34,6 +34,8 @@ The 0.7.2 path reproduces supplied historical SOAP code without presenting it as
 - `dto.mjs`: neutral DTO foundation (`AtInvoice`, `AtParty`, `AtAmount`, `AtTax`).
 - `historical.mjs`: isolated historical request builder and single-shot sandbox client.
 
+The 0.7.3 parser adds typed `AtInvoice`, `AtInvoicePage` and `AtInvoiceQueryResult` outputs. Monetary values are exact integer cents, dates remain date-only, absent fields remain explicit, and fiscal identifiers are reduced to presence flags in safe output. See `INVOICE_FIELD_PRESENCE.md` for the runtime/offline evidence boundary.
+
 No temporary private-key file is created. Node.js receives the PFX bytes in memory and clears the application buffer after the request is started. OpenSSL remains responsible for its internal secure context.
 
 ## Requirements and local setup
@@ -43,7 +45,7 @@ No temporary private-key file is created. Node.js receives the PFX bytes in memo
 - The current AT cipher public certificate for authenticated calls.
 - Portal das Finanças primary NIF credentials or, where applicable, supported AT subuser credentials.
 
-Set the variables from `.env.example` in the local shell. The tool intentionally does not load `.env` automatically, avoiding another dependency and accidental secret discovery.
+Process environment variables remain authoritative. When a required value is absent, the local harness loads the repository-root `.env.local` without overwriting the process environment. That file is Git-ignored and is never modified by the harness.
 
 ```powershell
 $env:AT_ENV='test'
@@ -70,7 +72,7 @@ node tools/at_connector/bin/historical-soap-fetch.js --dry-run
 
 Set `AT_START_DATE` and `AT_END_DATE` explicitly. The command validates complete local configuration, builds the encrypted request in memory, prints only a sanitized template and performs zero network requests.
 
-The opt-in live command is `AT_LIVE_TEST=1 node tools/at_connector/bin/historical-soap-fetch.js`. It makes at most one test request, has no retry, uses 15/60-second connection/total limits, and prints only TLS/HTTP/status/count metadata. Authentication supports a taxpayer's primary NIF credentials and, where applicable, supported AT subuser credentials. `CustomerTaxID` is the primary NIF or the NIF-base of a subuser.
+The opt-in live command is `AT_LIVE_TEST=1 node tools/at_connector/bin/historical-soap-fetch.js`. It makes at most one test request, has no retry, uses 15/60-second connection/total limits, and prints only TLS/HTTP/status/count metadata plus anonymous parsed field presence. Authentication supports a taxpayer's primary NIF credentials and, where applicable, supported AT subuser credentials. `CustomerTaxID` is the primary NIF or the NIF-base of a subuser.
 
 ## Official endpoints
 
@@ -100,5 +102,7 @@ The official document does **not** identify RSA padding. The historical path sel
 - No consultation WSDL was published in the cited generic manual.
 - The official v3.0 example uses undeclared `soapenv` and `fat` prefixes, so it does not resolve the namespace/binding gap.
 - No IRS, Modelo 3 or assessment service is inferred from e-Fatura.
-- No automatic persistence of responses. Only a generic, sanitized SOAP fault fixture is committed.
+- No automatic persistence of responses. Committed XML fixtures are explicitly sanitized and synthetic; none is represented as a captured AT invoice response.
+- No automatic pagination; the live harness requests only page 1.
+- No real invoice response was captured in 0.7.3 because the authorized attempt stopped locally at PKCS#12 verification. Synthetic fixtures validate parser behavior but are not runtime evidence.
 - No integration with Flutter or `TaxEngine`.

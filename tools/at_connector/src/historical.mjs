@@ -94,8 +94,8 @@ export function sanitizedHistoricalEnvelope() {
 export class HistoricalAtConsultationClient {
   #requestsSent = 0;
 
-  constructor(config, { transport = sendMtlsSoap, envelopeBuilder = buildHistoricalEnvelope } = {}) {
-    this.config = config; this.transport = transport; this.envelopeBuilder = envelopeBuilder;
+  constructor(config, { transport = sendMtlsSoap, envelopeBuilder = buildHistoricalEnvelope, onNetworkRequest = null } = {}) {
+    this.config = config; this.transport = transport; this.envelopeBuilder = envelopeBuilder; this.onNetworkRequest = onNetworkRequest;
   }
 
   async fetchOnce({ startDate, endDate, customerTaxId = null }) {
@@ -118,6 +118,7 @@ export class HistoricalAtConsultationClient {
       soapAction: undefined,
       connectTimeoutMs: 15_000,
       totalTimeoutMs: 60_000,
+      onRequestStart: this.onNetworkRequest,
     });
     const soap = parseSoapResponse(transport.body, transport.statusCode);
     const result = soap.fault ? null : AtInvoiceListResponse.fromXml(transport.body);
