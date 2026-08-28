@@ -1,0 +1,13 @@
+{
+  "name": "taxy-at-connector",
+  "private": true,
+  "version": "0.7.0",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test test/unit/*.test.mjs",
+    "test:integration": "node --test test/integration/*.test.mjs",
+    "probe": "node src/cli.mjs probe",
+    "inspect": "node src/cli.mjs inspect"
+  }
+}

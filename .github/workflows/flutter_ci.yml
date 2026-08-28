@@ -21,3 +21,5 @@ jobs:
         run: flutter analyze
       - name: Test
         run: flutter test
+      - name: Test AT connector (offline unit tests only)
+        run: node --test tools/at_connector/test/unit/*.test.mjs

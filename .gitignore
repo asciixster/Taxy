@@ -44,5 +44,16 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# AT connector local credentials and output (never commit)
+*.pfx
+*.p12
+*.key
+*.cer
+tools/at_connector/.env
+tools/at_connector/.env.*
+!tools/at_connector/.env.example
+tools/at_connector/local/
+tools/at_connector/output/
+
 # Widget Preview related
 .widget_preview/
