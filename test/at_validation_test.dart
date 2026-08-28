@@ -274,6 +274,56 @@ void main() {
     );
   });
 
+  test('quality gate distinguishes EXACT from PARTIAL_EXACT', () {
+    final fullFixture = OfficialAssessmentFixture.fromJson(
+      _fixture(simulation, rules, actual),
+    );
+    final full = const AtValidationEngine().compare(fullFixture, rules);
+    final partialResults = <String, int>{
+      for (final field in AtValidationField.required) field: actual[field]!,
+    };
+    final partialFixture = OfficialAssessmentFixture.fromJson(
+      _fixture(simulation, rules, partialResults),
+    );
+    final partial = const AtValidationEngine().compare(partialFixture, rules);
+
+    expect(full.qualityGate, OfficialCaseQualityGate.exact);
+    expect(partial.qualityGate, OfficialCaseQualityGate.partialExact);
+    expect(full.isExact, isTrue);
+    expect(partial.isExact, isTrue);
+  });
+
+  test('quality gate marks a one-cent mismatch as DIFFERENCE', () {
+    final expected = Map<String, int>.from(actual)
+      ..[AtValidationField.balance] = actual[AtValidationField.balance]! + 1;
+    final fixture = OfficialAssessmentFixture.fromJson(
+      _fixture(simulation, rules, expected),
+    );
+    final comparison = const AtValidationEngine().compare(fixture, rules);
+
+    expect(comparison.qualityGate, OfficialCaseQualityGate.difference);
+  });
+
+  test('quality gate maps invalid and unsupported failures explicitly', () {
+    const invalid = FixtureFailure(
+      category: FixtureFailureCategory.fixtureError,
+      message: 'Invalid fixture.',
+    );
+    const unsupported = FixtureFailure(
+      category: FixtureFailureCategory.unsupportedScenario,
+      message: 'Unsupported.',
+    );
+
+    expect(
+      OfficialCaseQualityGateEvaluator.fromFailure(invalid),
+      OfficialCaseQualityGate.invalidFixture,
+    );
+    expect(
+      OfficialCaseQualityGateEvaluator.fromFailure(unsupported),
+      OfficialCaseQualityGate.unsupported,
+    );
+  });
+
   test('typed trace exposes the four distinct quotient concepts', () {
     final trace = const AtValidationEngine().calculateTrace(simulation, rules);
 

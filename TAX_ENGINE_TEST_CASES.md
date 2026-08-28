@@ -54,7 +54,7 @@ Testes adicionais cobrem:
 
 O loader só aceita `source: OFFICIAL_AT_ASSESSMENT` e tipos de documento AT
 documentados. O exemplo não é executado como liquidação real. Nesta release:
-**0 fixtures oficiais**, **21 referências manuais**.
+**1 fixture oficial**, **22 referências manuais**.
 
 ## Referências independentes
 
@@ -63,5 +63,10 @@ Além das nove referências conjugais 2026 existentes,
 contém 12 casos ao cêntimo: anos 1/2/5/8, limite 55 IAS, rendimento elevado e
 as combinações conjugais A/B/ambos. São referências de revisão, não
 liquidações oficiais, e usam `MANUALLY_AUDITED_REFERENCE`.
+
+O caso `single-category-a-positive-tax-2025-001` acrescenta uma referência
+manual individual com coleta positiva. Audita separadamente o 5.º escalão de
+2025, o arredondamento por parcela, despesas gerais, saúde, imposto final,
+retenções e saldo. Não aumenta a cobertura oficial AT.
 
 O repositório de regras também é testado contra ano/base divergente, descriptor não verificado, schema incompatível, override desconhecido, ficheiro ausente e tentativa de carregar regiões 2025 não existentes. Não existe fallback silencioso.

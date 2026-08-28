@@ -1,10 +1,18 @@
-# taxy.pt — 0.6 Official AT Case Intake & Validation Triage
+# taxy.pt — 0.7 First Official AT Validation
 
 Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
 
 A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
-## O que a 0.6 acrescenta
+## Estado da 0.7
+
+O primeiro caso real anonimizado da AT está integrado como
+`AT-2025-JOINT-A-001`: Categoria A, Continente, casal em tributação conjunta e
+um dependente standard. Os 13 campos documentalmente comparáveis coincidem a
+zero cêntimos e o runner classifica o caso como `PARTIAL_EXACT`. A validação não
+alterou o motor nem as regras fiscais.
+
+## Base de validação preservada da 0.6
 
 - schema v3 robusto para liquidações oficiais AT anonimizadas;
 - `TaxCalculationTrace` tipado, independente de labels de UI;
@@ -12,7 +20,7 @@ A aplicação é Android-first, determinística e privada: guarda simulações n
   para taxa auditados separadamente;
 - comparação exata campo a campo e classificação auditável de diferenças;
 - validação de privacidade fail-closed, sem anonimização automática;
-- relatório com contagens absolutas: **0 casos oficiais** e **21 cálculos de
+- relatório com contagens absolutas: **1 caso oficial** e **22 cálculos de
   referência manual** nesta versão;
 - política explícita de arredondamentos e changelog de validação;
 - Validation Lab com Taxy / AT / diferença e export de fixture oficial;
@@ -33,7 +41,7 @@ A aplicação é Android-first, determinística e privada: guarda simulações n
   em tributação separada e conjunta;
 - scope check inicial, badge de âmbito e Validation Lab com exportação JSON;
 - runner automático para futuras liquidações oficiais anonimizadas;
-- 349 testes determinísticos e 21 referências manuais auditadas.
+- suite determinística e 22 referências manuais auditadas.
 
 O IRS Jovem continua dentro do módulo IRS. A liquidação normal permanece
 disponível quando o titular não é elegível; dados insuficientes nunca originam

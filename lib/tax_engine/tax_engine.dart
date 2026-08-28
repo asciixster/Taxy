@@ -269,7 +269,10 @@ final class TaxEngine {
         tax: Money.zero,
         baseTax: Money.zero,
         excess: Money.zero,
-        ratePpm: 0,
+        // A AT continua a apresentar a taxa do primeiro escalão quando o
+        // rendimento coletável é zero. A taxa é auditável, embora a coleta
+        // permaneça necessariamente em zero.
+        ratePpm: rules.brackets.first.marginalRatePpm,
       );
     }
     for (var i = 0; i < rules.brackets.length; i++) {
