@@ -56,8 +56,8 @@ If credential material is staged, logged or shared:
 | MITM | Normal hostname/CA validation, `rejectUnauthorized: true`, TLS 1.2 minimum and AT client certificate. |
 | Certificate misuse | Production blocked, external paths only, no private-key export, documented rotation. |
 | Credential replay | Fresh CSPRNG AES key per request; no automatic retry. Exact Created precision remains evidence-gated. |
-| Excessive permissions | Dedicated WFA subuser required; main Portal credential prohibited; consultation-specific WFA scope remains to be confirmed. |
+| Excessive permissions | Primary and supported subuser usernames are syntactically accepted. Remote authorization is classified from the AT response; least-privilege credentials remain recommended. |
 
 Live commands are single-shot: at most one request per execution, no loop and zero automatic retries.
 
-The historical command additionally requires `AT_LIVE_TEST=1`, derives the customer NIF from the subuser name, rejects mismatches, omits invoice details from output, and never persists a response. Historical code evidence is not authorization to use a principal Portal credential.
+The historical command additionally requires `AT_LIVE_TEST=1`, derives the customer NIF from either the primary username or a subuser's NIF-base, rejects mismatches, omits invoice details from output, and never persists a response. Local username validation does not claim or predict remote authorization.

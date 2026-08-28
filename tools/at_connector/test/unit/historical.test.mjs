@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { generateKeyPairSync } from 'node:crypto';
 import test from 'node:test';
 import { AtErrorCode } from '../../src/errors.mjs';
-import { buildHistoricalEnvelope, customerTaxIdFromUsername, HistoricalAtConsultationClient, HISTORICAL_NAMESPACE, sanitizedHistoricalEnvelope, validateHistoricalDateRange, validateSubuserUsername } from '../../src/historical.mjs';
+import { validateAtUsername } from '../../src/auth.mjs';
+import { buildHistoricalEnvelope, customerTaxIdFromUsername, HistoricalAtConsultationClient, HISTORICAL_NAMESPACE, sanitizedHistoricalEnvelope, validateHistoricalDateRange } from '../../src/historical.mjs';
 import { buildSoapHeaders } from '../../src/transport.mjs';
 
 const { publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -12,10 +13,17 @@ const base = {
   clock: () => new Date('2026-08-28T11:22:33.987Z'), randomSource: () => Buffer.alloc(16, 7),
 };
 
-test('historical username must use NIF/subuser and drives CustomerTaxID', () => {
-  assert.equal(validateSubuserUsername('123456789/12'), '123456789/12');
+test('primary NIF and historical subuser are both valid usernames', () => {
+  assert.equal(validateAtUsername('123456789'), '123456789');
+  assert.equal(validateAtUsername('123456789/12'), '123456789/12');
+  assert.throws(() => validateAtUsername('12345678'), (error) => error.code === AtErrorCode.INVALID_USERNAME);
+  assert.throws(() => validateAtUsername('123456789/12345'), (error) => error.code === AtErrorCode.INVALID_USERNAME);
+  assert.equal('SUBUSER_REQUIRED' in AtErrorCode, false);
+});
+
+test('CustomerTaxID is derived from primary NIF or subuser base NIF', () => {
+  assert.equal(customerTaxIdFromUsername('123456789'), '123456789');
   assert.equal(customerTaxIdFromUsername('123456789/12'), '123456789');
-  assert.throws(() => validateSubuserUsername('123456789'), (error) => error.code === AtErrorCode.INVALID_SUBUSER_FORMAT);
   assert.throws(() => customerTaxIdFromUsername('123456789/1', '987654321'), (error) => error.code === AtErrorCode.CUSTOMER_TAX_ID_MISMATCH);
 });
 
@@ -63,6 +71,20 @@ test('client permits at most one request and uses no retry', async () => {
   const response = await client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-02' });
   assert.equal(response.result.operationStatus, 200);
   assert(response.runtimeConfirmedFields.includes('rsaPadding'));
+  assert(response.runtimeConfirmedFields.includes('usernameFormat.subuser'));
   await assert.rejects(() => client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-02' }), (error) => error.code === AtErrorCode.RATE_LIMIT_EXCEEDED);
   assert.equal(calls, 1);
+});
+
+test('successful primary login confirms only primary username runtime shape', async () => {
+  const client = new HistoricalAtConsultationClient({
+    environment: 'test', username: '123456789', password: base.password,
+    cipherCertificatePath: 'unused', pfxPath: 'unused', pfxPassword: 'unused',
+  }, {
+    envelopeBuilder: (input) => buildHistoricalEnvelope({ ...input, cipherPublicKey: publicKey }),
+    transport: async () => ({ statusCode: 200, headers: {}, body: '<InvoicesResponse><EstadoOperacao>200</EstadoOperacao><Desc>OK</Desc></InvoicesResponse>', tls: { authorized: true } }),
+  });
+  const response = await client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-01' });
+  assert(response.runtimeConfirmedFields.includes('usernameFormat.primary'));
+  assert(!response.runtimeConfirmedFields.includes('usernameFormat.subuser'));
 });

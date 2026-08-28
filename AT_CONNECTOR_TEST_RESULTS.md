@@ -12,14 +12,14 @@ Date: 28 August 2026. Environment: AT test only.
 | TLS/mTLS to consultation test endpoint | PASS (`authorized: true`) |
 | Empty SOAP 1.1 connectivity probe | HTTP 500, `env:Client / Internal Error` |
 | Single `?wsdl` discovery request | HTTP 500, SOAP XML, no WSDL definitions |
-| Historical authenticated consultation | **NOT EXECUTED — credentials absent** |
+| Historical authenticated consultation | HTTP 500 / SOAP fault 33 (`SOAP_PROTOCOL_ERROR`) |
 | Production request | **BLOCKED** |
 
-The historical contract is implemented and independently tested, but the authenticated request was not executed because no local `AT_USERNAME` or `AT_PASSWORD` was configured. No network request or protocol variant was tried.
+One authenticated read-only request was executed with a primary-NIF username. TLS/mTLS completed, but the service rejected the historical application namespace and identified `http://factemi.at.min_financas.pt/fatshareInvoices` as expected. No retry or protocol variant was attempted.
 
 ## Offline verification
 
-- Connector unit tests: 48 passed; 4 opt-in local integration tests skipped offline.
+- Connector unit tests: 53 passed; 4 opt-in local integration tests skipped offline.
 - Flutter tests: 371 passed; `flutter analyze` reported no issues.
 - Local opt-in certificate/connectivity tests: 4 passed.
 

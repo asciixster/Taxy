@@ -1,5 +1,16 @@
 import { buildEncryptedCredentials, generateAes128SessionKey } from './crypto.mjs';
 import { securityHeader } from './soap.mjs';
+import { AtConnectorError, AtErrorCode } from './errors.mjs';
+
+const PRIMARY_USERNAME = /^\d{9}$/;
+const SUBUSER_USERNAME = /^\d{9}\/\d{1,4}$/;
+
+export function validateAtUsername(username) {
+  if (!PRIMARY_USERNAME.test(username || '') && !SUBUSER_USERNAME.test(username || '')) {
+    throw new AtConnectorError(AtErrorCode.INVALID_USERNAME, 'AT_USERNAME must use a 9-digit NIF or the supported NIF/subuser format');
+  }
+  return username;
+}
 
 export class AtTimestampBuilder {
   static fromIso8601Utc(value) {
@@ -32,7 +43,7 @@ export class AtNonceCipher {
 
 export class AtUsernameTokenBuilder {
   static build({ username, password, publicKey, rsaPaddingMode, created = AtTimestampBuilder.now(), randomSource }) {
-    if (!/^\d{9}\/\d{1,4}$/.test(username)) throw new Error('Username must use the documented NIF/UserId format');
+    validateAtUsername(username);
     const sessionKey = generateAes128SessionKey(randomSource);
     try {
       const encrypted = buildEncryptedCredentials({ password, created, publicKey, sessionKey, rsaPaddingMode });

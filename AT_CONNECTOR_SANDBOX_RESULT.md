@@ -2,27 +2,26 @@
 
 Date (UTC): 2026-08-28  
 Environment: AT test  
-Endpoint: `https://servicos.portaldasfinancas.gov.pt:725/fatshare/ws/fatshareFaturas`  
+Endpoint: consultation service on port 725
 Branch: `at-connector-historical-soap-0.7.2`  
-Commit SHA: NOT_APPLICABLE (live request not executed)  
-Live request count: **0**
+Live request count: **1**
 
-## Result
+## Sanitized result
 
-`AUTH_CONFIGURATION_MISSING`
-
-The local AT client PFX and public cipher certificate were available, but `AT_USERNAME` and `AT_PASSWORD` were absent. No authenticated request was sent. This is a fail-closed configuration result, not a protocol rejection.
-
-| Check | Result |
+| Field | Result |
 |---|---|
-| Historical envelope implementation | PASS (offline) |
-| Sanitized dry-run behavior | PASS (offline tests) |
-| TLS authorized | NOT_EXECUTED |
-| HTTP status | NOT_EXECUTED |
-| SOAP fault | NOT_EXECUTED |
-| `EstadoOperacao` / `Desc` | NOT_EXECUTED |
-| `totalPages` / invoice count | NOT_EXECUTED |
-| Runtime evidence confirmed | NO |
-| Production request | BLOCKED |
+| TLS / mTLS | SUCCESS (`authorized: true`) |
+| HTTP | 500 |
+| SOAP response | YES |
+| SOAP fault code | `33` |
+| Classification | `SOAP_PROTOCOL_ERROR` |
+| `EstadoOperacao` | NOT_AVAILABLE |
+| `Desc` | NOT_AVAILABLE |
+| `totalPages` | NOT_AVAILABLE |
+| Invoice count | NOT_AVAILABLE |
 
-No NIF, username, password, ciphertext, AES key, nonce, certificate content or invoice detail is recorded. A future authorized execution must update this file with sanitized facts only and still make no more than one request.
+The service rejected the historical application namespace and identified `http://factemi.at.min_financas.pt/fatshareInvoices` as the expected namespace for `InvoicesRequest`. The request used the unchanged historical namespace `http://fatshare.at.min_financas.pt/fatshare`.
+
+No retry, fallback or protocol variant was attempted. No field was promoted to `RUNTIME_BEHAVIOR_CONFIRMED`, because authentication and the application operation were not accepted. The next minimum experiment is a separately reviewed namespace-only change followed by one new opt-in request.
+
+No NIF, username, password, ciphertext, AES key, nonce, certificate content, raw XML or invoice detail is recorded.

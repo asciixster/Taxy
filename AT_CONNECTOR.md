@@ -41,7 +41,7 @@ No temporary private-key file is created. Node.js receives the PFX bytes in memo
 - Node.js 22 or newer (no third-party npm dependency).
 - The AT test PKCS#12 file and its password.
 - The current AT cipher public certificate for authenticated calls.
-- A Portal das Finanças subuser with WFA authorization for a future real consultation.
+- Portal das Finanças primary NIF credentials or, where applicable, supported AT subuser credentials.
 
 Set the variables from `.env.example` in the local shell. The tool intentionally does not load `.env` automatically, avoiding another dependency and accidental secret discovery.
 
@@ -70,7 +70,7 @@ node tools/at_connector/bin/historical-soap-fetch.js --dry-run
 
 Set `AT_START_DATE` and `AT_END_DATE` explicitly. The command validates complete local configuration, builds the encrypted request in memory, prints only a sanitized template and performs zero network requests.
 
-The opt-in live command is `AT_LIVE_TEST=1 node tools/at_connector/bin/historical-soap-fetch.js`. It makes at most one test request, has no retry, uses 15/60-second connection/total limits, and prints only TLS/HTTP/status/count metadata. It must use a dedicated `NIF/subuser`; `CustomerTaxID` is derived from its first nine digits.
+The opt-in live command is `AT_LIVE_TEST=1 node tools/at_connector/bin/historical-soap-fetch.js`. It makes at most one test request, has no retry, uses 15/60-second connection/total limits, and prints only TLS/HTTP/status/count metadata. Authentication supports a taxpayer's primary NIF credentials and, where applicable, supported AT subuser credentials. `CustomerTaxID` is the primary NIF or the NIF-base of a subuser.
 
 ## Official endpoints
 

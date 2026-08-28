@@ -1,4 +1,4 @@
-import { AtTimestampBuilder } from './auth.mjs';
+import { AtTimestampBuilder, validateAtUsername } from './auth.mjs';
 import { buildEncryptedCredentials, generateAes128SessionKey, readAtPublicKey, RsaPaddingMode } from './crypto.mjs';
 import { endpointFor } from './endpoints.mjs';
 import { AtConnectorError, AtErrorCode } from './errors.mjs';
@@ -11,21 +11,18 @@ import { parseSoapResponse } from './parser.mjs';
 export const HISTORICAL_NAMESPACE = 'http://fatshare.at.min_financas.pt/fatshare';
 export const HistoricalSource = 'HISTORICAL_CODE_EVIDENCE';
 export const RUNTIME_CONFIRMABLE_FIELDS = Object.freeze([
-  'endpoint.test.consultation', 'transport', 'clientCertificate', 'soapVersion', 'usernameFormat',
+  'endpoint.test.consultation', 'transport', 'clientCertificate', 'soapVersion',
   'aesMode', 'aesPadding', 'rsaPadding', 'timestampPrecision', 'nonceConstruction',
   'namespace', 'soapAction', 'requestRootElement',
 ]);
 
 export function validateSubuserUsername(username) {
-  if (!/^\d{9}\/\d{1,4}$/.test(username || '')) {
-    throw new AtConnectorError(AtErrorCode.INVALID_SUBUSER_FORMAT, 'AT_USERNAME must use NIF/subuser format');
-  }
-  return username;
+  return validateAtUsername(username);
 }
 
 export function customerTaxIdFromUsername(username, suppliedCustomerTaxId = null) {
-  const validated = validateSubuserUsername(username);
-  const derived = validated.slice(0, 9);
+  const validated = validateAtUsername(username);
+  const derived = validated.split('/')[0];
   if (suppliedCustomerTaxId != null && suppliedCustomerTaxId !== derived) {
     throw new AtConnectorError(AtErrorCode.CUSTOMER_TAX_ID_MISMATCH, 'CustomerTaxID must equal the NIF portion of AT_USERNAME');
   }
@@ -130,7 +127,9 @@ export class HistoricalAtConsultationClient {
     return Object.freeze({
       transport, soap, result,
       evidenceStatus: confirmed ? EvidenceStatus.RUNTIME_BEHAVIOR_CONFIRMED : EvidenceStatus.HISTORICAL_CODE_EVIDENCE,
-      runtimeConfirmedFields: confirmed ? RUNTIME_CONFIRMABLE_FIELDS : Object.freeze([]),
+      runtimeConfirmedFields: confirmed
+        ? Object.freeze([...RUNTIME_CONFIRMABLE_FIELDS, this.config.username.includes('/') ? 'usernameFormat.subuser' : 'usernameFormat.primary'])
+        : Object.freeze([]),
     });
   }
 }

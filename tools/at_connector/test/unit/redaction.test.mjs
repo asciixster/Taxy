@@ -6,7 +6,7 @@ test('redacts credential-shaped fields recursively', () => {
   const result = redact({ username: '123456789/1', password: 'plain', nested: { pfxPassword: 'pfx-secret' } });
   assert.equal(result.password, '[REDACTED]');
   assert.equal(result.nested.pfxPassword, '[REDACTED]');
-  assert.equal(result.username, '[REDACTED_NIF]/1');
+  assert.equal(result.username, '[REDACTED_USERNAME]');
 });
 
 test('redacts SOAP Password and Nonce values', () => {
@@ -14,6 +14,12 @@ test('redacts SOAP Password and Nonce values', () => {
   const safe = redactText(xml);
   assert(!safe.includes('ciphertext'));
   assert(!safe.includes('>nonce<'));
+});
+
+test('redacts primary usernames, subusers and document-shaped identifiers', () => {
+  const value = redactText('user 123456789 sub 123456789/12 document FT-123456');
+  assert(!value.includes('123456789'));
+  assert(!value.includes('FT-123456'));
 });
 
 test('safe logs contain neither plaintext nor encrypted credential fields', () => {
