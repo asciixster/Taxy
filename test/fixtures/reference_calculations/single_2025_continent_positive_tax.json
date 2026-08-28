@@ -1,14 +1,9 @@
 {
-  "schemaVersion": 1,
+  "manualReferenceSchemaVersion": 1,
   "source": "MANUALLY_AUDITED_REFERENCE",
   "taxYear": 2025,
   "jurisdiction": "CONTINENT",
-  "civilStatus": "SINGLE",
-  "filingMode": "SEPARATE",
-  "incomeCategory": "CATEGORY_A",
-  "irsJovem": false,
   "rulesVersion": "2025.4.0",
-  "ruleAsset": "assets/tax_rules/2025/base.json",
   "disclaimer": "Este caso valida consistência matemática e regressão interna. Não constitui validação contra liquidação oficial da AT.",
   "sources": [
     "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs25.aspx",
@@ -19,31 +14,30 @@
   "cases": [
     {
       "id": "single-category-a-positive-tax-2025-001",
+      "scenario": "single positive tax",
       "description": "Sujeito passivo individual, Categoria A, coleta positiva",
+      "civilStatus": "SINGLE",
+      "filingMode": "SEPARATE",
       "input": {
-        "age": 40,
-        "grossIncomeCents": 3000000,
-        "withholdingCents": 500000,
-        "mandatoryContributionsCents": 330000,
-        "dependents": 0,
-        "generalExpensesCents": 500000,
-        "healthExpensesCents": 100000,
-        "educationExpensesCents": 0,
-        "rentExpensesCents": 0,
-        "careHomeExpensesCents": 0,
-        "invoiceVat15Cents": 0,
-        "invoiceVat30Cents": 0,
-        "invoiceVat35Cents": 0,
-        "invoiceVat100Cents": 0,
-        "pprCents": 0
+        "taxpayerA": {
+          "age": 40,
+          "grossIncomeCents": 3000000,
+          "withholdingCents": 500000,
+          "mandatoryContributionsCents": 330000,
+          "deductions": {"generalCents": 500000, "healthCents": 100000}
+        },
+        "dependents": [],
+        "dependentDeductions": {}
       },
       "expected": {
         "grossIncomeCents": 3000000,
         "specificDeductionCents": 446215,
         "taxableIncomeCents": 2553785,
-        "grossTaxCents": 500690,
+        "grossTaxAfterExemptionCents": 500690,
         "generalExpenseCreditCents": 25000,
         "healthCreditCents": 15000,
+        "potentialTaxCreditsCents": 40000,
+        "effectiveTaxCreditsCents": 40000,
         "totalTaxCreditsCents": 40000,
         "finalTaxDueCents": 460690,
         "withholdingCents": 500000,
@@ -53,21 +47,27 @@
         "specificDeduction": "max(446215, 330000) = 446215 cents",
         "taxableIncome": "3000000 - 446215 = 2553785 cents",
         "bracket": "5th bracket: more than 2230600 and up to 2840000 cents",
-        "lowerBracketTax": "2230600 × 178970 / 1000000 = 399210.482 cents; half-up = 399210 cents",
-        "excess": "2553785 - 2230600 = 323185 cents",
-        "excessTax": "323185 × 314000 / 1000000 = 101480.09 cents; half-up = 101480 cents",
+        "lowerBracketTax": "2230600 × 178970 / 1000000 = 399210 cents half-up",
+        "excessTax": "323185 × 314000 / 1000000 = 101480 cents half-up",
         "grossTax": "399210 + 101480 = 500690 cents",
-        "generalExpenseCredit": "min(500000 × 350000 / 1000000, 25000) = 25000 cents",
-        "healthCredit": "min(100000 × 150000 / 1000000, 100000) = 15000 cents",
-        "overallDeductionsCap": "213556 cents; the 15000-cent limited group does not reach the cap; general expenses sit outside this group",
+        "generalExpenseCredit": "min(500000 × 35%, 25000) = 25000 cents",
+        "healthCredit": "100000 × 15% = 15000 cents",
         "totalTaxCredits": "25000 + 15000 = 40000 cents",
         "finalTaxDue": "500690 - 40000 = 460690 cents",
         "balance": "500000 - 460690 = 39310 cents",
-        "rounding": "Each bracket component is rounded half-up to integer cents before addition, matching ROUNDING_POLICY.md"
+        "rounding": "Each bracket component is rounded half-up before addition"
+      },
+      "inputEvidence": {
+        "taxpayerA.age": "ASSUMED_NON_MATERIAL",
+        "taxpayerA.grossIncomeCents": "DOCUMENTED",
+        "taxpayerA.withholdingCents": "DOCUMENTED",
+        "taxpayerA.mandatoryContributionsCents": "DOCUMENTED",
+        "taxpayerA.deductions.generalCents": "DOCUMENTED",
+        "taxpayerA.deductions.healthCents": "DOCUMENTED"
       },
       "candidateCorrection": {
         "classification": "REFERENCE_ERROR",
-        "reason": "The candidate gross tax was 5 cents too low. Applying the versioned average and marginal rates with the documented per-component rounding gives 500690 cents; downstream final tax and balance were corrected accordingly."
+        "reason": "The candidate gross tax was 5 cents too low. The independent bracket calculation gives 500690 cents."
       }
     }
   ]

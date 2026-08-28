@@ -21,6 +21,15 @@ divisões monetárias usam inteiros arbitrariamente grandes e arredondamento
 | Imposto apurado | coleta − deduções + solidariedade | cêntimos; coleta regular nunca negativa |
 | Saldo | retenções − imposto apurado | cêntimos; positivo é reembolso |
 
+## Auditoria 0.8
+
+O código e os testes 2025 confirmam explicitamente `Money.mulDiv` half-up,
+arredondamento separado da base e excesso do escalão, divisão half-up do
+quociente conjugal antes da aplicação das taxas, limite global após os limites
+por categoria e limite final pela coleta disponível. O trace distingue agora
+`potentialTaxCredits` de `effectiveTaxCredits`; esta alteração é apenas
+observacional e não muda a sequência fiscal.
+
 ## Regras de alteração
 
 - Nenhuma tolerância global é permitida em liquidações oficiais.

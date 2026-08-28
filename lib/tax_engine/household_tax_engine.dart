@@ -368,6 +368,8 @@ final class HouseholdTaxEngine {
         invoiceVatCredit: credits.invoiceVat,
         pprCredit: credits.ppr,
         overallDeductionsCap: credits.overallCap,
+        potentialTaxCredits: credits.potentialTotal,
+        effectiveTaxCredits: credits.total,
         totalTaxCredits: credits.total,
         solidarityTax: solidarity,
         finalTaxDue: taxDue,
@@ -485,6 +487,8 @@ final class HouseholdTaxEngine {
         invoiceVatCredit: credits.invoiceVat,
         pprCredit: credits.ppr,
         overallDeductionsCap: credits.overallCap,
+        potentialTaxCredits: credits.potentialTotal,
+        effectiveTaxCredits: credits.total,
         totalTaxCredits: credits.total,
         solidarityTax: solidarity,
         finalTaxDue: due,
@@ -558,6 +562,10 @@ final class HouseholdTaxEngine {
               b.trace.overallDeductionsCap != null
           ? a.trace.overallDeductionsCap! + b.trace.overallDeductionsCap!
           : null,
+      potentialTaxCredits:
+          a.trace.potentialTaxCredits + b.trace.potentialTaxCredits,
+      effectiveTaxCredits:
+          a.trace.effectiveTaxCredits + b.trace.effectiveTaxCredits,
       totalTaxCredits: a.trace.totalTaxCredits + b.trace.totalTaxCredits,
       solidarityTax: a.trace.solidarityTax + b.trace.solidarityTax,
       finalTaxDue: a.trace.finalTaxDue + b.trace.finalTaxDue,

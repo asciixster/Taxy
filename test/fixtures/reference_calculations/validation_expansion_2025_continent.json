@@ -1,0 +1,98 @@
+{
+  "manualReferenceSchemaVersion": 1,
+  "source": "MANUALLY_AUDITED_REFERENCE",
+  "taxYear": 2025,
+  "jurisdiction": "CONTINENT",
+  "rulesVersion": "2025.4.0",
+  "disclaimer": "Casos de consistência matemática e regressão interna; não constituem validação contra liquidações oficiais da AT.",
+  "sources": [
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs25.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/ra/Pages/irs68ra_202512.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs69.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs70.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs78e.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs12b.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/cirs_rep/Pages/irs22.aspx",
+    "https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/ebf_rep/Pages/ebf-artigo-21-ordm-.aspx"
+  ],
+  "cases": [
+    {
+      "id": "single-positive-no-credits-2025-001",
+      "scenario": "single positive tax",
+      "description": "Solteiro com coleta positiva e sem deduções à coleta",
+      "civilStatus": "SINGLE",
+      "filingMode": "SEPARATE",
+      "input": {"taxpayerA":{"age":41,"grossIncomeCents":3750000,"withholdingCents":650000,"mandatoryContributionsCents":412500,"deductions":{}},"dependents":[],"dependentDeductions":{}},
+      "expected": {"grossIncomeCents":3750000,"specificDeductionCents":446215,"taxableIncomeCents":3303785,"bracketBaseTaxCents":590550,"bracketExcessCents":463785,"marginalRatePpm":349000,"grossTaxAfterExemptionCents":752411,"potentialTaxCreditsCents":0,"effectiveTaxCreditsCents":0,"totalTaxCreditsCents":0,"finalTaxDueCents":752411,"withholdingCents":650000,"balanceCents":-102411},
+      "audit": {"specific":"max(446215, 412500) = 446215","taxable":"3750000 - 446215 = 3303785","bracket":"sixth bracket; lower boundary 2840000","base":"2840000 × 207940 ppm = 590550 half-up","excess":"463785 × 349000 ppm = 161861 half-up","grossTax":"590550 + 161861 = 752411","credits":"no eligible expenses = 0","balance":"650000 - 752411 = -102411"},
+      "inputEvidence": {"taxpayerA.age":"ASSUMED_NON_MATERIAL","taxpayerA.grossIncomeCents":"DOCUMENTED","taxpayerA.withholdingCents":"DOCUMENTED","taxpayerA.mandatoryContributionsCents":"DOCUMENTED"}
+    },
+    {
+      "id": "single-deductions-cap-2025-001",
+      "scenario": "deductions",
+      "description": "Solteiro com despesas gerais, saúde e rendas sujeito ao limite global",
+      "civilStatus": "SINGLE",
+      "filingMode": "SEPARATE",
+      "input": {"taxpayerA":{"age":43,"grossIncomeCents":5500000,"withholdingCents":1200000,"mandatoryContributionsCents":605000,"deductions":{"generalCents":600000,"healthCents":800000,"rentCents":600000}},"dependents":[],"dependentDeductions":{}},
+      "expected": {"grossIncomeCents":5500000,"specificDeductionCents":605000,"taxableIncomeCents":4895000,"grossTaxAfterExemptionCents":1373719,"generalExpenseCreditCents":25000,"healthCreditCents":100000,"rentCreditCents":70000,"overallDeductionsCapCents":164741,"potentialTaxCreditsCents":195000,"effectiveTaxCreditsCents":189741,"totalTaxCreditsCents":189741,"finalTaxDueCents":1183978,"withholdingCents":1200000,"balanceCents":16022},
+      "audit": {"specific":"mandatory contributions 605000 exceed 446215","taxable":"5500000 - 605000 = 4895000","grossTax":"1196969 + (396300 × 44.6%) = 1373719","general":"35% gives 210000, category cap gives 25000","health":"15% gives 120000, category cap gives 100000","rent":"15% gives 90000, 2025 cap gives 70000","potential":"25000 + 100000 + 70000 = 195000","overallCap":"limited group cap = 164741; general remains outside","effective":"25000 + 164741 = 189741","balance":"1200000 - 1183978 = 16022"},
+      "inputEvidence": {"taxpayerA.age":"ASSUMED_NON_MATERIAL","taxpayerA.grossIncomeCents":"DOCUMENTED","taxpayerA.withholdingCents":"DOCUMENTED","taxpayerA.mandatoryContributionsCents":"DOCUMENTED","taxpayerA.deductions.generalCents":"DOCUMENTED","taxpayerA.deductions.healthCents":"DOCUMENTED","taxpayerA.deductions.rentCents":"DOCUMENTED"}
+    },
+    {
+      "id": "couple-one-dependent-separate-2025-001",
+      "scenario": "married separate",
+      "description": "Casal com rendimentos assimétricos, um dependente e tributação separada",
+      "civilStatus": "MARRIED",
+      "filingMode": "SEPARATE",
+      "input": {"taxpayerA":{"age":32,"grossIncomeCents":5200000,"withholdingCents":900000,"mandatoryContributionsCents":572000,"deductions":{"generalCents":500000,"healthCents":100000,"pprCents":250000}},"taxpayerB":{"age":54,"grossIncomeCents":2900000,"withholdingCents":350000,"mandatoryContributionsCents":319000,"deductions":{"generalCents":400000,"healthCents":60000,"pprCents":50000}},"dependents":[{"id":"dependent-1","ageAtYearEnd":10}],"dependentDeductions":{"healthCents":80000,"educationCents":120000}},
+      "expected": {"grossIncomeCents":8100000,"specificDeductionCents":1018215,"taxableIncomeCents":7081785,"maritalQuotient":1,"grossTaxAfterExemptionCents":1723927,"dependentCreditsCents":60000,"generalExpenseCreditCents":50000,"healthCreditCents":36000,"educationCreditCents":36000,"pprCreditCents":50000,"overallDeductionsCapCents":192974,"potentialTaxCreditsCents":232000,"effectiveTaxCreditsCents":232000,"totalTaxCreditsCents":232000,"finalTaxDueCents":1491927,"withholdingCents":1250000,"balanceCents":-241927},
+      "audit": {"specific":"A=572000; B=max(446215,319000)=446215; total=1018215","taxable":"A=4628000; B=2453785; total=7081785","dependent":"30000 per separate return = 60000","dependentExpenses":"50% of health and education allocated to each titular","general":"25000 per titular = 50000","ppr":"A capped at 40000; B uses 10000; no transfer","grossTax":"A 1254637 + B 469290 = 1723927","credits":"134000 + 98000 = 232000","balance":"1250000 - 1491927 = -241927"},
+      "inputEvidence": {"taxpayerA.age":"DOCUMENTED","taxpayerA.grossIncomeCents":"DOCUMENTED","taxpayerA.withholdingCents":"DOCUMENTED","taxpayerA.mandatoryContributionsCents":"DOCUMENTED","taxpayerB.age":"DOCUMENTED","taxpayerB.grossIncomeCents":"DOCUMENTED","taxpayerB.withholdingCents":"DOCUMENTED","taxpayerB.mandatoryContributionsCents":"DOCUMENTED","dependents":"DOCUMENTED"}
+    },
+    {
+      "id": "couple-one-dependent-joint-2025-001",
+      "scenario": "married joint",
+      "description": "Mesmo agregado da referência separada, em tributação conjunta",
+      "civilStatus": "MARRIED",
+      "filingMode": "JOINT",
+      "input": {"taxpayerA":{"age":32,"grossIncomeCents":5200000,"withholdingCents":900000,"mandatoryContributionsCents":572000,"deductions":{"generalCents":500000,"healthCents":100000,"pprCents":250000}},"taxpayerB":{"age":54,"grossIncomeCents":2900000,"withholdingCents":350000,"mandatoryContributionsCents":319000,"deductions":{"generalCents":400000,"healthCents":60000,"pprCents":50000}},"dependents":[{"id":"dependent-1","ageAtYearEnd":10}],"dependentDeductions":{"healthCents":80000,"educationCents":120000}},
+      "expected": {"grossIncomeCents":8100000,"specificDeductionCents":1018215,"taxableIncomeCents":7081785,"maritalQuotient":2,"rateDeterminingIncomeCents":7081785,"rateDeterminingQuotientCents":3540893,"bracketBaseTaxCents":1181100,"bracketExcessCents":1401786,"marginalRatePpm":349000,"grossTaxAfterExemptionCents":1670324,"dependentCreditsCents":60000,"generalExpenseCreditCents":50000,"healthCreditCents":36000,"educationCreditCents":36000,"pprCreditCents":50000,"overallDeductionsCapCents":192974,"potentialTaxCreditsCents":232000,"effectiveTaxCreditsCents":232000,"totalTaxCreditsCents":232000,"finalTaxDueCents":1438324,"withholdingCents":1250000,"balanceCents":-188324},
+      "audit": {"specific":"same household specific deduction = 1018215","taxable":"8100000 - 1018215 = 7081785","quotient":"7081785 / 2 = 3540893 half-up","grossTax":"tax on quotient 835162 × 2 = 1670324","dependent":"one standard dependent = 60000","general":"joint cap 50000","ppr":"individual caps: 40000 + 10000 = 50000","credits":"60000 + 50000 + 36000 + 36000 + 50000 = 232000","difference":"separate due 1491927 - joint due 1438324 = 53603","balance":"1250000 - 1438324 = -188324"},
+      "inputEvidence": {"taxpayerA.age":"DOCUMENTED","taxpayerA.grossIncomeCents":"DOCUMENTED","taxpayerA.withholdingCents":"DOCUMENTED","taxpayerA.mandatoryContributionsCents":"DOCUMENTED","taxpayerB.age":"DOCUMENTED","taxpayerB.grossIncomeCents":"DOCUMENTED","taxpayerB.withholdingCents":"DOCUMENTED","taxpayerB.mandatoryContributionsCents":"DOCUMENTED","dependents":"DOCUMENTED"}
+    },
+    {
+      "id": "couple-ppr-individual-caps-joint-2025-001",
+      "scenario": "PPR couple",
+      "description": "Casal com limites PPR individuais e não transferíveis",
+      "civilStatus": "MARRIED",
+      "filingMode": "JOINT",
+      "input": {"taxpayerA":{"age":30,"grossIncomeCents":4000000,"withholdingCents":600000,"mandatoryContributionsCents":440000,"deductions":{"pprCents":300000}},"taxpayerB":{"age":55,"grossIncomeCents":3500000,"withholdingCents":400000,"mandatoryContributionsCents":385000,"deductions":{"pprCents":50000}},"dependents":[],"dependentDeductions":{}},
+      "expected": {"grossIncomeCents":7500000,"specificDeductionCents":892430,"taxableIncomeCents":6607570,"maritalQuotient":2,"rateDeterminingQuotientCents":3303785,"bracketBaseTaxCents":1181100,"bracketExcessCents":927570,"marginalRatePpm":349000,"grossTaxAfterExemptionCents":1504822,"pprCreditCents":50000,"potentialTaxCreditsCents":50000,"effectiveTaxCreditsCents":50000,"totalTaxCreditsCents":50000,"finalTaxDueCents":1454822,"withholdingCents":1000000,"balanceCents":-454822},
+      "audit": {"specific":"446215 per titular = 892430","taxable":"7500000 - 892430 = 6607570","quotient":"6607570 / 2 = 3303785","grossTax":"752411 × 2 = 1504822","pprA":"20% of 300000 is 60000, limited to 40000 for age 30","pprB":"20% of 50000 = 10000 for age 55","nonTransfer":"unused B cap cannot increase A: total remains 50000","final":"1504822 - 50000 = 1454822"},
+      "inputEvidence": {"taxpayerA.age":"DOCUMENTED","taxpayerA.grossIncomeCents":"DOCUMENTED","taxpayerA.withholdingCents":"DOCUMENTED","taxpayerA.mandatoryContributionsCents":"DOCUMENTED","taxpayerB.age":"DOCUMENTED","taxpayerB.grossIncomeCents":"DOCUMENTED","taxpayerB.withholdingCents":"DOCUMENTED","taxpayerB.mandatoryContributionsCents":"DOCUMENTED","taxpayerA.deductions.pprCents":"DOCUMENTED","taxpayerB.deductions.pprCents":"DOCUMENTED"}
+    },
+    {
+      "id": "single-minimum-existence-2025-001",
+      "scenario": "minimum existence",
+      "description": "Solteiro em fase material do mínimo de existência",
+      "civilStatus": "SINGLE",
+      "filingMode": "SEPARATE",
+      "input": {"taxpayerA":{"age":46,"grossIncomeCents":1350000,"withholdingCents":5000,"mandatoryContributionsCents":148500,"deductions":{"generalCents":200000,"healthCents":10000}},"dependents":[],"dependentDeductions":{}},
+      "expected": {"grossIncomeCents":1350000,"specificDeductionCents":446215,"minimumExistenceAllowanceCents":228585,"taxableIncomeCents":675200,"bracketBaseTaxCents":0,"bracketExcessCents":675200,"marginalRatePpm":125000,"grossTaxAfterExemptionCents":84400,"generalExpenseCreditCents":25000,"healthCreditCents":1500,"potentialTaxCreditsCents":26500,"effectiveTaxCreditsCents":26500,"totalTaxCreditsCents":26500,"finalTaxDueCents":57900,"withholdingCents":5000,"balanceCents":-52900},
+      "audit": {"specific":"max(446215,148500)=446215","phase":"gross is above reference and within the parametrized 2025 minimum-existence transition","allowance":"1218000 - ((1350000-1218000)×2.6) - 446215 - 200000 = 228585","taxable":"1350000 - 446215 - 228585 = 675200","grossTax":"675200 × 12.5% = 84400","credits":"25000 general + 1500 health = 26500","final":"84400 - 26500 = 57900","balance":"5000 - 57900 = -52900","verification":"Formula and sequence are explicit; official AT evidence is still absent"},
+      "inputEvidence": {"taxpayerA.age":"ASSUMED_NON_MATERIAL","taxpayerA.grossIncomeCents":"DOCUMENTED","taxpayerA.withholdingCents":"DOCUMENTED","taxpayerA.mandatoryContributionsCents":"DOCUMENTED","taxpayerA.deductions.generalCents":"DOCUMENTED","taxpayerA.deductions.healthCents":"DOCUMENTED"}
+    },
+    {
+      "id": "single-irs-jovem-year5-positive-2025-001",
+      "scenario": "IRS Jovem positive tax",
+      "description": "IRS Jovem no quinto ano, com histórico completo e coleta positiva",
+      "civilStatus": "SINGLE",
+      "filingMode": "SEPARATE",
+      "input": {"taxpayerA":{"age":29,"grossIncomeCents":3000000,"withholdingCents":500000,"mandatoryContributionsCents":330000,"deductions":{"generalCents":500000,"healthCents":100000},"irsJovem":{"requested":true,"taxSituationRegularized":true,"historyConfirmedComplete":true,"incomeHistory":[{"year":2021,"hadCategoryAIncome":true,"hadCategoryBIncome":false,"wasDependent":false,"residentInPortugal":true},{"year":2022,"hadCategoryAIncome":true,"hadCategoryBIncome":false,"wasDependent":false,"residentInPortugal":true},{"year":2023,"hadCategoryAIncome":true,"hadCategoryBIncome":false,"wasDependent":false,"residentInPortugal":true},{"year":2024,"hadCategoryAIncome":true,"hadCategoryBIncome":false,"wasDependent":false,"residentInPortugal":true},{"year":2025,"hadCategoryAIncome":true,"hadCategoryBIncome":false,"wasDependent":false,"residentInPortugal":true}]}},"dependents":[],"dependentDeductions":{}},
+      "expected": {"grossIncomeCents":3000000,"specificDeductionCents":446215,"taxableIncomeCents":1053785,"maritalQuotient":1,"rateDeterminingIncomeCents":2553785,"rateDeterminingQuotientCents":2553785,"bracketBaseTaxCents":399210,"bracketExcessCents":323185,"marginalRatePpm":314000,"taxBeforeExemptionCents":500690,"exemptIncomeCents":1500000,"taxAllocatedToExemptIncomeCents":294087,"grossTaxAfterExemptionCents":206603,"generalExpenseCreditCents":25000,"healthCreditCents":15000,"potentialTaxCreditsCents":40000,"effectiveTaxCreditsCents":40000,"totalTaxCreditsCents":40000,"finalTaxDueCents":166603,"withholdingCents":500000,"balanceCents":333397},
+      "audit": {"eligibility":"five complete qualifying years, age 29, resident and regularized","rate":"year 5 exemption rate = 50%","limit":"50% of 3000000 = 1500000, below 55 IAS","normalTaxable":"3000000 - 446215 = 2553785","taxable":"2553785 - 1500000 = 1053785","rateIncome":"1053785 + 1500000 = 2553785","taxBefore":"tax on 2553785 = 500690","allocated":"500690 × 1500000 / 2553785 = 294087 half-up","grossTax":"500690 - 294087 = 206603","credits":"25000 + 15000 = 40000","final":"206603 - 40000 = 166603","balance":"500000 - 166603 = 333397"},
+      "inputEvidence": {"taxpayerA.age":"DOCUMENTED","taxpayerA.grossIncomeCents":"DOCUMENTED","taxpayerA.withholdingCents":"DOCUMENTED","taxpayerA.mandatoryContributionsCents":"DOCUMENTED","taxpayerA.irsJovem.incomeHistory":"DOCUMENTED","taxpayerA.irsJovem.taxSituationRegularized":"DOCUMENTED"}
+    }
+  ]
+}

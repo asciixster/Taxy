@@ -215,6 +215,8 @@ final class IrsJovemTaxEngine {
         invoiceVatCredit: credits.invoiceVat,
         pprCredit: credits.ppr,
         overallDeductionsCap: credits.overallCap,
+        potentialTaxCredits: credits.potentialTotal,
+        effectiveTaxCredits: credits.total,
         totalTaxCredits: credits.total,
         solidarityTax: solidarity,
         finalTaxDue: due,

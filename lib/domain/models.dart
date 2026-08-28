@@ -649,6 +649,8 @@ final class TaxCalculationTrace {
     required this.invoiceVatCredit,
     required this.pprCredit,
     required this.overallDeductionsCap,
+    required this.potentialTaxCredits,
+    required this.effectiveTaxCredits,
     required this.totalTaxCredits,
     required this.solidarityTax,
     required this.finalTaxDue,
@@ -681,6 +683,12 @@ final class TaxCalculationTrace {
   final Money invoiceVatCredit;
   final Money pprCredit;
   final Money? overallDeductionsCap;
+
+  /// Créditos apurados antes do limite global e do limite pela coleta.
+  final Money potentialTaxCredits;
+
+  /// Créditos que reduziram efetivamente a coleta.
+  final Money effectiveTaxCredits;
   final Money totalTaxCredits;
   final Money solidarityTax;
   final Money finalTaxDue;

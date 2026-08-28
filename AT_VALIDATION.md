@@ -13,6 +13,12 @@ correspondências está em [AT_VALIDATION_REPORT.md](AT_VALIDATION_REPORT.md). A
 ausência de casos é mostrada como zero, nunca convertida numa alegação de
 precisão.
 
+Na 0.8, referências manuais estruturadas exigem `source`, `inputs`, `expected`,
+`audit` e `inputEvidence`. A provenance por input distingue `DOCUMENTED`,
+`MANUALLY_DERIVED`, `ASSUMED_NON_MATERIAL` e `NO_DIRECT_SOURCE`; estes dados
+servem apenas a auditoria e nunca alteram o cálculo. O runner atribui `PASS` ou
+`FAIL`, nunca `EXACT`/`PARTIAL_EXACT`, que são reservados à evidência AT.
+
 ## Schema e comparação
 
 O schema v3 guarda metadados explícitos (`taxYear`, jurisdição, estado civil,

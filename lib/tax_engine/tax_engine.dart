@@ -8,6 +8,7 @@ import 'supported_scope.dart';
 final class TaxCreditCalculation {
   const TaxCreditCalculation({
     required this.total,
+    required this.potentialTotal,
     required this.breakdown,
     required this.overallCap,
     required this.dependent,
@@ -21,6 +22,9 @@ final class TaxCreditCalculation {
   });
 
   final Money total;
+
+  /// Soma antes do limite global e do limite pela coleta disponível.
+  final Money potentialTotal;
   final List<TaxBreakdown> breakdown;
   final Money? overallCap;
   final Money dependent;
@@ -161,6 +165,8 @@ final class TaxEngine {
         invoiceVatCredit: credits.invoiceVat,
         pprCredit: credits.ppr,
         overallDeductionsCap: credits.overallCap,
+        potentialTaxCredits: credits.potentialTotal,
+        effectiveTaxCredits: credits.total,
         totalTaxCredits: credits.total,
         solidarityTax: solidarity,
         finalTaxDue: taxDue,
@@ -478,6 +484,7 @@ final class TaxEngine {
     ];
     return TaxCreditCalculation(
       total: total,
+      potentialTotal: dependentCredit + general + limitedGroupRaw,
       breakdown: breakdown,
       overallCap: overallCap,
       dependent: dependentCredit,
@@ -603,6 +610,8 @@ final class TaxEngine {
       invoiceVatCredit: Money.zero,
       pprCredit: Money.zero,
       overallDeductionsCap: null,
+      potentialTaxCredits: Money.zero,
+      effectiveTaxCredits: Money.zero,
       totalTaxCredits: Money.zero,
       solidarityTax: Money.zero,
       finalTaxDue: Money.zero,

@@ -690,9 +690,19 @@ class ValidationCoverage {
   const ValidationCoverage({
     required this.comparisons,
     this.referenceCalculationCount = 0,
+    this.manualReferencesExecuted = 0,
+    this.manualReferencesPassing = 0,
+    this.manualReferencesFailing = 0,
+    this.manualCoverage = const {},
   });
   final List<AtFixtureComparison> comparisons;
   final int referenceCalculationCount;
+  final int manualReferencesExecuted;
+  final int manualReferencesPassing;
+  final int manualReferencesFailing;
+  final Map<String, int> manualCoverage;
+  int get legacyManualReferences =>
+      referenceCalculationCount - manualReferencesExecuted;
 
   int get totalCases => comparisons.length;
   int get exactCases => comparisons
@@ -786,11 +796,25 @@ class AtValidationReport {
         '- Casos de referência manual executáveis: '
         '${coverage.referenceCalculationCount}',
       )
-      ..writeln('- Correspondencias exatas: ${coverage.exactCases}')
       ..writeln(
-        '- Correspondencias parciais exatas: ${coverage.partialExactCases}',
+        '- Referências manuais executadas pelo runner: '
+        '${coverage.manualReferencesExecuted}',
       )
-      ..writeln('- Casos com diferencas: ${coverage.failedCases}')
+      ..writeln(
+        '- Referências manuais PASS: '
+        '${coverage.manualReferencesPassing}',
+      )
+      ..writeln(
+        '- Referências manuais FAIL: '
+        '${coverage.manualReferencesFailing}',
+      )
+      ..writeln(
+        '- Referências manuais legacy cobertas pela suite: '
+        '${coverage.legacyManualReferences}',
+      )
+      ..writeln('- Casos oficiais EXACT: ${coverage.exactCases}')
+      ..writeln('- Casos oficiais PARTIAL_EXACT: ${coverage.partialExactCases}')
+      ..writeln('- Casos oficiais DIFFERENCE: ${coverage.differenceCases}')
       ..writeln('- Fixtures invalidas: ${coverage.invalidFixtureCases}')
       ..writeln('- Casos fora do scope: ${coverage.unsupportedCases}')
       ..writeln(
@@ -816,6 +840,17 @@ class AtValidationReport {
     _writeGroup(buffer, 'Por regiao', coverage.casesByRegion);
     _writeGroup(buffer, 'Por modo de tributacao', coverage.casesByFilingMode);
     _writeGroup(buffer, 'Por IRS Jovem', coverage.casesByIrsJovem);
+    buffer
+      ..writeln()
+      ..writeln('## Cobertura das referências manuais estruturadas')
+      ..writeln();
+    if (coverage.manualCoverage.isEmpty) {
+      buffer.writeln('- 0 cenários estruturados');
+    } else {
+      for (final entry in coverage.manualCoverage.entries) {
+        buffer.writeln('- ${entry.key}: ${entry.value} caso(s)');
+      }
+    }
     buffer
       ..writeln()
       ..writeln('## Falhas por categoria')
