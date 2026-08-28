@@ -1,4 +1,4 @@
-# Taxy 0.7.1 — Authenticated e-Fatura Consultation
+# Taxy 0.7.2 — Historical SOAP Reproduction
 
 The AT connector is a developer-only Node.js CLI under `tools/at_connector`. It is deliberately separate from Flutter and from the deterministic IRS engine. It does not place credentials in the mobile application and does not feed AT data into `TaxEngine`.
 
@@ -15,7 +15,7 @@ SOAP fault string: Internal Error
 
 This proves TLS, client-certificate presentation, HTTP and SOAP response handling. It does **not** prove Portal credentials, an invoice query, or acceptance of password encryption.
 
-The 0.7.1 protocol investigation reached the documented-blocker outcome: the official manual confirms the operation name and request fields, but not RSA padding, the consultation namespace, binding/WSDL or SOAPAction. No authenticated request was sent and no cryptographic/contract combination was guessed. See `AT_PROTOCOL_EVIDENCE.md`.
+The 0.7.2 path reproduces supplied historical SOAP code without presenting it as official evidence. It uses the historical namespace, absent SOAPAction, RSA PKCS#1 v1.5, exact millisecond precision and fixed first-page pagination. Production remains blocked.
 
 ## Architecture
 
@@ -32,6 +32,7 @@ The 0.7.1 protocol investigation reached the documented-blocker outcome: the off
 - `redaction.mjs`: recursive log redaction.
 - `client.mjs`: orchestration through `AtSoapClient`.
 - `dto.mjs`: neutral DTO foundation (`AtInvoice`, `AtParty`, `AtAmount`, `AtTax`).
+- `historical.mjs`: isolated historical request builder and single-shot sandbox client.
 
 No temporary private-key file is created. Node.js receives the PFX bytes in memory and clears the application buffer after the request is started. OpenSSL remains responsible for its internal secure context.
 
@@ -61,13 +62,15 @@ node --test tools/at_connector/test/integration/*.test.mjs
 
 CI runs only offline unit tests. It has no AT certificate or Portal credentials and makes no AT call.
 
-## Authenticated dry-run
+## Historical authenticated dry-run
 
 ```powershell
-node tools/at_connector/bin/test-authenticated-consultation.mjs --dry-run
+node tools/at_connector/bin/historical-soap-fetch.js --dry-run
 ```
 
-The command validates local configuration and the evidence registry. At present it returns `RSA_PADDING_UNCONFIRMED`, prints only redacted metadata and performs zero network requests. There is no live authenticated mode until the critical evidence is officially confirmed and reviewed.
+Set `AT_START_DATE` and `AT_END_DATE` explicitly. The command validates complete local configuration, builds the encrypted request in memory, prints only a sanitized template and performs zero network requests.
+
+The opt-in live command is `AT_LIVE_TEST=1 node tools/at_connector/bin/historical-soap-fetch.js`. It makes at most one test request, has no retry, uses 15/60-second connection/total limits, and prints only TLS/HTTP/status/count metadata. It must use a dedicated `NIF/subuser`; `CustomerTaxID` is derived from its first nine digits.
 
 ## Official endpoints
 
@@ -88,12 +91,12 @@ The WSDL's embedded `soap:address` is not used; the manuals are authoritative fo
 
 The official generic manual specifies a fresh random 128-bit AES session key for every request, UTF-8 strings, AES ECB with PKCS5Padding for Password and Created, Base64 for Password/Created/Nonce, and RSA encryption of the AES key with the AT public certificate.
 
-The document does **not** identify the RSA padding/hash. The public source example referenced by the manual requires an authenticated portal session and was unavailable to this implementation. Therefore authenticated requests fail closed. The library exposes explicit `pkcs1v15`, `oaepSha1` and `oaepSha256` modes for isolated testing, but none is a default and none is selected for AT. The final mode must only be enabled after written AT confirmation or inspection of the official source example.
+The official document does **not** identify RSA padding. The historical path selects PKCS#1 v1.5 only because that choice exists in the supplied historical code. The general library still has no implicit RSA default and the official-only path remains fail-closed.
 
 ## Limitations
 
 - Test environment only; production execution is blocked.
-- No authenticated invoice consultation yet.
+- Authenticated runtime behavior is not confirmed unless a controlled sandbox request succeeds.
 - No consultation WSDL was published in the cited generic manual.
 - The official v3.0 example uses undeclared `soapenv` and `fat` prefixes, so it does not resolve the namespace/binding gap.
 - No IRS, Modelo 3 or assessment service is inferred from e-Fatura.

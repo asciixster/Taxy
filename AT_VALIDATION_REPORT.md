@@ -2,7 +2,7 @@
 
 > Relatorio gerado automaticamente. Apenas fixtures anonimizadas com origem oficial AT sao contabilizadas.
 
-- Gerado em: 2026-08-27T23:43:00.831288Z
+- Gerado em: 2026-08-28T19:28:04.678172Z
 - Casos oficiais executados: 1
 - Casos de referência manual executáveis: 22
 - Correspondencias exatas: 0

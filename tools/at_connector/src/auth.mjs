@@ -12,6 +12,12 @@ export class AtTimestampBuilder {
   static now(clock = () => new Date()) {
     return AtTimestampBuilder.fromIso8601Utc(clock().toISOString());
   }
+
+  static historical(clock = () => new Date()) {
+    const date = clock();
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) throw new Error('Historical Created clock must return a valid Date');
+    return `${date.toISOString().slice(0, 19)}.000Z`;
+  }
 }
 
 export class AtPasswordCipher {

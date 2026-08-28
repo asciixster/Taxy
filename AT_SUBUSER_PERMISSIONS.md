@@ -21,3 +21,5 @@ The official wording found does not separately state that WFA grants the new `In
 - a dedicated least-privilege subuser must be used;
 - the principal Portal das Finanças credential must not be used;
 - an authorization failure must be reported, not bypassed by granting broader profiles.
+
+The 0.7.2 live harness validates `NIF/subuser`. It cannot verify permissions locally. A sandbox authentication or permission failure is classified and reported without retry; it must not trigger use of broader or principal credentials.

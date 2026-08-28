@@ -46,7 +46,7 @@ If credential material is staged, logged or shared:
 
 ## Threat model
 
-| Threat | Control in 0.7.1 |
+| Threat | Control in 0.7.2 |
 |---|---|
 | APK extraction | Connector and secrets remain outside Flutter/assets; no AT code path in the app. |
 | Repository leak | Credential extensions and local directories ignored; staged-content secret scan required. |
@@ -59,3 +59,5 @@ If credential material is staged, logged or shared:
 | Excessive permissions | Dedicated WFA subuser required; main Portal credential prohibited; consultation-specific WFA scope remains to be confirmed. |
 
 Live commands are single-shot: at most one request per execution, no loop and zero automatic retries.
+
+The historical command additionally requires `AT_LIVE_TEST=1`, derives the customer NIF from the subuser name, rejects mismatches, omits invoice details from output, and never persists a response. Historical code evidence is not authorization to use a principal Portal credential.
