@@ -39,10 +39,9 @@ test('.env.local fallback fills only missing process variables and never overwri
   }
 });
 
-test('authenticated config permits an explicitly empty PKCS#12 passphrase', () => {
-  const config = loadConfig({
+test('authenticated config rejects an empty PKCS#12 passphrase', () => {
+  assert.throws(() => loadConfig({
     AT_ENV: 'test', AT_CLIENT_PFX_PATH: import.meta.filename, AT_CLIENT_PFX_PASSWORD: '',
     AT_CIPHER_CERT_PATH: import.meta.filename, AT_USERNAME: '123456789', AT_PASSWORD: 'secret',
-  }, { requireAtCredentials: true });
-  assert.equal(config.pfxPassword, '');
+  }, { requireAtCredentials: true }), /AT_CLIENT_PFX_PASSWORD/);
 });

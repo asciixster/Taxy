@@ -28,6 +28,7 @@ The 0.7.2 path reproduces supplied historical SOAP code without presenting it as
 - `errors.mjs`: structured error taxonomy.
 - `soap.mjs`: XML escaping and SOAP/WS-Security envelope serialization.
 - `transport.mjs`: HTTPS transport with the PFX passed directly to Node.js.
+- `pfx-preflight.mjs`: local, non-network PKCS#12 validation with stable fail-closed classifications.
 - `parser.mjs`: structured SOAP response/fault parsing.
 - `redaction.mjs`: recursive log redaction.
 - `client.mjs`: orchestration through `AtSoapClient`.
@@ -74,6 +75,8 @@ Set `AT_START_DATE` and `AT_END_DATE` explicitly. The command validates complete
 
 The opt-in live command is `AT_LIVE_TEST=1 node tools/at_connector/bin/historical-soap-fetch.js`. It makes at most one test request, has no retry, uses 15/60-second connection/total limits, and prints only TLS/HTTP/status/count metadata plus anonymous parsed field presence. Authentication supports a taxpayer's primary NIF credentials and, where applicable, supported AT subuser credentials. `CustomerTaxID` is the primary NIF or the NIF-base of a subuser.
 
+Before creating a socket, the harness checks the configured PKCS#12 exactly once with `AT_CLIENT_PFX_PATH` and `AT_CLIENT_PFX_PASSWORD` (legacy aliases remain accepted). Missing/invalid passphrases, missing certificate/key material and parse failures receive distinct classifications. The preflight never tries an empty or alternative password and never exposes certificate metadata.
+
 ## Official endpoints
 
 | Service | Test | Production (configuration only) | WSDL | SOAPAction / namespace |
@@ -104,5 +107,5 @@ The official document does **not** identify RSA padding. The historical path sel
 - No IRS, Modelo 3 or assessment service is inferred from e-Fatura.
 - No automatic persistence of responses. Committed XML fixtures are explicitly sanitized and synthetic; none is represented as a captured AT invoice response.
 - No automatic pagination; the live harness requests only page 1.
-- No real invoice response was captured in 0.7.3 because the authorized attempt stopped locally at PKCS#12 verification. Synthetic fixtures validate parser behavior but are not runtime evidence.
+- No real invoice response was captured in 0.7.3. The latest preflight found the file but stopped with `PFX_PASSWORD_MISSING` before opening the bundle or creating a network request. Synthetic fixtures validate parser behavior but are not runtime evidence.
 - No integration with Flutter or `TaxEngine`.

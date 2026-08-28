@@ -2,6 +2,7 @@
 import { loadConfig, loadEnvLocalFallback } from '../src/config.mjs';
 import { AtErrorCode } from '../src/errors.mjs';
 import { buildHistoricalEnvelope, HistoricalAtConsultationClient, sanitizedHistoricalEnvelope } from '../src/historical.mjs';
+import { PfxPreflightClassification, preflightPkcs12 } from '../src/pfx-preflight.mjs';
 import { redact } from '../src/redaction.mjs';
 
 const dryRun = process.argv.includes('--dry-run');
@@ -39,6 +40,15 @@ async function main() {
   effectiveEnv = local.env;
   envLocalFound = local.found;
   const dates = { startDate: effectiveEnv.AT_START_DATE, endDate: effectiveEnv.AT_END_DATE };
+  const preflight = preflightPkcs12({
+    pfxPath: effectiveEnv.AT_CLIENT_PFX_PATH ?? effectiveEnv.AT_PFX_PATH,
+    pfxPassword: effectiveEnv.AT_CLIENT_PFX_PASSWORD ?? effectiveEnv.AT_PFX_PASSWORD,
+  });
+  if (preflight.classification !== PfxPreflightClassification.READY) {
+    output({ result: 'PREFLIGHT_FAILED', envLocalFound, preflight, classification: preflight.classification, networkRequests: 0 });
+    process.exitCode = 2;
+    return;
+  }
   const config = loadConfig(effectiveEnv, { requireAtCredentials: true });
   if (!dates.startDate || !dates.endDate) throw new Error('AT_START_DATE and AT_END_DATE are required');
 
@@ -57,7 +67,7 @@ async function main() {
   buildHistoricalEnvelope({ ...dates, username: config.username, password: config.password, cipherCertificatePath: config.cipherCertificatePath });
   const result = await new HistoricalAtConsultationClient(config, { onNetworkRequest: () => { networkRequests += 1; } }).fetchOnce(dates);
   output({
-    mode: 'LIVE_TEST', envLocalFound, networkRequests, interval: dates, tlsAuthorized: result.transport.tls.authorized,
+    mode: 'LIVE_TEST', envLocalFound, preflight, networkRequests, interval: dates, tlsAuthorized: result.transport.tls.authorized,
     httpStatus: result.transport.statusCode, classification: classify(result),
     fault: result.soap.fault && { code: result.soap.fault.code, message: result.soap.fault.message },
     operationStatus: result.result?.operationStatus, description: result.result?.description,

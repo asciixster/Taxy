@@ -44,7 +44,7 @@ export function loadConfig(env = process.env, { requireAtCredentials = false } =
   const pfxPath = env.AT_CLIENT_PFX_PATH ?? env.AT_PFX_PATH;
   const pfxPassword = env.AT_CLIENT_PFX_PASSWORD ?? env.AT_PFX_PASSWORD;
   const normalized = { ...env, AT_CLIENT_PFX_PATH: pfxPath, AT_CLIENT_PFX_PASSWORD: pfxPassword };
-  const required = ['AT_CLIENT_PFX_PATH'];
+  const required = ['AT_CLIENT_PFX_PATH', 'AT_CLIENT_PFX_PASSWORD'];
   if (requireAtCredentials) {
     required.push('AT_CIPHER_CERT_PATH', 'AT_USERNAME', 'AT_PASSWORD');
   }
@@ -54,14 +54,6 @@ export function loadConfig(env = process.env, { requireAtCredentials = false } =
       if (code) throw new AtConnectorError(code, `Missing required configuration: ${key}`);
       throw new AtConfigurationError(`Missing required configuration: ${key}`);
     }
-  }
-  // PKCS#12 files may deliberately have an empty passphrase. Presence and
-  // value are distinct here so the live harness does not invent one.
-  const hasPfxPassword = Object.hasOwn(normalized, 'AT_CLIENT_PFX_PASSWORD') || Object.hasOwn(normalized, 'AT_PFX_PASSWORD');
-  if (!hasPfxPassword) {
-    const code = requireAtCredentials ? AtErrorCode.AUTH_CONFIGURATION_MISSING : null;
-    if (code) throw new AtConnectorError(code, 'Missing required configuration: AT_CLIENT_PFX_PASSWORD');
-    throw new AtConfigurationError('Missing required configuration: AT_CLIENT_PFX_PASSWORD');
   }
   for (const key of ['AT_CLIENT_PFX_PATH', ...(requireAtCredentials ? ['AT_CIPHER_CERT_PATH'] : [])]) {
     if (!existsSync(normalized[key])) throw new AtConfigurationError(`Configured file does not exist: ${key}`);
