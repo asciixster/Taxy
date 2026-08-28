@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sanitized normalization of the real AT test response. Contains no request or taxpayer data. -->
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Body>
+    <env:Fault>
+      <faultcode>env:Client</faultcode>
+      <faultstring>Internal Error</faultstring>
+    </env:Fault>
+  </env:Body>
+</env:Envelope>

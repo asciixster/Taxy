@@ -4,6 +4,10 @@ Taxy is a multi-module Portuguese tax and personal finance application. IRS is t
 
 A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
+## AT connector test harness
+
+Taxy 0.7 includes a developer-only, test-environment AT connectivity harness isolated from Flutter and the IRS engine. See [AT_CONNECTOR.md](AT_CONNECTOR.md) and [AT_CONNECTOR_SECURITY.md](AT_CONNECTOR_SECURITY.md). It proves mTLS/SOAP connectivity only and deliberately blocks production and authenticated calls while an RSA-padding detail remains unconfirmed.
+
 ## Estado da 0.7
 
 O primeiro caso real anonimizado da AT está integrado como
