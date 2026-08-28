@@ -1,4 +1,4 @@
-# Tax Engine — matriz de testes 0.5
+# Tax Engine — matriz de testes 0.8
 
 A suite executa mais de 200 testes e compara cêntimos inteiros.
 
@@ -54,7 +54,7 @@ Testes adicionais cobrem:
 
 O loader só aceita `source: OFFICIAL_AT_ASSESSMENT` e tipos de documento AT
 documentados. O exemplo não é executado como liquidação real. Nesta release:
-**1 fixture oficial**, **22 referências manuais**.
+**1 fixture oficial**, **29 referências manuais**.
 
 ## Referências independentes
 
@@ -68,5 +68,16 @@ O caso `single-category-a-positive-tax-2025-001` acrescenta uma referência
 manual individual com coleta positiva. Audita separadamente o 5.º escalão de
 2025, o arredondamento por parcela, despesas gerais, saúde, imposto final,
 retenções e saldo. Não aumenta a cobertura oficial AT.
+
+A 0.8 acrescenta sete referências 2025 Continente: coleta positiva sem
+créditos, deduções gerais/saúde/rendas com limite global, o mesmo agregado em
+separada e conjunta, limites PPR individuais, mínimo de existência e IRS Jovem
+no quinto ano com coleta positiva. Todas têm expected fixo, audit trail e
+provenance por input; a comparação é ao cêntimo.
+
+Um grupo adicional cobre as oito fronteiras finitas dos escalões 2025 a −1/0/+1
+cêntimo, zero e um cêntimo de rendimento coletável, crédito no cap e cap+1,
+coleta igual e um cêntimo inferior aos créditos, quociente conjunto ímpar,
+half-up e regressões fail-closed.
 
 O repositório de regras também é testado contra ano/base divergente, descriptor não verificado, schema incompatível, override desconhecido, ficheiro ausente e tentativa de carregar regiões 2025 não existentes. Não existe fallback silencioso.

@@ -4,6 +4,15 @@ Registo append-only de alterações motivadas por evidência fiscal. Cada entrad
 futura deve incluir data, caso anónimo, classificação, causa, ficheiros/regras
 afetados, testes adicionados, revisor e decisão. Nunca incluir dados pessoais.
 
+## 0.8.0 — expansão de validação
+
+- sete referências manuais 2025 Continente adicionadas, todas com provenance e
+  audit trail; nenhuma foi classificada como evidência oficial;
+- trace alargado com créditos potenciais e efetivos, sem alteração de fórmula;
+- fronteiras 2025, arredondamentos e fail-closed reforçados;
+- divergências nos novos casos: **0**; bugs fiscais confirmados: **0**;
+- alterações de `rulesVersion`: **0**; scope fiscal novo: **0**.
+
 ## 0.7.0 — primeiro caso oficial real
 
 - adicionados estados `EXACT`, `PARTIAL_EXACT`, `DIFFERENCE`,

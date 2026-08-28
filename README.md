@@ -1,10 +1,21 @@
-# taxy.pt — 0.7 First Official AT Validation
+# taxy.pt — 0.8 Validation Expansion
 
 Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
 
 A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
-## Estado da 0.7
+## Estado da 0.8
+
+A 0.8 não aumenta o scope fiscal. Acrescenta sete referências manuais 2025
+Continente com audit trail independente: coleta positiva sem créditos,
+deduções e limite global, casal separado, o mesmo casal em conjunta, PPR por
+titular, mínimo de existência e IRS Jovem com coleta positiva. O trace passa a
+distinguir créditos potenciais de créditos efetivamente aplicados.
+
+O relatório mantém evidência oficial e manual em contagens separadas. Consulte
+[VALIDATION_COVERAGE_MATRIX.md](VALIDATION_COVERAGE_MATRIX.md).
+
+## Evidência oficial preservada da 0.7
 
 O primeiro caso real anonimizado da AT está integrado como
 `AT-2025-JOINT-A-001`: Categoria A, Continente, casal em tributação conjunta e
@@ -20,8 +31,8 @@ alterou o motor nem as regras fiscais.
   para taxa auditados separadamente;
 - comparação exata campo a campo e classificação auditável de diferenças;
 - validação de privacidade fail-closed, sem anonimização automática;
-- relatório com contagens absolutas: **1 caso oficial** e **22 cálculos de
-  referência manual** nesta versão;
+- relatório com contagens absolutas separadas: **1 caso oficial** e **29
+  cálculos de referência manual** nesta versão;
 - política explícita de arredondamentos e changelog de validação;
 - Validation Lab com Taxy / AT / diferença e export de fixture oficial;
 - intake developer-only, `sourceNotes`, triage estruturado e mapeamento de
@@ -41,7 +52,8 @@ alterou o motor nem as regras fiscais.
   em tributação separada e conjunta;
 - scope check inicial, badge de âmbito e Validation Lab com exportação JSON;
 - runner automático para futuras liquidações oficiais anonimizadas;
-- suite determinística e 22 referências manuais auditadas.
+- suite determinística; as 22 referências manuais anteriores são preservadas e
+  a 0.8 eleva o total para 29.
 
 O IRS Jovem continua dentro do módulo IRS. A liquidação normal permanece
 disponível quando o titular não é elegível; dados insuficientes nunca originam
