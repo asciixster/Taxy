@@ -1,4 +1,4 @@
-# Taxy 0.7 — AT Connector Test Harness
+# Taxy 0.7.1 — Authenticated e-Fatura Consultation
 
 The AT connector is a developer-only Node.js CLI under `tools/at_connector`. It is deliberately separate from Flutter and from the deterministic IRS engine. It does not place credentials in the mobile application and does not feed AT data into `TaxEngine`.
 
@@ -15,11 +15,17 @@ SOAP fault string: Internal Error
 
 This proves TLS, client-certificate presentation, HTTP and SOAP response handling. It does **not** prove Portal credentials, an invoice query, or acceptance of password encryption.
 
+The 0.7.1 protocol investigation reached the documented-blocker outcome: the official manual confirms the operation name and request fields, but not RSA padding, the consultation namespace, binding/WSDL or SOAPAction. No authenticated request was sent and no cryptographic/contract combination was guessed. See `AT_PROTOCOL_EVIDENCE.md`.
+
 ## Architecture
 
 - `config.mjs`: environment validation; production execution is blocked.
 - `endpoints.mjs`: centrally defined, documented endpoints.
 - `crypto.mjs`: AT public certificate loading and AES-128-ECB/PKCS padding.
+- `auth.mjs`: timestamp, session-key and UsernameToken components.
+- `evidence.mjs`: executable official-evidence gate.
+- `consultation.mjs`: documented request/response DTOs with namespace fail-closed serialization.
+- `errors.mjs`: structured error taxonomy.
 - `soap.mjs`: XML escaping and SOAP/WS-Security envelope serialization.
 - `transport.mjs`: HTTPS transport with the PFX passed directly to Node.js.
 - `parser.mjs`: structured SOAP response/fault parsing.
@@ -40,8 +46,8 @@ Set the variables from `.env.example` in the local shell. The tool intentionally
 
 ```powershell
 $env:AT_ENV='test'
-$env:AT_PFX_PATH='C:\absolute\path\TesteWebservices.pfx'
-$env:AT_PFX_PASSWORD='<local password>'
+$env:AT_CLIENT_PFX_PATH='C:\absolute\path\TesteWebservices.pfx'
+$env:AT_CLIENT_PFX_PASSWORD='<local password>'
 $env:AT_CIPHER_CERT_PATH='C:\absolute\path\Chave Cifra Publica AT.cer'
 node tools/at_connector/src/cli.mjs probe
 ```
@@ -54,6 +60,14 @@ node --test tools/at_connector/test/integration/*.test.mjs
 ```
 
 CI runs only offline unit tests. It has no AT certificate or Portal credentials and makes no AT call.
+
+## Authenticated dry-run
+
+```powershell
+node tools/at_connector/bin/test-authenticated-consultation.mjs --dry-run
+```
+
+The command validates local configuration and the evidence registry. At present it returns `RSA_PADDING_UNCONFIRMED`, prints only redacted metadata and performs zero network requests. There is no live authenticated mode until the critical evidence is officially confirmed and reviewed.
 
 ## Official endpoints
 
@@ -74,13 +88,14 @@ The WSDL's embedded `soap:address` is not used; the manuals are authoritative fo
 
 The official generic manual specifies a fresh random 128-bit AES session key for every request, UTF-8 strings, AES ECB with PKCS5Padding for Password and Created, Base64 for Password/Created/Nonce, and RSA encryption of the AES key with the AT public certificate.
 
-The document does **not** identify the RSA padding/hash. The public source example referenced by the manual requires an authenticated portal session and was unavailable to this implementation. Therefore authenticated requests fail closed. `crypto.mjs` does not silently choose OAEP or PKCS#1 v1.5. AES and certificate-loading helpers are implemented and tested; the final RSA operation must only be enabled after written AT confirmation or inspection of the official source example.
+The document does **not** identify the RSA padding/hash. The public source example referenced by the manual requires an authenticated portal session and was unavailable to this implementation. Therefore authenticated requests fail closed. The library exposes explicit `pkcs1v15`, `oaepSha1` and `oaepSha256` modes for isolated testing, but none is a default and none is selected for AT. The final mode must only be enabled after written AT confirmation or inspection of the official source example.
 
 ## Limitations
 
 - Test environment only; production execution is blocked.
 - No authenticated invoice consultation yet.
 - No consultation WSDL was published in the cited generic manual.
+- The official v3.0 example uses undeclared `soapenv` and `fat` prefixes, so it does not resolve the namespace/binding gap.
 - No IRS, Modelo 3 or assessment service is inferred from e-Fatura.
 - No automatic persistence of responses. Only a generic, sanitized SOAP fault fixture is committed.
 - No integration with Flutter or `TaxEngine`.
