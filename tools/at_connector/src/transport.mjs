@@ -11,7 +11,26 @@ export class AtTransportError extends AtConnectorError {
   }
 }
 
-export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction = '', timeoutMs = 20_000 }) {
+export function buildSoapHeaders(xml, soapAction) {
+  const headers = {
+    'Content-Type': 'text/xml; charset=utf-8',
+    'Content-Length': Buffer.byteLength(xml),
+    'User-Agent': 'Taxy-AT-Connector/0.7.2',
+  };
+  if (soapAction !== undefined && soapAction !== null) headers.SOAPAction = `"${soapAction}"`;
+  return headers;
+}
+
+export function tlsMetadataFromSocket(socket) {
+  return Object.freeze({
+    authorized: socket?.authorized === true,
+    authorizationError: socket?.authorizationError || null,
+    protocol: socket?.getProtocol?.() || null,
+    cipher: socket?.getCipher?.()?.standardName || socket?.getCipher?.()?.name || null,
+  });
+}
+
+export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction, timeoutMs, connectTimeoutMs = timeoutMs ?? 20_000, totalTimeoutMs = timeoutMs ?? 20_000 }) {
   const started = performance.now();
   return new Promise((resolve, reject) => {
     let pfx;
@@ -22,31 +41,30 @@ export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction =
       passphrase: pfxPassword,
       rejectUnauthorized: true,
       minVersion: 'TLSv1.2',
-      headers: {
-        'Content-Type': 'text/xml; charset=utf-8',
-        SOAPAction: `"${soapAction}"`,
-        'Content-Length': Buffer.byteLength(xml),
-        'User-Agent': 'Taxy-AT-Connector/0.7',
-      },
-      timeout: timeoutMs,
+      headers: buildSoapHeaders(xml, soapAction),
+      timeout: connectTimeoutMs,
     }, (response) => {
       const chunks = [];
+      // Capture while Node still associates the response with its TLS socket.
+      const tls = tlsMetadataFromSocket(response.socket);
       response.on('data', (chunk) => chunks.push(chunk));
-      response.on('end', () => resolve({
+      response.on('end', () => {
+        clearTimeout(totalTimer);
+        resolve({
         statusCode: response.statusCode,
         headers: response.headers,
         body: Buffer.concat(chunks).toString('utf8'),
-        tls: Object.freeze({
-          authorized: response.socket.authorized,
-          authorizationError: response.socket.authorizationError || null,
-          protocol: response.socket.getProtocol?.() || null,
-          cipher: response.socket.getCipher?.()?.standardName || response.socket.getCipher?.()?.name || null,
-        }),
+        tls,
         durationMs: Math.round(performance.now() - started),
-      }));
+        });
+      });
     });
-    request.on('timeout', () => request.destroy(new Error('AT request timed out')));
-    request.on('error', (error) => reject(new AtTransportError('AT TLS/HTTP request failed', error)));
+    const totalTimer = setTimeout(() => request.destroy(new Error('AT request total timeout exceeded')), totalTimeoutMs);
+    request.on('timeout', () => request.destroy(new Error('AT connection timeout exceeded')));
+    request.on('error', (error) => {
+      clearTimeout(totalTimer);
+      reject(new AtTransportError('AT TLS/HTTP request failed', error));
+    });
     request.end(xml);
     pfx.fill(0);
   });

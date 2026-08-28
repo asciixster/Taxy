@@ -1,9 +1,14 @@
 import { AtConnectorError, AtErrorCode } from './errors.mjs';
 
 export const EvidenceStatus = Object.freeze({
-  CONFIRMED_OFFICIAL: 'CONFIRMED_OFFICIAL',
+  OFFICIAL_DOCUMENTATION: 'OFFICIAL_DOCUMENTATION',
+  HISTORICAL_CODE_EVIDENCE: 'HISTORICAL_CODE_EVIDENCE',
+  RUNTIME_BEHAVIOR_CONFIRMED: 'RUNTIME_BEHAVIOR_CONFIRMED',
+  UNKNOWN: 'UNKNOWN',
+  // Backward-compatible aliases for the 0.7.1 API.
+  CONFIRMED_OFFICIAL: 'OFFICIAL_DOCUMENTATION',
   INFERRED_NOT_ALLOWED: 'INFERRED_NOT_ALLOWED',
-  UNRESOLVED: 'UNRESOLVED',
+  UNRESOLVED: 'UNKNOWN',
 });
 
 export class AtProtocolEvidence {
@@ -19,10 +24,10 @@ const FAQ = 'https://info.portaldasfinancas.gov.pt/pt/faturas/Pages/faqs-00996.a
 const VERIFIED_AT = '2026-08-28';
 
 function official(field, value, sourceUrl, sourceTitle, documentVersion, section, notes = null) {
-  return new AtProtocolEvidence({ field, value, sourceUrl, sourceTitle, documentVersion, section, verifiedAt: VERIFIED_AT, status: EvidenceStatus.CONFIRMED_OFFICIAL, notes });
+  return new AtProtocolEvidence({ field, value, sourceUrl, sourceTitle, documentVersion, section, verifiedAt: VERIFIED_AT, status: EvidenceStatus.OFFICIAL_DOCUMENTATION, notes });
 }
 function unresolved(field, notes, { sourceUrl = SPECIFIC_MANUAL, sourceTitle = 'AT e-Fatura — Aspetos Específicos', documentVersion = '3.0 (October 2025)', section = '2.1.10.3 / generic manual 3.6' } = {}) {
-  return new AtProtocolEvidence({ field, value: null, sourceUrl, sourceTitle, documentVersion, section, verifiedAt: VERIFIED_AT, status: EvidenceStatus.UNRESOLVED, notes });
+  return new AtProtocolEvidence({ field, value: null, sourceUrl, sourceTitle, documentVersion, section, verifiedAt: VERIFIED_AT, status: EvidenceStatus.UNKNOWN, notes });
 }
 
 const GENERIC_SOURCE = { sourceUrl: GENERIC_MANUAL, sourceTitle: 'AT e-Fatura — Aspetos Genéricos', documentVersion: 'April 2026 publication' };
@@ -57,12 +62,38 @@ export function evidenceFor(field) {
 
 export function assertAuthenticatedConsultationEvidence() {
   const critical = ['rsaPadding', 'passwordEncoding', 'timestampPrecision', 'wsdl', 'namespace', 'operation', 'soapAction', 'requestRootElement'];
-  const unresolved = critical.map(evidenceFor).filter((item) => !item || item.status !== EvidenceStatus.CONFIRMED_OFFICIAL);
+  const unresolved = critical.map(evidenceFor).filter((item) => !item || item.status !== EvidenceStatus.OFFICIAL_DOCUMENTATION);
   if (unresolved.some((item) => item?.field === 'rsaPadding')) {
     throw new AtConnectorError(AtErrorCode.RSA_PADDING_UNCONFIRMED, 'Authenticated request blocked: official RSA padding is unconfirmed', { details: unresolved.map((item) => item?.field) });
   }
   if (unresolved.length) {
     throw new AtConnectorError(AtErrorCode.SOAP_CONTRACT_UNRESOLVED, 'Authenticated request blocked: official SOAP contract is incomplete', { details: unresolved.map((item) => item?.field) });
   }
+  return true;
+}
+
+export const historicalProtocolEvidence = Object.freeze([
+  new AtProtocolEvidence({ field: 'usernameFormat.primary', value: '9-digit taxpayer NIF', sourceUrl: null, sourceTitle: 'Historical authentication behavior supplied to Taxy 0.7.2', documentVersion: 'historical', section: 'UsernameToken Username', verifiedAt: VERIFIED_AT, status: EvidenceStatus.HISTORICAL_CODE_EVIDENCE, notes: 'Remote authorization for a primary user is not inferred and remains subject to the AT response.' }),
+  new AtProtocolEvidence({ field: 'usernameFormat.subuser', value: 'NIF/UserId', sourceUrl: GENERIC_MANUAL, sourceTitle: 'AT e-Fatura — Aspetos Genéricos and historical implementation', documentVersion: 'historical', section: 'UsernameToken Username', verifiedAt: VERIFIED_AT, status: EvidenceStatus.HISTORICAL_CODE_EVIDENCE }),
+  new AtProtocolEvidence({ field: 'namespace', value: 'http://factemi.at.min_financas.pt/fatshareInvoices', sourceUrl: null, sourceTitle: 'Controlled AT sandbox response', documentVersion: '0.7.2 experiment', section: 'InvoicesRequest namespace', verifiedAt: VERIFIED_AT, status: EvidenceStatus.RUNTIME_BEHAVIOR_CONFIRMED, notes: 'HTTP 200, no SOAP fault, parsed EstadoOperacao 486 and empty invoice list.' }),
+  new AtProtocolEvidence({ field: 'soapAction', value: 'absent', sourceUrl: null, sourceTitle: 'Historical SOAP implementation supplied to Taxy 0.7.2', documentVersion: 'historical', section: 'HTTP headers', verifiedAt: VERIFIED_AT, status: EvidenceStatus.HISTORICAL_CODE_EVIDENCE }),
+  new AtProtocolEvidence({ field: 'rsaPadding', value: 'RSAES-PKCS1-v1_5', sourceUrl: null, sourceTitle: 'Historical SOAP implementation supplied to Taxy 0.7.2', documentVersion: 'historical', section: 'Nonce construction', verifiedAt: VERIFIED_AT, status: EvidenceStatus.HISTORICAL_CODE_EVIDENCE }),
+  new AtProtocolEvidence({ field: 'passwordEncoding', value: 'UTF-8 bytes (historical runtime behavior; not officially confirmed)', sourceUrl: null, sourceTitle: 'Historical SOAP implementation supplied to Taxy 0.7.2', documentVersion: 'historical', section: 'Password cipher', verifiedAt: VERIFIED_AT, status: EvidenceStatus.HISTORICAL_CODE_EVIDENCE }),
+  new AtProtocolEvidence({ field: 'timestampPrecision', value: 'YYYY-MM-DDTHH:mm:ss.000Z', sourceUrl: null, sourceTitle: 'Historical SOAP implementation supplied to Taxy 0.7.2', documentVersion: 'historical', section: 'Created', verifiedAt: VERIFIED_AT, status: EvidenceStatus.HISTORICAL_CODE_EVIDENCE }),
+  new AtProtocolEvidence({ field: 'nonceConstruction', value: 'Base64(RSA-PKCS1-v1_5(AES-128 session key))', sourceUrl: null, sourceTitle: 'Historical SOAP implementation supplied to Taxy 0.7.2', documentVersion: 'historical', section: 'UsernameToken Nonce', verifiedAt: VERIFIED_AT, status: EvidenceStatus.HISTORICAL_CODE_EVIDENCE }),
+  new AtProtocolEvidence({ field: 'pagination.documentsPerPage', value: 500, sourceUrl: null, sourceTitle: 'Historical SOAP implementation supplied to Taxy 0.7.2', documentVersion: 'historical', section: 'InvoicesRequest Pagination', verifiedAt: VERIFIED_AT, status: EvidenceStatus.HISTORICAL_CODE_EVIDENCE }),
+]);
+
+export function historicalEvidenceFor(field) {
+  return historicalProtocolEvidence.find((item) => item.field === field) || evidenceFor(field);
+}
+
+export function assertHistoricalConsultationEvidence() {
+  const required = ['endpoint.test.consultation', 'soapVersion', 'usernameFormat', 'aesAlgorithm', 'aesKeyLength', 'aesMode', 'aesPadding', 'operation', 'requestRootElement', 'namespace', 'soapAction', 'rsaPadding', 'passwordEncoding', 'timestampPrecision', 'nonceConstruction', 'pagination.documentsPerPage'];
+  const missing = required.filter((field) => {
+    const item = historicalEvidenceFor(field);
+    return !item || ![EvidenceStatus.OFFICIAL_DOCUMENTATION, EvidenceStatus.HISTORICAL_CODE_EVIDENCE, EvidenceStatus.RUNTIME_BEHAVIOR_CONFIRMED].includes(item.status);
+  });
+  if (missing.length) throw new AtConnectorError(AtErrorCode.SOAP_CONTRACT_UNRESOLVED, 'Historical SOAP protocol evidence is incomplete', { details: missing });
   return true;
 }

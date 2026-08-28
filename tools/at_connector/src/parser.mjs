@@ -13,11 +13,12 @@ export function parseSoapResponse(xml, httpStatus) {
   const isXml = typeof xml === 'string' && /^\s*(?:<\?xml[^>]*>\s*)?</.test(xml);
   const faultCode = isXml ? (element(xml, 'faultcode') || element(xml, 'Code')) : null;
   const faultString = isXml ? (element(xml, 'faultstring') || element(xml, 'Reason')) : null;
+  const faultDetail = isXml ? (element(xml, 'detail') || element(xml, 'Detail')) : null;
   const requestId = isXml ? (element(xml, 'RequestId') || element(xml, 'CorrelationId')) : null;
   return Object.freeze({
     httpStatus,
     isXml,
-    fault: faultCode || faultString ? Object.freeze({ code: faultCode, message: faultString }) : null,
+    fault: faultCode || faultString ? Object.freeze({ code: faultCode, message: faultString, detail: faultDetail }) : null,
     requestId,
     rawXml: xml,
   });

@@ -1,10 +1,14 @@
 const SENSITIVE_KEY = /^(?:password|passphrase|private.?key|pfx(?:content|password)?|nonce|token|authorization)$/i;
-const PORTUGUESE_NIF = /(?<!\d)\d{9}(?!\d)/g;
+const AT_USERNAME = /(?<!\d)\d{9}\/\d{1,4}(?!\d)/g;
+const LONG_NUMERIC_IDENTIFIER = /(?<!\d)\d{9,}(?!\d)/g;
+const DOCUMENT_LIKE_IDENTIFIER = /\b[A-Z]{1,5}[-/]\d{4,}\b/gi;
 
 export function redactText(value) {
   if (value == null) return value;
   return String(value)
-    .replace(PORTUGUESE_NIF, '[REDACTED_NIF]')
+    .replace(AT_USERNAME, '[REDACTED_USERNAME]')
+    .replace(LONG_NUMERIC_IDENTIFIER, '[REDACTED_IDENTIFIER]')
+    .replace(DOCUMENT_LIKE_IDENTIFIER, '[REDACTED_DOCUMENT_ID]')
     .replace(/(<(?:\w+:)?(?:Password|Nonce)>)[\s\S]*?(<\/(?:\w+:)?(?:Password|Nonce)>)/gi, '$1[REDACTED]$2');
 }
 

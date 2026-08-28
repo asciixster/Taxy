@@ -30,3 +30,11 @@ test('InvoicesResponse parser maps documented status and pagination fields', () 
 test('InvoicesResponse rejects unrecognizable payloads', () => {
   assert.throws(() => AtInvoiceListResponse.fromXml('<unknown/>'), (error) => error.code === AtErrorCode.INVALID_RESPONSE);
 });
+
+test('InvoicesResponse parses invoice fields into memory without logging them', () => {
+  const response = AtInvoiceListResponse.fromXml('<InvoicesResponse><Invoice><InvoiceNo>FT 1</InvoiceNo><InvoiceDate>2025-01-02</InvoiceDate><InvoiceType>FT</InvoiceType><TaxRegistrationNumber>123456789</TaxRegistrationNumber><CustomerTaxID>987654321</CustomerTaxID><ATCUD>ABC-1</ATCUD><TaxPayable>23.00</TaxPayable><NetTotal>100.00</NetTotal><GrossTotal>123.00</GrossTotal></Invoice><EstadoOperacao>200</EstadoOperacao><Desc>OK</Desc></InvoicesResponse>');
+  assert.deepEqual(response.invoices[0], {
+    invoiceNo: 'FT 1', invoiceDate: '2025-01-02', invoiceType: 'FT', taxRegistrationNumber: '123456789',
+    customerTaxId: '987654321', atcud: 'ABC-1', taxPayable: '23.00', netTotal: '100.00', grossTotal: '123.00',
+  });
+});

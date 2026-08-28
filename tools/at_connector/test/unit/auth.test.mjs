@@ -49,3 +49,12 @@ test('UsernameToken serialization escapes username and never exposes plaintext a
   assert(!redactText(xml).includes('123456789'));
   assert.match(redactText(xml), /\[REDACTED\]/);
 });
+
+test('UsernameToken accepts primary NIF without requiring a subuser', () => {
+  assert.doesNotThrow(() => AtUsernameTokenBuilder.build({
+    username: '123456789', password: 'test-only', publicKey,
+    rsaPaddingMode: RsaPaddingMode.OAEP_SHA256,
+    created: '2026-08-28T17:00:01.250Z',
+    randomSource: () => Buffer.from('00112233445566778899aabbccddeeff', 'hex'),
+  }));
+});
