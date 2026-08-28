@@ -1,10 +1,12 @@
 import https from 'node:https';
 import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
+import { AtConnectorError, AtErrorCode } from './errors.mjs';
 
-export class AtTransportError extends Error {
+export class AtTransportError extends AtConnectorError {
   constructor(message, cause) {
-    super(message, { cause });
+    const clientRejected = /certificate required|alert bad certificate|certificate unknown/i.test(cause?.message || '');
+    super(clientRejected ? AtErrorCode.CLIENT_CERT_REJECTED : AtErrorCode.TLS_ERROR, message, { cause });
     this.name = 'AtTransportError';
   }
 }

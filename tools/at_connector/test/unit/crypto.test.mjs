@@ -18,5 +18,5 @@ test('invalid cipher certificate fails without exposing content', () => {
 });
 
 test('authenticated encryption fails closed while RSA padding is undocumented', () => {
-  assert.throws(() => buildEncryptedCredentials({ password: 'never-log-me', created: '2026-01-01T00:00:00Z', publicKey: {}, sessionKey: Buffer.alloc(16) }), /does not specify RSA padding/);
+  assert.throws(() => buildEncryptedCredentials({ password: 'never-log-me', created: '2026-01-01T00:00:00Z', publicKey: {}, sessionKey: Buffer.alloc(16) }), /RSA_PADDING_UNCONFIRMED/);
 });
