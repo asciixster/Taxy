@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><FaturasPorClassificarResponse><WSResult><EstadoOperacao>201</EstadoOperacao><Desc>Synthetic empty result</Desc></WSResult><ListaFaturasPorClassificar></ListaFaturasPorClassificar></FaturasPorClassificarResponse></env:Body></env:Envelope>

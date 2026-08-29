@@ -1,0 +1,1 @@
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><DadosContribuinteResponse><Nif>000000000</Nif><Nome>Synthetic taxpayer</Nome><WSResult><EstadoOperacao>200</EstadoOperacao><Desc>Synthetic success</Desc></WSResult></DadosContribuinteResponse></env:Body></env:Envelope>

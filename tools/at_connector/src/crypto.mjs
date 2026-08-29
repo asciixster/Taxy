@@ -1,4 +1,4 @@
-import { constants, createCipheriv, publicEncrypt, randomBytes, X509Certificate } from 'node:crypto';
+import { constants, createCipheriv, createHash, publicEncrypt, randomBytes, X509Certificate } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 export class AtCryptoError extends Error {
@@ -29,6 +29,14 @@ export function readAtPublicKey(certificatePath) {
   } catch {
     throw new AtCryptoError('AT cipher certificate is invalid or unreadable');
   }
+}
+
+export function inspectAtCipherPublicKey(certificatePath) {
+  const key = readAtPublicKey(certificatePath);
+  const spki = key.export({ type: 'spki', format: 'der' });
+  return Object.freeze({ readable: true, keyType: key.asymmetricKeyType,
+    privateKeyPresent: false, fingerprintAlgorithm: 'SHA-256',
+    publicKeyFingerprint: createHash('sha256').update(spki).digest('hex') });
 }
 
 export function aes128EcbPkcs5Encrypt(plaintext, sessionKey) {
