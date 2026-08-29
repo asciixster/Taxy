@@ -27,6 +27,23 @@ function optionalInteger(xml, localName) {
   if (!Number.isSafeInteger(parsed)) throw new FactIntWsParsingError(localName, 'safe integer', 'out of range');
   return parsed;
 }
+function requiredMoney(xml, localName) {
+  const value = requiredText(xml, localName);
+  try { return parseFactIntMoneyCents(value); }
+  catch (error) {
+    if (error instanceof FactIntWsParsingError) {
+      throw new FactIntWsParsingError(localName, 'decimal with at most two fraction digits', error.observedShape);
+    }
+    throw error;
+  }
+}
+function requiredInteger(xml, localName) {
+  const value = requiredText(xml, localName);
+  if (!/^\d+$/.test(value)) throw new FactIntWsParsingError(localName, 'non-negative integer', 'invalid text');
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed)) throw new FactIntWsParsingError(localName, 'safe integer', 'out of range');
+  return parsed;
+}
 
 export class FactIntWsParsingError extends Error {
   constructor(field, expectedType, observedShape, { failedIndex = null } = {}) {
@@ -123,8 +140,8 @@ export function parseFactIntWsResponse(xml, operation) {
   if (operation === 'EcraInicial') return Object.freeze({ operation, fault: null, result, invoices: Object.freeze(invoices),
     buyerCanManipulateInvoices: opaqueCode(text(responseBlock, 'AdquirentePodeManipularFaturas'), { S: true, N: false }),
     canShowPreviousYear: opaqueCode(text(responseBlock, 'PodeMostrarAnoAnterior'), { S: true, N: false }),
-    totals: Object.freeze({ pendingValidation: optionalInteger(responseBlock, 'NumTotalFaturasPorValidar'),
-      pendingRevenueAssociation: optionalInteger(responseBlock, 'NumTotalFaturasPorAssociarReceita'), provisionalBenefitCents: optionalMoney(responseBlock, 'ValorTotalBeneficioProvisorio') }),
+    totals: Object.freeze({ pendingValidation: requiredInteger(responseBlock, 'NumTotalFaturasPorValidar'),
+      pendingRevenueAssociation: requiredInteger(responseBlock, 'NumTotalFaturasPorAssociarReceita'), provisionalBenefitCents: requiredMoney(responseBlock, 'ValorTotalBeneficioProvisorio') }),
     sectors: Object.freeze(blocks(responseBlock, 'Setor').map((sector) => Object.freeze({ sectorCode: text(sector, 'CodSetor'),
       provisionalBenefitCents: optionalMoney(sector, 'ValorBeneficioProvisorioPorSetor'), totalExpensesCents: optionalMoney(sector, 'ValorTotalDespesas'),
       totalVatExpensesCents: optionalMoney(sector, 'ValorTotalIvaDespesas') }))) });

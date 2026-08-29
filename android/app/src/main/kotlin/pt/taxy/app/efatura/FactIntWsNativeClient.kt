@@ -346,10 +346,12 @@ internal object FactIntWsResponseParser {
         }
         return mapOf(
             "estadoOperacao" to estado,
-            "provisionalBenefitCents" to (optionalMoney(response, "ValorTotalBeneficioProvisorio") ?: 0L),
-            "pendingValidation" to (optionalInteger(response, "NumTotalFaturasPorValidar") ?: 0),
-            "pendingRevenueAssociation" to
-                (optionalInteger(response, "NumTotalFaturasPorAssociarReceita") ?: 0),
+            "provisionalBenefitCents" to requiredOverviewMoney(response, "ValorTotalBeneficioProvisorio"),
+            "pendingValidation" to requiredOverviewInteger(response, "NumTotalFaturasPorValidar"),
+            "pendingRevenueAssociation" to requiredOverviewInteger(
+                response,
+                "NumTotalFaturasPorAssociarReceita",
+            ),
             "sectors" to sectors,
         )
     }
@@ -415,6 +417,26 @@ internal object FactIntWsResponseParser {
 
     private fun requiredMoney(parent: Element, name: String): Long =
         optionalMoney(parent, name) ?: throw IllegalArgumentException("missing money")
+
+    private fun requiredOverviewMoney(parent: Element, name: String): Long = try {
+        requiredMoney(parent, name)
+    } catch (error: Exception) {
+        throw RuntimeBridgeException(
+            "PARSING_ERROR",
+            "A resposta não contém todos os campos obrigatórios.",
+            error,
+        )
+    }
+
+    private fun requiredOverviewInteger(parent: Element, name: String): Int = try {
+        optionalInteger(parent, name) ?: throw IllegalArgumentException("missing integer")
+    } catch (error: Exception) {
+        throw RuntimeBridgeException(
+            "PARSING_ERROR",
+            "A resposta não contém todos os campos obrigatórios.",
+            error,
+        )
+    }
 
     private fun optionalMoney(parent: Element, name: String): Long? {
         val value = text(parent, name)?.takeIf(String::isNotBlank) ?: return null

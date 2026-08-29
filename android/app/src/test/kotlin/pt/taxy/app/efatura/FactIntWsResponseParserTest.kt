@@ -8,10 +8,26 @@ class FactIntWsResponseParserTest {
     @Test
     fun `overview maps only normalized aggregates`() {
         val parsed = FactIntWsResponseParser.parse(overviewXml, FactIntOperation.OVERVIEW)
-        assertEquals(1234L, parsed["provisionalBenefitCents"])
-        assertEquals(2, parsed["pendingValidation"])
+        assertEquals(50339L, parsed["provisionalBenefitCents"])
+        assertEquals(5, parsed["pendingValidation"])
         val sectors = parsed["sectors"] as List<*>
-        assertEquals("C05", (sectors.single() as Map<*, *>)["code"])
+        val sector = sectors.single() as Map<*, *>
+        assertEquals("C05", sector["code"])
+        assertEquals(234L, sector["provisionalBenefitCents"])
+    }
+
+    @Test
+    fun `overview missing required aggregate fails closed instead of becoming zero`() {
+        val error = assertFailsWith<RuntimeBridgeException> {
+            FactIntWsResponseParser.parse(
+                overviewXml.replace(
+                    "<app:NumTotalFaturasPorValidar>5</app:NumTotalFaturasPorValidar>",
+                    "",
+                ),
+                FactIntOperation.OVERVIEW,
+            )
+        }
+        assertEquals("PARSING_ERROR", error.code)
     }
 
     @Test
@@ -30,7 +46,10 @@ class FactIntWsResponseParserTest {
     fun `business 419 remains unknown and safely classified`() {
         val error = assertFailsWith<RuntimeBridgeException> {
             FactIntWsResponseParser.parse(
-                overviewXml.replace("<EstadoOperacao>200", "<EstadoOperacao>419"),
+                overviewXml.replace(
+                    "<app:EstadoOperacao>200",
+                    "<app:EstadoOperacao>419",
+                ),
                 FactIntOperation.OVERVIEW,
             )
         }
@@ -55,15 +74,15 @@ class FactIntWsResponseParserTest {
     private companion object {
         val overviewXml = """
             <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
-              <env:Body><EcraInicialResponse>
-                <NumTotalFaturasPorAssociarReceita>1</NumTotalFaturasPorAssociarReceita>
-                <NumTotalFaturasPorValidar>2</NumTotalFaturasPorValidar>
-                <ValorTotalBeneficioProvisorio>12.34</ValorTotalBeneficioProvisorio>
-                <ListaSetores><Setor><CodSetor>05</CodSetor>
-                  <ValorBeneficioProvisorioPorSetor>2.34</ValorBeneficioProvisorioPorSetor>
-                </Setor></ListaSetores>
-                <WSResult><EstadoOperacao>200</EstadoOperacao><Desc>Synthetic</Desc></WSResult>
-              </EcraInicialResponse></env:Body>
+              <env:Body><app:EcraInicialResponse xmlns:app="http://factemi.at.min_financas.pt/factintws">
+                <app:ListaSetores><app:Setor><app:ValorBeneficioProvisorioPorSetor>2.34</app:ValorBeneficioProvisorioPorSetor>
+                  <app:CodSetor>05</app:CodSetor>
+                </app:Setor></app:ListaSetores>
+                <app:ValorTotalBeneficioProvisorio>503.39</app:ValorTotalBeneficioProvisorio>
+                <app:NumTotalFaturasPorValidar>5</app:NumTotalFaturasPorValidar>
+                <app:NumTotalFaturasPorAssociarReceita>1</app:NumTotalFaturasPorAssociarReceita>
+                <app:WSResult><app:Desc>Synthetic</app:Desc><app:EstadoOperacao>200</app:EstadoOperacao></app:WSResult>
+              </app:EcraInicialResponse></env:Body>
             </env:Envelope>
         """.trimIndent()
 

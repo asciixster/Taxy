@@ -160,9 +160,12 @@ final class AndroidEfaturaRuntimeBridge
 EfaturaOverview _overviewFromMap(Map<String, Object?> map) {
   final rawSectors = (map['sectors'] as List<Object?>? ?? const []);
   return EfaturaOverview(
-    provisionalBenefitCents: _integer(map['provisionalBenefitCents']) ?? 0,
-    pendingValidation: _integer(map['pendingValidation']) ?? 0,
-    pendingRevenueAssociation: _integer(map['pendingRevenueAssociation']) ?? 0,
+    provisionalBenefitCents: _requiredInteger(map, 'provisionalBenefitCents'),
+    pendingValidation: _requiredInteger(map, 'pendingValidation'),
+    pendingRevenueAssociation: _requiredInteger(
+      map,
+      'pendingRevenueAssociation',
+    ),
     sectors: rawSectors
         .whereType<Map<Object?, Object?>>()
         .map(
@@ -199,6 +202,17 @@ int? _integer(Object? value) => switch (value) {
   num value => value.toInt(),
   _ => null,
 };
+
+int _requiredInteger(Map<String, Object?> map, String key) {
+  final value = _integer(map[key]);
+  if (value == null) {
+    throw const EfaturaServiceException(
+      EfaturaFailureKind.parsing,
+      'Recebemos uma resposta inesperada do e-Fatura.',
+    );
+  }
+  return value;
+}
 
 EfaturaServiceException _mapPlatformError(PlatformException error) {
   final kind = switch (error.code) {

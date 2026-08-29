@@ -195,7 +195,7 @@ test('response parser fails closed on malformed invoice and parses SOAP fault', 
 
 test('EcraInicial and DadosContribuinte synthetic response shapes parse without exposing data', () => {
   const initial = parseFactIntWsResponse(fixture('ecra_inicial_response.xml'), 'EcraInicial');
-  assert.deepEqual(initial.totals, { pendingValidation: 2, pendingRevenueAssociation: 1, provisionalBenefitCents: 1234 });
+  assert.deepEqual(initial.totals, { pendingValidation: 5, pendingRevenueAssociation: 1, provisionalBenefitCents: 50339 });
   assert.deepEqual(initial.buyerCanManipulateInvoices, { kind: 'known', code: 'S', value: true });
   assert.deepEqual(initial.canShowPreviousYear, { kind: 'known', code: 'S', value: true });
   assert.deepEqual(initial.sectors, [{ sectorCode: '01', provisionalBenefitCents: 1234,
@@ -203,6 +203,15 @@ test('EcraInicial and DadosContribuinte synthetic response shapes parse without 
   const taxpayer = parseFactIntWsResponse(fixture('dados_contribuinte_response.xml'), 'DadosContribuinte');
   assert.equal(taxpayer.taxpayerDataPresent, true);
   assert.equal(taxpayer.taxpayer.sensitive, true);
+});
+
+test('EcraInicial required aggregates fail closed instead of becoming zero', () => {
+  const missingPending = fixture('ecra_inicial_response.xml')
+    .replace(/<app:NumTotalFaturasPorValidar>.*?<\/app:NumTotalFaturasPorValidar>/, '');
+  assert.throws(
+    () => parseFactIntWsResponse(missingPending, 'EcraInicial'),
+    (error) => error.code === 'PARSING_ERROR' && error.field === 'NumTotalFaturasPorValidar',
+  );
 });
 
 test('research artefacts contain no official-app identity material or live path', () => {

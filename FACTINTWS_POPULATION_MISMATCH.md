@@ -1,0 +1,80 @@
+# FactIntWS population mismatch audit
+
+## Confirmed constraints
+
+- `BASE_NIF` matches the intended taxpayer (`RUNTIME_CONFIGURATION_CONFIRMED`,
+  value intentionally omitted).
+- Year 2026 matches the official-app observation.
+- FactIntWS transport, WS-Security authentication, operation dispatch and
+  successful business responses are operational.
+- The official app for the intended taxpayer/year visibly reports five pending
+  invoices, a non-zero provisional benefit and non-zero sectors.
+- Taxy's controlled responses report zero overview aggregates and an empty
+  pending list.
+- `GENUINE_OPERATION_EMPTY`, `BASE_NIF_MISMATCH` and a simple year mismatch do
+  not explain the intended comparison.
+
+The password was neither read for output nor compared during this audit.
+Evidence is limited to `CREDENTIAL_AUTH_PATH_OPERATIONALLY_WORKING`.
+
+## Login form
+
+Official and Taxy code implement the same transformation:
+
+```text
+SOAP_USERNAME = complete LOGIN_IDENTITY
+request body  = BASE_NIF(LOGIN_IDENTITY)
+```
+
+Both support the historical primary/subuser syntax in their reference flows.
+The supplied evidence establishes base-NIF equality but does not expose or
+provide a safe equality proof for the complete official-app login. Therefore:
+
+```text
+LOGIN_FORM_MATCH = UNKNOWN
+```
+
+No credential value is needed or stored in this document.
+
+## Updated hypotheses
+
+| Hypothesis | Confidence/status | Evidence |
+|---|---|---|
+| `UNKNOWN_SERVER_POPULATION_RULE` / client application identity context | **HIGH-MEDIUM** | Official mobile and Taxy client-certificate identities differ; endpoint acceptance does not prove equal population policy |
+| `BOOTSTRAP_CALL_MISSING` | **MEDIUM** | Official displayed homepage follows `EcraInicial -> DadosContribuinte -> EcraInicial`; Taxy tested a direct operation. No token/cookie proves a remote dependency |
+| `LOGIN_FORM_MISMATCH` | **MEDIUM-UNKNOWN** | Base NIF is equal, but complete official login equality was not safely established |
+| `SESSION_CONTEXT_MISMATCH` | **LOW-MEDIUM** | Call sequence differs, but no explicit session token is carried |
+| `COOKIE_STATE_MISMATCH` | **LOW** | Official code replaces its CookieManager before each operation; no Set-Cookie evidence exists |
+| `SELECTED_TAXPAYER_SERVER_CONTEXT_MISSING` | **LOW** | Selection is local credential state and is serialized on every request; no activation operation found |
+| `HTTP_HEADER_CONTEXT_MISMATCH` | **LOW** | Material headers match; only timeout/platform defaults differ |
+| `ECRAINICIAL_PARSER_DATA_LOSS` | **FIXED; LOW for prior Node live** | Six unsafe bridge defaults existed, but earlier runtime evidence records all three fields present |
+| `CANALORIGEM_CONTEXT_MISMATCH` | **LOW** | Same constant/formula is used throughout official calls and current value was accepted |
+| `YEAR_MISMATCH` | **LOW** | Same explicit year in both observations |
+| `BASE_NIF_MISMATCH` | **REJECTED** | Safe local equality confirmation |
+| `PASSWORD_MISMATCH` | **LOW** | Authentication path is operational; no plaintext comparison performed |
+
+## Independent sector issue
+
+The official homepage's explicit empty `CodSetor` remains an evidence-backed
+difference for the aggregate `FaturasPorSetor` call. It cannot explain the
+zero `EcraInicial`, which has no sector field, and must remain a separate future
+experiment.
+
+## Recommended next experiment
+
+The next authorized experiment should reproduce the official login/home call
+sequence exactly, with zero parameter variation:
+
+```text
+EcraInicial(authentication year)
+  -> DadosContribuinte
+  -> EcraInicial(2026)
+```
+
+Inspect only the final overview aggregates. Use the same configured identity,
+endpoint, TLS client identity, crypto, channel and body derivation. This tests
+`BOOTSTRAP_CALL_MISSING` without mixing it with header, year, taxpayer or sector
+changes. If the final overview remains zero, the sequence hypothesis is
+falsified and investigation should move to the client-application identity /
+server-population policy boundary; the official private identity must not be
+used.

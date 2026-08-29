@@ -26,8 +26,8 @@ void main() {
             },
             'saveCredentials' || 'clearCredentials' => null,
             'loadOverview' => <String, Object>{
-              'provisionalBenefitCents': 1234,
-              'pendingValidation': 1,
+              'provisionalBenefitCents': 50339,
+              'pendingValidation': 5,
               'pendingRevenueAssociation': 0,
               'sectors': <Object>[
                 <String, Object>{'code': 'C05', 'provisionalBenefitCents': 234},
@@ -75,8 +75,31 @@ void main() {
 
   test('overview is normalized before reaching application service', () async {
     final overview = await bridge.fetchOverview();
-    expect(overview.provisionalBenefitCents, 1234);
+    expect(overview.provisionalBenefitCents, 50339);
+    expect(overview.pendingValidation, 5);
     expect(overview.sectors.single.code, 'C05');
+  });
+
+  test('overview missing required aggregate fails closed', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          channel,
+          (_) async => <String, Object>{
+            'pendingValidation': 5,
+            'pendingRevenueAssociation': 0,
+            'sectors': <Object>[],
+          },
+        );
+    await expectLater(
+      bridge.fetchOverview(),
+      throwsA(
+        predicate(
+          (error) =>
+              error is EfaturaServiceException &&
+              error.kind == EfaturaFailureKind.parsing,
+        ),
+      ),
+    );
   });
 
   test('pending and sector operations remain explicit and on-demand', () async {
