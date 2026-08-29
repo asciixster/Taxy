@@ -15,6 +15,16 @@ function requiredText(xml, localName) {
   if (value == null) throw new TypeError(`Malformed FactIntWS response: missing ${localName}`);
   return value;
 }
+function optionalMoney(xml, localName) {
+  const value = text(xml, localName);
+  return value == null ? null : parseFactIntMoneyCents(value);
+}
+function optionalInteger(xml, localName) {
+  const value = text(xml, localName);
+  if (value == null) return null;
+  if (!/^\d+$/.test(value)) throw new TypeError(`Malformed FactIntWS response: invalid ${localName}`);
+  return Number(value);
+}
 export function parseFactIntMoneyCents(value) {
   if (!/^-?\d+(?:[.,]\d{1,2})?$/.test(String(value))) throw new TypeError('Invalid FactIntWS monetary value');
   const normalized = String(value).replace(',', '.');
@@ -28,12 +38,17 @@ export function parseFactIntMoneyCents(value) {
 export function parseFactIntInvoice(xml) {
   const date = requiredText(xml, 'DataDocumento');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new TypeError('Malformed FactIntWS response: invalid DataDocumento');
-  const optionalMoney = (name) => { const value = text(xml, name); return value == null ? null : parseFactIntMoneyCents(value); };
   return Object.freeze({ wireType: 'FactIntInvoiceResponse', idDocumento: requiredText(xml, 'IdDocumento'),
     issuerTaxId: text(xml, 'NifEmitente'), issuerName: text(xml, 'NomeEmitente'), documentNumber: text(xml, 'NumeroFatura'),
-    atcud: text(xml, 'ATCUD'), date, totalCents: parseFactIntMoneyCents(requiredText(xml, 'ValorTotal')),
-    vatCents: optionalMoney('ValorIva'), sectorCode: text(xml, 'CodSetor'), registrationChannel: text(xml, 'CanalRegisto'),
-    registrationOrigin: text(xml, 'OrigemRegisto'), professionalActivityFlag: text(xml, 'FAmbActProfissional') });
+    documentType: text(xml, 'TipoDocumento'), atcud: text(xml, 'ATCUD'), date,
+    totalCents: parseFactIntMoneyCents(requiredText(xml, 'ValorTotal')),
+    vatCents: optionalMoney(xml, 'ValorIva'), consumerIncentiveCents: optionalMoney(xml, 'ValorIncentivoConsumo'),
+    generalExpenseBenefitCents: optionalMoney(xml, 'ValorProvisorioBeneficioDespesasGerais'),
+    sectorBenefitCents: optionalMoney(xml, 'ValorProvisorioBeneficioSetor'), sectorCode: text(xml, 'CodSetor'),
+    registrationChannel: text(xml, 'CanalRegisto'), originChannel: text(xml, 'CanalOrigem'),
+    registrationOrigin: text(xml, 'OrigemRegisto'), recipe: text(xml, 'Receita'),
+    professionalActivityFlag: text(xml, 'FAmbActProfissional'),
+    buyerCanManipulateInvoices: text(xml, 'AdquirentePodeManipularFaturas') });
 }
 export function toAtInvoiceDomain(invoice) {
   return Object.freeze({ source: 'FACTINTWS', date: invoice.date, totalCents: invoice.totalCents,
@@ -42,15 +57,28 @@ export function toAtInvoiceDomain(invoice) {
 export function parseFactIntWsResponse(xml, operation) {
   if (typeof xml !== 'string' || !/<(?:[\w.-]+:)?Envelope\b/i.test(xml)) throw new TypeError('Malformed FactIntWS SOAP envelope');
   if (text(xml, 'faultcode') || text(xml, 'faultstring')) return Object.freeze({ operation, fault: Object.freeze({ code: text(xml, 'faultcode'), reason: text(xml, 'faultstring') }) });
+  if (text(xml, 'AuthenticationFailed') || text(xml, 'AuthenticationException')) {
+    return Object.freeze({ operation, fault: Object.freeze({ code: 'AuthenticationFailed', reason: text(xml, 'message') }) });
+  }
   const responseBlock = blocks(xml, `${operation}Response`)[0];
   if (responseBlock == null) throw new TypeError(`Malformed FactIntWS response: missing ${operation}Response`);
   const result = Object.freeze({ estadoOperacao: requiredText(responseBlock, 'EstadoOperacao'), desc: requiredText(responseBlock, 'Desc') });
   const invoices = blocks(responseBlock, 'Fatura').map(parseFactIntInvoice);
   const common = { operation, fault: null, result, invoices: Object.freeze(invoices) };
-  if (operation === 'EcraInicial') return Object.freeze({ ...common, totals: Object.freeze({
-    pendingValidation: text(responseBlock, 'NumTotalFaturasPorValidar'),
-    pendingRevenueAssociation: text(responseBlock, 'NumTotalFaturasPorAssociarReceita'),
-    provisionalBenefitCents: text(responseBlock, 'ValorTotalBeneficioProvisorio') == null ? null : parseFactIntMoneyCents(text(responseBlock, 'ValorTotalBeneficioProvisorio')) }) });
-  if (operation === 'DadosContribuinte') return Object.freeze({ ...common, taxpayerDataPresent: Boolean(text(responseBlock, 'Nif') || text(responseBlock, 'Nome')) });
+  if (operation === 'EcraInicial') return Object.freeze({ ...common,
+    buyerCanManipulateInvoices: text(responseBlock, 'AdquirentePodeManipularFaturas'),
+    canShowPreviousYear: text(responseBlock, 'PodeMostrarAnoAnterior'),
+    totals: Object.freeze({ pendingValidation: optionalInteger(responseBlock, 'NumTotalFaturasPorValidar'),
+      pendingRevenueAssociation: optionalInteger(responseBlock, 'NumTotalFaturasPorAssociarReceita'),
+      provisionalBenefitCents: optionalMoney(responseBlock, 'ValorTotalBeneficioProvisorio') }),
+    sectors: Object.freeze(blocks(responseBlock, 'Setor').map((sector) => Object.freeze({ sectorCode: text(sector, 'CodSetor'),
+      provisionalBenefitCents: optionalMoney(sector, 'ValorBeneficioProvisorioPorSetor'),
+      totalExpensesCents: optionalMoney(sector, 'ValorTotalDespesas'), totalVatExpensesCents: optionalMoney(sector, 'ValorTotalIvaDespesas') }))) });
+  if (operation === 'DadosContribuinte') return Object.freeze({ ...common,
+    taxpayer: Object.freeze({ taxId: text(responseBlock, 'Nif'), name: text(responseBlock, 'Nome'), sensitive: true }),
+    taxpayerDataPresent: Boolean(text(responseBlock, 'Nif') || text(responseBlock, 'Nome')) });
+  if (operation === 'FaturasPorSetor') return Object.freeze({ ...common, summary: Object.freeze({
+    totalExpensesCents: optionalMoney(responseBlock, 'ValorTotalDespesas'),
+    provisionalBenefitCents: optionalMoney(responseBlock, 'ValorTotalBeneficioProvisorio') }) });
   return Object.freeze(common);
 }

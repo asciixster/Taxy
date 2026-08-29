@@ -1,6 +1,7 @@
 # FactIntWS evidence matrix
 
-No row is runtime-confirmed in this release.
+No successful FactIntWS protocol element is runtime-confirmed. The sole runtime
+row records only a transport failure and does not promote the submitted protocol.
 
 | Element | Evidence | Confidence | Implementation status | Live-ready |
 |---|---|---|---|---|

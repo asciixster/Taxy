@@ -91,11 +91,18 @@ test('money parser returns integer cents without floating point', () => {
 });
 
 test('typed invoice parser maps wire response separately from domain', () => {
-  const xml = '<Fatura><IdDocumento>SYNTHETIC-ID</IdDocumento><NifEmitente>000000000</NifEmitente><DataDocumento>2026-01-02</DataDocumento><ValorTotal>23.45</ValorTotal><ValorIva>4.39</ValorIva><CodSetor>01</CodSetor></Fatura>';
+  const xml = '<Fatura><IdDocumento>SYNTHETIC-ID</IdDocumento><NifEmitente>000000000</NifEmitente><TipoDocumento>FT</TipoDocumento><DataDocumento>2026-01-02</DataDocumento><ValorTotal>23.45</ValorTotal><ValorIva>4.39</ValorIva><ValorIncentivoConsumo>0.50</ValorIncentivoConsumo><ValorProvisorioBeneficioDespesasGerais>0.35</ValorProvisorioBeneficioDespesasGerais><ValorProvisorioBeneficioSetor>0.25</ValorProvisorioBeneficioSetor><CodSetor>01</CodSetor><CanalOrigem>SYNTHETIC</CanalOrigem><Receita>N</Receita><AdquirentePodeManipularFaturas>S</AdquirentePodeManipularFaturas></Fatura>';
   const invoice = parseFactIntInvoice(xml);
   assert.equal(invoice.wireType, 'FactIntInvoiceResponse');
   assert.equal(invoice.totalCents, 2345);
   assert.equal(invoice.vatCents, 439);
+  assert.equal(invoice.documentType, 'FT');
+  assert.equal(invoice.consumerIncentiveCents, 50);
+  assert.equal(invoice.generalExpenseBenefitCents, 35);
+  assert.equal(invoice.sectorBenefitCents, 25);
+  assert.equal(invoice.originChannel, 'SYNTHETIC');
+  assert.equal(invoice.recipe, 'N');
+  assert.equal(invoice.buyerCanManipulateInvoices, 'S');
   assert.deepEqual(toAtInvoiceDomain(invoice), { source: 'FACTINTWS', date: '2026-01-02', totalCents: 2345, vatCents: 439, sectorCode: '01', sourceReferencePresent: true });
 });
 
@@ -105,6 +112,7 @@ test('response parser handles success, empty, multiple, optional and unknown ele
   assert.equal(result.result.estadoOperacao, '200');
   assert.equal(result.invoices.length, 2);
   assert.equal(result.invoices[1].vatCents, null);
+  assert.deepEqual(result.summary, { totalExpensesCents: 2445, provisionalBenefitCents: 200 });
   assert(xml.includes('<SyntheticUnknownElement>'));
   const empty = parseFactIntWsResponse(fixture('faturas_por_classificar_empty.xml'), 'FaturasPorClassificar');
   assert.equal(empty.invoices.length, 0);
@@ -115,13 +123,21 @@ test('response parser fails closed on malformed invoice and parses SOAP fault', 
   assert.throws(() => parseFactIntWsResponse(malformed, 'FaturasPorSetor'), /DataDocumento/);
   const fault = parseFactIntWsResponse(fixture('soap_fault.xml'), 'EcraInicial');
   assert.equal(fault.fault.code, 'Client.Synthetic');
+  const auth = parseFactIntWsResponse(fixture('authentication_failed.xml'), 'EcraInicial');
+  assert.equal(auth.fault.code, 'AuthenticationFailed');
+  assert.equal(auth.fault.reason, 'Synthetic authentication failure');
 });
 
 test('EcraInicial and DadosContribuinte synthetic response shapes parse without exposing data', () => {
   const initial = parseFactIntWsResponse(fixture('ecra_inicial_response.xml'), 'EcraInicial');
-  assert.deepEqual(initial.totals, { pendingValidation: '2', pendingRevenueAssociation: '1', provisionalBenefitCents: 1234 });
+  assert.deepEqual(initial.totals, { pendingValidation: 2, pendingRevenueAssociation: 1, provisionalBenefitCents: 1234 });
+  assert.equal(initial.buyerCanManipulateInvoices, 'S');
+  assert.equal(initial.canShowPreviousYear, 'S');
+  assert.deepEqual(initial.sectors, [{ sectorCode: '01', provisionalBenefitCents: 1234,
+    totalExpensesCents: 10000, totalVatExpensesCents: 2300 }]);
   const taxpayer = parseFactIntWsResponse(fixture('dados_contribuinte_response.xml'), 'DadosContribuinte');
   assert.equal(taxpayer.taxpayerDataPresent, true);
+  assert.equal(taxpayer.taxpayer.sensitive, true);
 });
 
 test('research artefacts contain no official-app identity material or live path', () => {

@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><AuthenticationException><AuthenticationFailed>true</AuthenticationFailed><message>Synthetic authentication failure</message></AuthenticationException></env:Body></env:Envelope>
