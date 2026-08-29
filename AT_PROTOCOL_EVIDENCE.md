@@ -46,4 +46,10 @@ A later single-variable 0.7.3 experiment restored the exact `TesteWebservices.pf
 
 This evidence is identity-specific. It does not prove that AT Issuing CA1 is universally required. The separate AT Issuing CA2 identity has different certificate and public-key fingerprints and remains unconfirmed for this endpoint after its TLS-handshake failure; it was not retested in this experiment.
 
+## Request-semantics review required
+
+Three successful authenticated requests returned `EstadoOperacao` 486 and an empty invoice list for one-day, seven-day and 28-day August 2026 intervals. The last experiment changed only the date range and made exactly one page-1 request. This is classified `EMPTY_RESULT_REQUIRES_REQUEST_SEMANTICS_REVIEW`.
+
+Before another live request, an offline review must establish the exact date semantics, `CustomerTaxID` role, invoice direction/type selected by `InvoicesRequest`, implicit filters, pagination meaning and differences from the historical source implementation. No broader interval, different month or request parameter is inferred from the empty results.
+
 Official sources remain the AT manuals for [generic aspects](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Outras_entidades/Suporte_tecnologico/Webservice/e_Fatura/Documents/Comunicacao_dos_elementos_dos_documentos_de_faturacao_aspetos_gerais.pdf), [specific aspects](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Outras_entidades/Suporte_tecnologico/Webservice/e_Fatura/Documents/Comunicacao_dos_elementos_dos_documentos_de_faturacao.pdf), and [FAQ 4996](https://info.portaldasfinancas.gov.pt/pt/faturas/Pages/faqs-00996.aspx).
