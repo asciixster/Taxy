@@ -15,8 +15,14 @@ All schemas below are reconstructed from official app call sites and DTOs. Only 
 
 `FaturasPorSetor` pagination uses `Indice` offsets observed as 0, 20, 40, 60 and 80. No automatic pagination is part of 0.7.5; the live validation used index 0 only.
 
+The official homepage also sends `FaturasPorSetor` with an explicit empty
+`CodSetor` to obtain the all-sector aggregate population. Taxy's current
+serializer accepts only concrete `Cxx` codes, so that official-app population
+has not been runtime-tested. See `FACTINTWS_INVOICE_POPULATIONS.md` and
+`FACTINTWS_REQUEST_DIFF_INVOICES.md`.
+
 ## Taxy 0.7.5 runtime validation
 
-- `FaturasPorClassificar`: HTTP 200, no SOAP fault, `EstadoOperacao=204`, controlled empty result. The request and functional operation are `RUNTIME_CONFIRMED`.
-- `FaturasPorSetor`: HTTP 200, no SOAP fault, `EstadoOperacao=204`, controlled empty result for official-app sector `C05` and index 0. The request and functional operation are `RUNTIME_CONFIRMED`.
+- `FaturasPorClassificar`: HTTP 200, no SOAP fault, `EstadoOperacao=204`, controlled empty result. Dispatch and the empty-result contract are `RUNTIME_CONFIRMED`; this operation only represents invoices awaiting classification.
+- `FaturasPorSetor`: HTTP 200, no SOAP fault, `EstadoOperacao=204`, controlled empty result for official-app sector `C05` and offset 0. Dispatch and that empty result are `RUNTIME_CONFIRMED`; the all-sector population is not.
 - No real invoice item was returned. Real-item field presence and parsing remain unconfirmed; synthetic fixtures are not promoted to runtime evidence.
