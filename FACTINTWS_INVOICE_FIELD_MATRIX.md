@@ -1,6 +1,9 @@
 # FactIntWS invoice field matrix
 
-Evidence labels: `RUNTIME_CONFIRMED`, `CONFIRMED_FROM_OFFICIAL_APP`, `OFFLINE_SYNTHETIC`, and `NOT_AVAILABLE`. The 0.7.5 controlled calls returned empty lists, so no invoice field is claimed as runtime-observed.
+Evidence labels: `RUNTIME_CONFIRMED`, `OBSERVED_RUNTIME_NON_EMPTY`,
+`CONFIRMED_FROM_OFFICIAL_APP`, `OFFLINE_SYNTHETIC`, and `NOT_AVAILABLE`.
+The 0.7.6 controlled discovery found no sector with evidence of invoice data,
+so no invoice field is claimed as `OBSERVED_RUNTIME_NON_EMPTY`.
 
 | Field | faturasPorClassificar | faturasPorSetor | Observed live | Parser support | Domain mapping | Notes |
 |---|---|---|---|---|---|---|
@@ -26,6 +29,17 @@ Evidence labels: `RUNTIME_CONFIRMED`, `CONFIRMED_FROM_OFFICIAL_APP`, `OFFLINE_SY
 |---|---:|---:|---:|---:|---|
 | `FaturasPorClassificar` | 200 | 204 | 0 | 0 | `RUNTIME_CONFIRMED` operation, empty result |
 | `FaturasPorSetor` (`C05`, index 0) | 200 | 204 | 0 | 0 | `RUNTIME_CONFIRMED` operation, empty result |
+
+### 0.7.6 controlled discovery
+
+| Operation | Year | HTTP | EstadoOperacao | Result |
+|---|---:|---:|---:|---|
+| `EcraInicial` | 2026 | 200 | 200 | Sectors `C01`–`C15` and `C99`; all observed aggregates zero |
+| `EcraInicial` | 2025 | 200 | 419 | Sanitized business response directing consultation of IRS deduction expenses in Portal das Finanças |
+
+No sector or pending count provided evidence for a follow-up invoice request.
+The exploration stopped after two requests; no brute-force sector search was
+performed.
 
 `REAL_FACTINT_INVOICE_RESPONSE_OBSERVED = NO`
 

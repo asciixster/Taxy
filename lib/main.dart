@@ -8,6 +8,8 @@ import 'app/home/module_section.dart';
 import 'domain/models.dart';
 import 'domain/money.dart';
 import 'navigation/app_navigation.dart';
+import 'modules/efatura/application/efatura_read_only_service.dart';
+import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'screens/how_we_calculate_screen.dart';
 import 'state/providers.dart';
@@ -294,7 +296,11 @@ final class _Welcome extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 26),
-                ModuleSection(onOpenIrs: () => _openWizard(context, rules)),
+                ModuleSection(
+                  onOpenIrs: () => _openWizard(context, rules),
+                  showExperimentalEfatura: EfaturaFeatureFlags.experimental,
+                  onOpenEfatura: () => _openEfatura(context),
+                ),
                 const SizedBox(height: 26),
                 FilledButton.icon(
                   onPressed: () => _openWizard(context, rules),
@@ -470,6 +476,19 @@ final class _Dashboard extends ConsumerWidget {
                     label: const Text('Explorar oportunidades fiscais'),
                   ),
                 ],
+                if (EfaturaFeatureFlags.experimental) ...[
+                  const SizedBox(height: 22),
+                  Card(
+                    child: ListTile(
+                      key: const Key('efatura-dashboard-entry'),
+                      leading: const Icon(Icons.receipt_outlined),
+                      title: const Text('e-Fatura'),
+                      subtitle: const Text('Consulta read-only experimental'),
+                      trailing: const Chip(label: Text('Experimental')),
+                      onTap: () => _openEfatura(context),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 32),
                 Row(
                   children: [
@@ -490,11 +509,8 @@ final class _Dashboard extends ConsumerWidget {
                       ),
                     ),
                     TextButton.icon(
-                      onPressed: () => _openWizard(
-                        context,
-                        rules,
-                        resumeDraft: false,
-                      ),
+                      onPressed: () =>
+                          _openWizard(context, rules, resumeDraft: false),
                       icon: const Icon(Icons.add_rounded),
                       label: const Text('Nova'),
                     ),
@@ -684,14 +700,20 @@ Future<void> _openWizard(
   await Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => WizardScreen(
-        rules: rules,
-        source: source,
-        resumeDraft: resumeDraft,
-      ),
+      builder: (_) =>
+          WizardScreen(rules: rules, source: source, resumeDraft: resumeDraft),
     ),
   );
 }
+
+Future<void> _openEfatura(BuildContext context) => Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) => const EfaturaScreen(
+      service: EfaturaReadOnlyService(UnconfiguredEfaturaGateway()),
+    ),
+  ),
+);
 
 void _openResult(
   BuildContext context,
