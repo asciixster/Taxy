@@ -2,7 +2,7 @@
 
 ## Scope and evidence boundary
 
-This is an offline audit of the `InvoicesRequest` used by Taxy 0.7.3. It made **zero AT network requests**. Runtime evidence is limited to the three already-recorded authenticated responses: HTTP 200, no SOAP fault, `EstadoOperacao` 486, `Desc` "Lista de faturas vazia", and zero invoices for 1-, 7-, and 28-day intervals in August 2026.
+This document began as an offline audit of the `InvoicesRequest` used by Taxy 0.7.3. The audit itself made **zero AT network requests**. A later authorized single-variable experiment changed only `CustomerTaxID` to `TaxRegistrationNumber` for the same 28-day interval. It also returned HTTP 200, no SOAP fault, `EstadoOperacao` 486, `Desc` "Lista de faturas vazia", and zero invoices.
 
 Evidence labels mean:
 
@@ -16,7 +16,7 @@ Evidence labels mean:
 
 ```xml
 <fat:InvoicesRequest xmlns:fat="http://factemi.at.min_financas.pt/fatshareInvoices">
-  <fat:CustomerTaxID>&lt;TAXPAYER_ID&gt;</fat:CustomerTaxID>
+  <fat:TaxRegistrationNumber>&lt;TAXPAYER_ID&gt;</fat:TaxRegistrationNumber>
   <fat:StartDate>&lt;START_DATE:YYYY-MM-DD&gt;</fat:StartDate>
   <fat:EndDate>&lt;END_DATE:YYYY-MM-DD&gt;</fat:EndDate>
   <fat:Pagination>
@@ -34,7 +34,7 @@ The body contains exactly the elements above, in that order. It contains no expl
 |---|---|---:|---|---|---|---|---|
 | `InvoicesRequest` | Constant root | yes | XML element | `RUNTIME_BEHAVIOR_CONFIRMED` | Operation dispatched successfully with this root and namespace | high | Low after successful dispatch |
 | Namespace | `http://factemi.at.min_financas.pt/fatshareInvoices` | yes | URI | `RUNTIME_BEHAVIOR_CONFIRMED` | Expanded namespace accepted for `InvoicesRequest` | high | Low after successful dispatch |
-| `CustomerTaxID` | Base nine-digit NIF derived from `AT_USERNAME`; primary NIF remains unchanged, subuser suffix is removed | yes in current serializer | nine digits | `HISTORICAL_CODE_EVIDENCE` | Historical code selected this element only for `role === "customer"`; its exact population/authorization semantics are not documented locally. The serialization was accepted at runtime. | medium | **High**: current code fixes one side of the historical issuer/customer selector |
+| `TaxRegistrationNumber` | Base nine-digit NIF derived from `AT_USERNAME`; primary NIF remains unchanged, subuser suffix is removed | yes in current serializer | nine digits | `HISTORICAL_CODE_EVIDENCE` | Historical code used this element for its default/supplier role. The server accepted the serialization, but returned an empty list, so the population semantics were not confirmed. | medium | The empty result disproved neither role; this selector alone did not produce data for the controlled interval |
 | `StartDate` | Harness input | yes | date-only `YYYY-MM-DD` | `HISTORICAL_CODE_EVIDENCE` | Lower bound and format accepted at runtime; whether it is issue, communication, registration, or another date is unknown | medium for format; unknown for business meaning | Medium |
 | `EndDate` | Harness input | yes | date-only `YYYY-MM-DD` | `HISTORICAL_CODE_EVIDENCE` | Upper bound and format accepted at runtime; inclusivity and business-date meaning are unknown | medium for format; unknown for business meaning | Medium |
 | `Pagination` | Constant container | yes in current serializer and historical implementation | XML element | `HISTORICAL_CODE_EVIDENCE` | Pagination container; the current form was accepted at runtime | medium | Low to medium |
@@ -59,7 +59,7 @@ The historical serializer had a two-way selector:
 - `role === "customer"` -> `CustomerTaxID`
 - every other/default role -> `TaxRegistrationNumber`
 
-Its credential-validation call explicitly selected `role: "supplier"`. That is strong historical evidence that the two fields select different invoice populations. It does **not** establish that `CustomerTaxID` is invalid, nor whether either population corresponds exactly to the consumer purchases visible in the current e-Fatura application.
+Its credential-validation call explicitly selected `role: "supplier"`. That is strong historical evidence that the two fields select different invoice populations. It does **not** establish that either population corresponds exactly to the consumer purchases visible in the current e-Fatura application. The controlled `TaxRegistrationNumber` experiment returned the same empty business result as `CustomerTaxID`, so the role/population hypothesis is `NOT_CONFIRMED`.
 
 Hypotheses and boundaries:
 
@@ -77,7 +77,7 @@ Hypotheses and boundaries:
 - Current values: page 1, 500 documents.
 - Historical defaults: page 1, 300 documents; caller could select page and size, with size clamped to 1..5000.
 - Mandatory status: both located implementations always serialized the container; an official schema was not found.
-- `totalPages`: absent in all three empty runtime responses. Whether it appears only for non-empty results is `UNKNOWN`.
+- `totalPages`: absent in all four empty runtime responses. Whether it appears only for non-empty results is `UNKNOWN`.
 - No page 2 request was made.
 
 ## `EstadoOperacao` 486
@@ -95,7 +95,7 @@ Consequently, compatibility of `AtInvoice`, `AtInvoicePage`, `AtInvoiceQueryResu
 | Dimension | fatshareInvoices | FactIntWS research | Conclusion |
 |---|---|---|---|
 | Apparent purpose | Read-only `InvoicesRequest` list consultation | Official-app historical service with a distinct contract | Different products/contracts; equivalence is unproven |
-| Observed population | Empty results for current `CustomerTaxID` requests | No Taxy runtime population observed | Unknown on both sides |
+| Observed population | Empty results with both `CustomerTaxID` and `TaxRegistrationNumber` | No Taxy runtime population observed | Unknown on both sides |
 | Operations available | Only the read-only query is implemented in Taxy | Research notes imply a broader mobile application service | Must not mix operations or assumptions |
 | Authentication | mTLS plus encrypted WS-Security credentials in Taxy | Separate `SecurityContext` and historical namespaces | Structurally different; no credentials/material are shared |
 | Response model | `InvoicesResponse`; only empty response is runtime-confirmed | Not runtime-tested | No cross-protocol parser inference |
@@ -107,20 +107,20 @@ No FactIntWS request was executed during this audit.
 
 | Rank | Category | Supporting evidence | Contradicting evidence | Confidence | Required single-variable experiment |
 |---:|---|---|---|---|---|
-| 1 | `ROLE/POPULATION_MISMATCH` | Historical default and explicit validation used supplier role/`TaxRegistrationNumber`; current request always uses customer role | `CustomerTaxID` is a recognized historical branch and is accepted by the server | high | Change only party element to `TaxRegistrationNumber` |
-| 2 | `CUSTOMER_TAX_ID_SEMANTICS` | Authentication identity and query party are separate concepts; successful auth does not prove the body filter is appropriate | Derived base NIF is structurally valid and server accepted it | medium-high | Same experiment as rank 1 |
-| 3 | `DATE_SEMANTICS` | Business meaning and inclusivity are undocumented locally | Three increasingly broad accepted intervals remained empty | medium | Would require changing only the interpreted date window after role is resolved |
-| 4 | `GENUINELY_EMPTY_DATA` | Empty response is internally consistent and no fault occurred | Three intervals up to 28 days were empty despite expectation of data | medium | Confirm independently that the selected population/date has a known record before testing |
+| 1 | `DATE_SEMANTICS` | Business meaning and inclusivity are undocumented locally | Three increasingly broad accepted intervals remained empty | medium | Requires independent evidence before another experiment |
+| 2 | `GENUINELY_EMPTY_DATA` | Empty response is internally consistent and no fault occurred for both party fields | Expectation of data remains unverified for the queried service population | medium | Confirm independently that this operation/population contains a known record |
+| 3 | `ROLE/POPULATION_MISMATCH` | Historical code distinguishes the two party fields | The controlled `TaxRegistrationNumber` request returned the same empty result as `CustomerTaxID` | low | Experiment completed; hypothesis not confirmed |
+| 4 | `CUSTOMER_TAX_ID_SEMANTICS` | Authentication identity and query party are separate concepts | Switching away from `CustomerTaxID` did not produce data | low | Experiment completed; hypothesis not confirmed |
 | 5 | `HISTORICAL_PROTOCOL_DRIFT` | Historical transport and defaults differ | Root, namespace, body order, and field names were accepted | low-medium | Not selected |
 | 6 | `PAGINATION_PARAMETER_ERROR` | Official pagination semantics/schema were not found | Positive page/size were accepted; page 1 is historical default | low | Not selected |
 | 7 | `REQUEST_FILTER_ERROR` | Server-side defaults cannot be excluded | No hidden filter exists in current or historical body | low | Not selected |
 
-## NEXT_SINGLE_VARIABLE_EXPERIMENT
+## Completed single-variable experiment
 
-Do **not** execute as part of this audit. In one future controlled read-only request, change only:
+The controlled read-only experiment changed only:
 
 ```text
 CustomerTaxID -> TaxRegistrationNumber
 ```
 
-Keep the same taxpayer identifier, the previously accepted seven-day interval `2026-08-22` through `2026-08-28`, page 1, page size 500, endpoint, namespace, SOAP version, SOAPAction absence, encryption, timestamp, credentials, certificate, and parser. This is the one change with the strongest historical support.
+The identifier value, 28-day interval `2026-08-01` through `2026-08-28`, page 1, page size 500, endpoint, namespace, SOAP version, SOAPAction absence, encryption, timestamp behavior, credentials, certificate, and parser were preserved. The single request completed with authorized mTLS, HTTP 200, no SOAP fault, `EstadoOperacao` 486, and zero invoices. Classification: `SUCCESS_EMPTY_RESULT`; `ROLE_POPULATION_HYPOTHESIS_NOT_CONFIRMED`. `TaxRegistrationNumber` is therefore **not** promoted to `RUNTIME_BEHAVIOR_CONFIRMED` population semantics.

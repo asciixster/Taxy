@@ -67,7 +67,7 @@ export function buildHistoricalEnvelope({ username, password, cipherCertificateP
       `<wss:Created>${encrypted.created}</wss:Created>` +
       `</wss:UsernameToken></wss:Security></S:Header>` +
       `<S:Body><fat:InvoicesRequest>` +
-      `<fat:CustomerTaxID>${customer}</fat:CustomerTaxID>` +
+      `<fat:TaxRegistrationNumber>${customer}</fat:TaxRegistrationNumber>` +
       `<fat:StartDate>${dates.startDate}</fat:StartDate>` +
       `<fat:EndDate>${dates.endDate}</fat:EndDate>` +
       `<fat:Pagination><fat:nPage>1</fat:nPage><fat:nDocsPage>500</fat:nDocsPage></fat:Pagination>` +
@@ -85,7 +85,7 @@ export function sanitizedHistoricalEnvelope() {
     `<wss:Username>[REDACTED]</wss:Username><wss:Password>[REDACTED]</wss:Password>` +
     `<wss:Nonce>[REDACTED]</wss:Nonce><wss:Created>[REDACTED]</wss:Created>` +
     `</wss:UsernameToken></wss:Security></S:Header>\n` +
-    `  <S:Body><fat:InvoicesRequest><fat:CustomerTaxID>[REDACTED_NIF]</fat:CustomerTaxID>` +
+    `  <S:Body><fat:InvoicesRequest><fat:TaxRegistrationNumber>[REDACTED_NIF]</fat:TaxRegistrationNumber>` +
     `<fat:StartDate>[YYYY-MM-DD]</fat:StartDate><fat:EndDate>[YYYY-MM-DD]</fat:EndDate>` +
     `<fat:Pagination><fat:nPage>1</fat:nPage><fat:nDocsPage>500</fat:nDocsPage></fat:Pagination>` +
     `</fat:InvoicesRequest></S:Body>\n</S:Envelope>`;

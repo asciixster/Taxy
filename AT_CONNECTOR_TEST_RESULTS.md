@@ -12,7 +12,7 @@ Updated: 29 August 2026. Environment: AT test only.
 | TLS/mTLS to consultation test endpoint | PASS (`authorized: true`) |
 | Empty SOAP 1.1 connectivity probe | HTTP 500, `env:Client / Internal Error` |
 | Single `?wsdl` discovery request | HTTP 500, SOAP XML, no WSDL definitions |
-| Historical authenticated consultation | Experiment 3: HTTP 200, no fault, EstadoOperacao 486, empty list |
+| Historical authenticated consultation | Experiment 5: `TaxRegistrationNumber`, HTTP 200, no fault, EstadoOperacao 486, empty list; role/population hypothesis not confirmed |
 | Real invoice parsing 0.7.3 | The CA2 identity passed local preflight but failed during mTLS. A separate single-variable repeat with the known-good `TesteWebservices.pfx` identity reached mTLS authorized, HTTP 200 and `EstadoOperacao` 486 with an empty list. No runtime invoice fields are claimed. |
 | Production request | **BLOCKED** |
 

@@ -27,7 +27,7 @@ Current Taxy serializer:
 
 ```xml
 <fat:InvoicesRequest xmlns:fat="http://factemi.at.min_financas.pt/fatshareInvoices">
-  <fat:CustomerTaxID>&lt;TAXPAYER_ID&gt;</fat:CustomerTaxID>
+  <fat:TaxRegistrationNumber>&lt;TAXPAYER_ID&gt;</fat:TaxRegistrationNumber>
   <fat:StartDate>&lt;START_DATE:YYYY-MM-DD&gt;</fat:StartDate>
   <fat:EndDate>&lt;END_DATE:YYYY-MM-DD&gt;</fat:EndDate>
   <fat:Pagination>
@@ -46,7 +46,7 @@ Default-namespace and `fat:`-prefix forms have the same expanded XML names. That
 | Root | `InvoicesRequest` | `InvoicesRequest` | identical | None known |
 | Expanded namespace | `http://factemi.at.min_financas.pt/fatshareInvoices` | same | identical | Runtime-confirmed in current form |
 | Namespace serialization | Default namespace | `fat:` prefix | changed, lexical only | Expanded names are identical |
-| Party selector | `CustomerTaxID` only when `role === "customer"`; otherwise `TaxRegistrationNumber` | Always `CustomerTaxID` | **changed** | Can select a different invoice population |
+| Party selector | `CustomerTaxID` only when `role === "customer"`; otherwise `TaxRegistrationNumber` | Fixed `TaxRegistrationNumber` after the single-variable experiment | **changed behavior**, same as historical default | Controlled runtime returned the same empty result; population semantics remain unconfirmed |
 | Party identifier source | `payload.nif` or credential NIF, non-digits stripped | Strict base NIF derived from validated username; optional supplied ID must match | **changed** | Safer binding, but less caller flexibility; not the likely empty-result cause |
 | `StartDate` | Caller value, `YYYY-MM-DD` | Caller value, `YYYY-MM-DD` | identical on wire | Business meaning remains unknown |
 | `EndDate` | Caller value, `YYYY-MM-DD` | Caller value, `YYYY-MM-DD` | identical on wire | Business meaning remains unknown |
@@ -70,7 +70,7 @@ There are **7 material implementation differences** tracked by this audit:
 6. namespace lexical serialization;
 7. SOAPAction transport metadata.
 
-Only item 1 has strong evidence of selecting a different result population. Items 6 and 7 are already shown not to prevent dispatch in the current runtime. The root, expanded namespace, child order, field names, date wire format, pagination element names, and absence of extra body filters are identical.
+Item 1 had the strongest historical evidence, so it was tested alone. The request dispatched successfully but returned the same empty result; the role/population hypothesis was not confirmed. Items 6 and 7 are already shown not to prevent dispatch in the current runtime. The root, expanded namespace, child order, field names, date wire format, pagination element names, and absence of extra body filters are identical.
 
 ## Hidden/default filters audit
 
@@ -86,4 +86,4 @@ No non-empty historical `InvoicesResponse` was located. Historical records found
 
 ## Regression boundary
 
-Offline tests freeze the current request shape and the historical contract metadata without changing the live request. The documented next experiment is intentionally not implemented in this branch.
+Offline tests freeze the current `TaxRegistrationNumber` request shape and the historical contract metadata. The one authorized experiment changed no other request parameter and made no retry.

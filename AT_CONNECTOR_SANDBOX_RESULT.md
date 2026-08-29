@@ -77,6 +77,27 @@ The current 0.7.3 code, endpoint, SOAP request, one-day interval and TLS options
 
 This confirms only that the specific `TesteWebservices.pfx` identity is accepted by this test endpoint at runtime. It does not establish that AT Issuing CA1 is universally required, nor that the separate AT Issuing CA2 identity can never work. No invoice field received runtime confirmation because the returned list was empty.
 
+## Experiment 5 — party/population selector
+
+The request changed only `CustomerTaxID` to `TaxRegistrationNumber`, preserving the identifier and every other protocol parameter. The 28-day interval was `2026-08-01` through `2026-08-28`.
+
+| Field | Result |
+|---|---|
+| Network requests | 1 |
+| TLS/mTLS | SUCCESS (`authorized: true`) |
+| HTTP | 200 |
+| SOAP response | YES |
+| SOAP fault | NONE |
+| `EstadoOperacao` | 486 |
+| `Desc` | Empty invoice list (sanitized) |
+| `totalPages` | NOT_AVAILABLE |
+| Invoice count | 0 |
+| Parsed invoice count | 0 |
+| Classification | `SUCCESS_EMPTY_RESULT` |
+| Role/population hypothesis | `NOT_CONFIRMED` |
+
+The server accepted the request shape, but an empty response does not confirm the semantic population selected by `TaxRegistrationNumber`. No invoice field was promoted and no retry was made.
+
 ## Experiment 5 — August date range only
 
 The known-good identity and all TLS, endpoint, SOAP, authentication, pagination and parser settings were preserved. Only the inclusive date interval changed to `2026-08-01` through `2026-08-28`. The harness's local seven-day guard was temporarily relaxed solely to permit the authorized request and restored immediately afterwards; this did not change the wire protocol and was not committed.

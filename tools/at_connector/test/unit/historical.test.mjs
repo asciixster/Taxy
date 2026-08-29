@@ -34,7 +34,7 @@ test('historical request reproduces exact SOAP contract and timestamp precision'
   assert.equal(request.createdPlaintext, '2026-08-28T11:22:33.000Z');
   assert(request.xml.includes(`xmlns:fat="${HISTORICAL_NAMESPACE}"`));
   assert(request.xml.includes('<fat:InvoicesRequest>'));
-  assert(request.xml.includes('<fat:CustomerTaxID>123456789</fat:CustomerTaxID>'));
+  assert(request.xml.includes('<fat:TaxRegistrationNumber>123456789</fat:TaxRegistrationNumber>'));
   assert(request.xml.includes('<fat:nPage>1</fat:nPage><fat:nDocsPage>500</fat:nDocsPage>'));
   for (const field of ['Password', 'Nonce', 'Created']) {
     const encoded = request.xml.match(new RegExp(`<wss:${field}>([^<]+)</wss:${field}>`))[1];
@@ -49,11 +49,11 @@ test('current request serializes required body fields in exact order without hid
   const orderedTags = [...body.matchAll(/<(?:fat:)?([A-Za-z][A-Za-z0-9]*)(?:\s[^>]*)?>/g)]
     .map((match) => match[1]);
   assert.deepEqual(orderedTags, [
-    'InvoicesRequest', 'CustomerTaxID', 'StartDate', 'EndDate',
+    'InvoicesRequest', 'TaxRegistrationNumber', 'StartDate', 'EndDate',
     'Pagination', 'nPage', 'nDocsPage',
   ]);
   for (const absent of [
-    'TaxRegistrationNumber', 'Status', 'InvoiceType', 'Sector', 'Country',
+    'CustomerTaxID', 'Status', 'InvoiceType', 'Sector', 'Country',
     'Origin', 'Situation', 'Role', 'FiscalYear', 'Channel', 'Software', 'Mode',
   ]) assert.equal(body.includes(`<fat:${absent}>`), false, `${absent} must remain absent`);
 });
@@ -75,8 +75,8 @@ test('sanitized historical contract records the material current-versus-source d
   assert.equal(contract.containsAdditionalBodyFilters, false);
 
   const current = buildHistoricalEnvelope(base).xml;
-  assert(current.includes('<fat:CustomerTaxID>'));
-  assert.equal(current.includes('<fat:TaxRegistrationNumber>'), false);
+  assert(current.includes('<fat:TaxRegistrationNumber>'));
+  assert.equal(current.includes('<fat:CustomerTaxID>'), false);
   assert(current.includes('<fat:nPage>1</fat:nPage>'));
   assert(current.includes('<fat:nDocsPage>500</fat:nDocsPage>'));
 });
