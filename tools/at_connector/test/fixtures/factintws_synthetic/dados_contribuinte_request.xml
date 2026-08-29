@@ -1,0 +1,1 @@
+<app:DadosContribuinteRequest xmlns:app="http://factemi.at.min_financas.pt/factintws"> <app:Nif>000000000</app:Nif><app:CanalOrigem><app:Sistema>A</app:Sistema><app:Versao>Android SDK: synthetic</app:Versao></app:CanalOrigem> </app:DadosContribuinteRequest>

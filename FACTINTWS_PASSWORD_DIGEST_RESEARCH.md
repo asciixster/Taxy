@@ -2,53 +2,41 @@
 
 ## Result
 
-`FACTINTWS_DIGEST_NOT_READY`
+`EXACT` from the official app implementation, with deterministic synthetic regression vectors. This is still `CONFIRMED_FROM_OFFICIAL_APP`, not runtime confirmation.
 
-Offline searches of the available extracted/documented material found the structural names `Password Digest`, `Nonce`, `Created`, and a reference to `buildPasswordDigest`, but did not locate the function body or an independently verifiable test vector. The WS-Security field names alone do not prove the digest formula.
+## Dataflow
 
-## Evidence matrix
+```text
+AES key generator (128 bits) -> keyBytes
+NTP receive time -> Joda UTC ISO string -> createdUtf8
+original password -> passwordUtf8
 
-| Detail | Finding | Evidence |
-|---|---|---|
-| Password is represented by a digest | Observed structurally | `HISTORICAL_CODE_EVIDENCE_FROM_OFFICIAL_APP` |
-| Hash algorithm is SHA-1 | Mentioned in research target, but no implementation/test vector was located | `UNKNOWN` |
-| Digest inputs | Password, nonce, and Created appear related | `INFERENCE`; exact set is `UNKNOWN` |
-| Input order | Not demonstrated | `UNKNOWN` |
-| Password treatment | Raw bytes, text, prior hash, or another transformation not demonstrated | `UNKNOWN` |
-| Character encoding | Not demonstrated | `UNKNOWN` |
-| Base64 stage | Digest value appears encoded, but the encoded bytes/stage are not demonstrated | `UNKNOWN` |
-| Digest XML attribute/type | Exact name and value not demonstrated | `UNKNOWN` |
+SHA-1(keyBytes || createdUtf8 || passwordUtf8) -> digestBytes
+AES-128-ECB/PKCS#5-compatible padding(keyBytes, digestBytes)
+  -> Base64 -> Password@Digest
 
-The standard WS-Security expression commonly associated with password digests was deliberately **not** assumed. FactIntWS may use standard behavior, an AT-specific variant, or app-specific preprocessing; selecting one without the historical implementation or official documentation would be protocol invention.
+AES-128-ECB/PKCS#5-compatible padding(keyBytes, passwordUtf8)
+  -> Base64 -> Password element text
 
-## Nonce
+RSA/ECB/PKCS1Padding(AT public encryption key, keyBytes)
+  -> Base64 -> Nonce element text
+```
 
-| Detail | Status |
+Java PKCS#5 padding for AES is byte-compatible with PKCS#7. The digest is not the standard WS-Security `SHA1(nonce + created + password)` representation because the XML Nonce is an RSA-encrypted AES key and both password and digest are separately AES-encrypted.
+
+## Exact fields
+
+| Detail | Value |
 |---|---|
-| Cryptographically random generation | `UNKNOWN` |
-| Byte length | `UNKNOWN` |
-| Raw bytes versus text before hashing | `UNKNOWN` |
-| XML Base64 encoding | `UNKNOWN` |
-| Encoding/type attribute | `UNKNOWN` |
+| Hash | SHA-1 |
+| Input order | raw 16-byte AES key, Created UTF-8, password UTF-8 |
+| Digest XML attribute | `Digest="base64(AES ciphertext)"` |
+| Password element text | `base64(AES(password UTF-8))` |
+| Nonce raw material | fresh 128-bit AES key |
+| Nonce XML | `base64(RSAES-PKCS1-v1_5(aesKey))` |
+| Created source | NTP receive timestamp, UTC |
+| Created representation | Joda ISO-8601 UTC with millisecond precision and trailing `Z` |
 
-## Created
+## Synthetic vector
 
-| Detail | Status |
-|---|---|
-| UTC versus local time | `UNKNOWN` |
-| Exact ISO-8601 layout | `UNKNOWN` |
-| Fractional-second precision | `UNKNOWN` |
-| Trailing `Z` or offset | `UNKNOWN` |
-| Same text/bytes used by digest and XML | `UNKNOWN` |
-
-The runtime-confirmed fatshare timestamp format was not reused because FactIntWS is a separate protocol.
-
-## Evidence required to proceed
-
-Any one of the following could make reconstruction reviewable:
-
-1. the historical `buildPasswordDigest` implementation plus its callers;
-2. official FactIntWS authentication documentation;
-3. a sanitized deterministic test vector specifying password bytes, nonce bytes, Created bytes, digest bytes, and XML representation.
-
-Until then, Taxy refuses to build or send a FactIntWS authentication header.
+For AES bytes `00..0f`, Created `2026-08-29T12:34:56.789Z`, and password `synthetic-password`, the pre-encryption SHA-1 hex is `16f6c5f922bdc646515132f831ddb75a4589fe0b`. No real credential is used.

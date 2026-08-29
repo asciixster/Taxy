@@ -1,0 +1,1 @@
+<app:EcraInicialRequest xmlns:app="http://factemi.at.min_financas.pt/factintws"> <app:Nif>000000000</app:Nif><app:Ano>2026</app:Ano><app:CanalOrigem><app:Sistema>A</app:Sistema><app:Versao>Android SDK: synthetic</app:Versao></app:CanalOrigem> </app:EcraInicialRequest>

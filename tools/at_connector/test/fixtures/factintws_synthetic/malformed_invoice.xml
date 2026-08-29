@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><FaturasPorSetorResponse><WSResult><EstadoOperacao>200</EstadoOperacao><Desc>Synthetic malformed</Desc></WSResult><ListaFaturasPorSetor><Fatura><IdDocumento>SYNTHETIC-BAD</IdDocumento><DataDocumento>02/01/2026</DataDocumento><ValorTotal>10.00</ValorTotal></Fatura></ListaFaturasPorSetor></FaturasPorSetorResponse></env:Body></env:Envelope>

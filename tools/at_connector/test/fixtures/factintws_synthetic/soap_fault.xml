@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><env:Fault><faultcode>Client.Synthetic</faultcode><faultstring>Synthetic fault without personal data</faultstring></env:Fault></env:Body></env:Envelope>

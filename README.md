@@ -8,6 +8,11 @@ A aplicação é Android-first, determinística e privada: guarda simulações n
 
 Taxy 0.7.1 includes a developer-only, test-environment AT connectivity harness isolated from Flutter and the IRS engine. See [AT_CONNECTOR.md](AT_CONNECTOR.md), [AT_CONNECTOR_SECURITY.md](AT_CONNECTOR_SECURITY.md) and [AT_PROTOCOL_EVIDENCE.md](AT_PROTOCOL_EVIDENCE.md). It proves mTLS/SOAP connectivity only and deliberately blocks production and authenticated calls while critical official protocol details remain unconfirmed.
 
+FactIntWS is researched as a separate protocol. Its offline reconstruction,
+evidence levels and live-readiness gates are summarized in
+[FACTINTWS_EVIDENCE_MATRIX.md](FACTINTWS_EVIDENCE_MATRIX.md). Tests and CI never
+contact FactIntWS, and Taxy never uses the official app's private identity.
+
 ## Estado da 0.7
 
 O primeiro caso real anonimizado da AT está integrado como
