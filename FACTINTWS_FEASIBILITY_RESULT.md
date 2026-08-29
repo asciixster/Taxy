@@ -2,13 +2,13 @@
 
 ## Offline decision
 
-`READY FOR A SEPARATELY APPROVED SINGLE LIVE FACTINTWS TEST`
+`CONTINUE OFFLINE — LIVE GATES NOT READY`
 
-The offline reconstruction gates pass for the `EcraInicial` wire operation. The
+The cryptographic and wire reconstruction gates pass for the `EcraInicial` operation. The
 offline phase made zero network requests and did not open any certificate or
 credential. Readiness means the official app contract is sufficiently
-reconstructed; it does not mean Taxy's TLS identity or credentials are accepted
-by FactIntWS.
+reconstructed; live execution remains blocked by the unconfigured verified NTP
+source and unknown concrete Taxy `CanalOrigem` values.
 
 | Field | Result |
 |---|---|
@@ -17,7 +17,9 @@ by FactIntWS.
 | Auth reconstruction | exact from official app code |
 | Request schema | complete |
 | Response schema/parser | complete for documented DTO fields |
-| HTTP/SOAP serialization | complete |
+| HTTP/SOAP serialization | complete, including exact unquoted SOAPAction |
+| Created source | NTP required; provider unavailable; system fallback forbidden |
+| Concrete channel values | unknown; live-blocking |
 | Network requests | 0 |
 | Runtime-confirmed elements | none |
 | Official-app private identity used | no |
@@ -36,8 +38,9 @@ observed, so the run neither confirms nor rejects the Taxy identity.
 - protocol elements promoted to runtime evidence: none;
 - retries/fallback/alternate endpoint: none.
 
-## Recommended single live test
+## Recommended single live test after both gates pass
 
-Audit the Node/OpenSSL TLS failure locally before authorizing another request.
-Do not change SOAP, authentication fields, endpoint, operation or credentials
-until the transport-level cause is isolated.
+Use only the legitimate `TesteWebservices.pfx`, a locally validated AT RSA
+public cipher certificate, the primary endpoint 443 and one `EcraInicial`
+request. Do not retry or fall back. Before authorization, wire a verified NTP
+provider, document the Taxy channel values, and complete the local TLS diagnosis.

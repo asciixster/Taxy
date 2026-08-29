@@ -14,4 +14,9 @@ pin-set scoped to the service hostname (without subdomains). Therefore
 `CERTIFICATE_PINNING = YES` and `CUSTOM_TRUST_STORE = YES`. Pin values are not
 copied into Taxy: this task records behavior and does not import app trust data.
 
+The Taxy live harness currently uses normal platform CA validation with
+`rejectUnauthorized = true`; application-level pinning is `NOT_IMPLEMENTED`.
+That is a client-side hardening difference, not evidence of server protocol
+incompatibility, and certificate validation is not disabled.
+
 The APK asset inventory includes production/quality client certificates and private-key containers, a master CA bundle, BKS public-encryption-key material, and legacy PFX assets. These were inventoried by role only. None was read, exported, used, or committed. Taxy must use only its separately legitimate PFX and trusted public AT encryption key material.

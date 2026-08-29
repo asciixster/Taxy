@@ -15,7 +15,11 @@ Evidence: `CONFIRMED_FROM_OFFICIAL_APP`. Wire operation: `EcraInicial`.
 </app:EcraInicialRequest>
 ```
 
-The app uses system `A`; the version string describes Android SDK/API. Taxy must use its own honest channel/version value rather than impersonating a device build.
+The app uses system `A`; the version string describes Android SDK/API. The
+structure and observed app value are evidence, but they do not prove that the
+candidate Taxy pair `A` / `Taxy 0.7.4` is accepted. The combined concrete-value
+status is therefore `CHANNEL_VALUES = UNKNOWN`, and live execution is blocked
+until that choice is documented with adequate evidence.
 
 ## Response fields
 

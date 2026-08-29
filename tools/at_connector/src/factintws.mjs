@@ -53,7 +53,12 @@ export const factIntWsProtocolEvidence = Object.freeze({
   operationRequiredBody: Object.freeze({ value: Object.freeze(['app:Nif', 'app:Ano', 'app:CanalOrigem']), status: officialApp }),
   soapAction: Object.freeze({ value: `${FACTINTWS_NAMESPACE}/EcraInicial`, status: officialApp }),
   contentType: Object.freeze({ value: 'text/xml;charset=utf-8', status: officialApp }),
+  channelStructure: Object.freeze({ value: Object.freeze(['Sistema', 'Versao']), status: officialApp }),
+  channelSystemValue: Object.freeze({ value: 'A', status: officialApp }),
+  channelVersionValue: Object.freeze({ value: null, status: FactIntWsEvidenceStatus.UNKNOWN }),
+  channelValues: Object.freeze({ value: null, status: FactIntWsEvidenceStatus.UNKNOWN }),
   certificatePinning: Object.freeze({ value: 'TrustKit SHA-256 pin-set, enforced for the service hostname', status: officialApp }),
+  taxyCertificatePinning: Object.freeze({ value: 'NOT_IMPLEMENTED', status: FactIntWsEvidenceStatus.UNKNOWN }),
 });
 
 const criticalFields = Object.freeze([
@@ -61,13 +66,24 @@ const criticalFields = Object.freeze([
   'nonceByteLength', 'nonceGeneration', 'nonceXmlEncoding', 'createdTimezone',
   'createdPrecision', 'createdFormat', 'operationRootElement',
   'operationRequiredBody', 'soapAction', 'contentType',
+  'channelValues',
 ]);
 
 export function assessFactIntWsReadiness(evidence = factIntWsProtocolEvidence) {
   const accepted = [FactIntWsEvidenceStatus.OFFICIAL_APP, FactIntWsEvidenceStatus.RUNTIME];
   const missing = criticalFields.filter((field) => !accepted.includes(evidence[field]?.status));
+  const classification = missing.includes('channelValues')
+    ? AtErrorCode.FACTINTWS_CHANNEL_VALUES_UNKNOWN
+    : AtErrorCode.FACTINTWS_OPERATION_SCHEMA_UNKNOWN;
   return Object.freeze({ ready: missing.length === 0, missing: Object.freeze(missing),
-    classification: missing.length ? AtErrorCode.FACTINTWS_OPERATION_SCHEMA_UNKNOWN : 'READY' });
+    classification: missing.length ? classification : 'READY' });
+}
+
+export function assertFactIntWsLiveReadiness(evidence = factIntWsProtocolEvidence) {
+  const readiness = assessFactIntWsReadiness(evidence);
+  if (!readiness.ready) throw new AtConnectorError(readiness.classification,
+    `FactIntWS live gate is not ready: ${readiness.missing.join(', ')}`);
+  return readiness;
 }
 
 function aesEncrypt(key, bytes) {
@@ -115,7 +131,6 @@ export function serializeFactIntWsOperation(operation, input = {}) {
 }
 
 export function buildFactIntWsEnvelope({ username, credentials, operation = FACTINTWS_OPERATION, input }) {
-  if (!assessFactIntWsReadiness().ready) throw new AtConnectorError(AtErrorCode.FACTINTWS_OPERATION_SCHEMA_UNKNOWN, 'FactIntWS protocol gate is not ready');
   const body = serializeFactIntWsOperation(operation, input);
   return `<?xml version="1.0" encoding="utf-8" standalone="no"?>\n` +
     `<S:Envelope xmlns:S="${FACTINTWS_SOAP_NAMESPACE}"><S:Header>` +

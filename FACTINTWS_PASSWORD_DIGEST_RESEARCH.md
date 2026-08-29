@@ -37,6 +37,10 @@ Java PKCS#5 padding for AES is byte-compatible with PKCS#7. The digest is not th
 | Created source | NTP receive timestamp, UTC |
 | Created representation | Joda ISO-8601 UTC with millisecond precision and trailing `Z` |
 
+The live harness no longer substitutes `new Date().toISOString()` silently.
+Until a verified NTP provider is configured it returns `NTP_TIME_UNAVAILABLE`;
+system-clock fallback is represented explicitly but disabled for live use.
+
 ## Synthetic vector
 
 For AES bytes `00..0f`, Created `2026-08-29T12:34:56.789Z`, and password `synthetic-password`, the pre-encryption SHA-1 hex is `16f6c5f922bdc646515132f831ddb75a4589fe0b`. No real credential is used.

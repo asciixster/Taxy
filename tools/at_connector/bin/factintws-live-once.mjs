@@ -6,12 +6,13 @@ import { gunzipSync } from 'node:zlib';
 import { validateAtUsername } from '../src/auth.mjs';
 import { readAtPublicKey } from '../src/crypto.mjs';
 import {
-  buildFactIntWsEnvelope, buildFactIntWsSecurityMaterial,
+  assertFactIntWsLiveReadiness, buildFactIntWsEnvelope, buildFactIntWsSecurityMaterial,
   FACTINTWS_ENDPOINT_443, FACTINTWS_OPERATION, factIntWsHttpContract,
 } from '../src/factintws.mjs';
 import { parseFactIntWsResponse } from '../src/factintws_parser.mjs';
 import { redact } from '../src/redaction.mjs';
 import { tlsMetadataFromSocket } from '../src/transport.mjs';
+import { resolveFactIntWsCreated } from '../src/factintws_time.mjs';
 
 const required = ['AT_USERNAME', 'AT_PASSWORD', 'AT_CIPHER_CERT_PATH', 'AT_CLIENT_PFX_PATH', 'AT_CLIENT_PFX_PASSWORD'];
 let networkRequests = 0;
@@ -66,15 +67,18 @@ async function main() {
   if (required.some((key) => !process.env[key])) return fail('AUTH_CONFIGURATION_MISSING', 'Required local configuration is missing');
   const username = validateAtUsername(process.env.AT_USERNAME);
   const pfx = readFileSync(process.env.AT_CLIENT_PFX_PATH);
-  const created = new Date().toISOString();
   const aesKey = randomBytes(16);
   try {
+    // Fail closed until a verified NTP provider is wired in. A system-clock
+    // timestamp must never be presented as equivalent to the app's NTP source.
+    const { created, source: createdSource } = await resolveFactIntWsCreated({ allowSystemClockFallback: false });
+    assertFactIntWsLiveReadiness();
     const credentials = buildFactIntWsSecurityMaterial({
       aesKey, created, password: process.env.AT_PASSWORD,
       rsaPublicKey: readAtPublicKey(process.env.AT_CIPHER_CERT_PATH),
     });
     const xml = buildFactIntWsEnvelope({ username, credentials,
-      input: { nif: username.split('/')[0], year: String(new Date().getUTCFullYear()),
+      input: { nif: username.split('/')[0], year: created.slice(0, 4),
         channel: { system: 'A', version: 'Taxy 0.7.4' } } });
     networkRequests = 1;
     const response = await sendOnce({ xml, pfx, passphrase: process.env.AT_CLIENT_PFX_PASSWORD });
@@ -87,7 +91,7 @@ async function main() {
       process.exitCode = 2; return;
     }
     const classification = parsed.fault ? classifyFault(parsed.fault) : 'SUCCESS';
-    output({ networkRequests, operation: FACTINTWS_OPERATION,
+    output({ networkRequests, operation: FACTINTWS_OPERATION, createdSource,
       mTLS: response.tls.authorized ? 'SUCCESS' : 'FAILED', authorized: response.tls.authorized,
       tlsVersion: response.tls.protocol, httpStatus: response.httpStatus, soapResponse: 'YES',
       soapFault: parsed.fault || null, estadoOperacao: parsed.result?.estadoOperacao ?? null,
@@ -102,6 +106,10 @@ async function main() {
 }
 
 main().catch((error) => {
+  if (error.code === 'NTP_TIME_UNAVAILABLE' || error.code === 'FACTINTWS_CHANNEL_VALUES_UNKNOWN') {
+    output({ networkRequests, classification: error.code, message: error.message });
+    process.exitCode = 2; return;
+  }
   const identityRejected = /certificate required|bad certificate|certificate unknown/i.test(error.message);
   const tlsError = identityRejected || /ssl|tls|handshake|bad record mac/i.test(error.message);
   output({ networkRequests, classification: identityRejected ? 'TLS_IDENTITY_REJECTED' : (tlsError ? 'TLS_ERROR' : 'UNKNOWN'),

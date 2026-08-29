@@ -22,6 +22,18 @@ The APK contains client-certificate, private-key and trust-store assets. Only fi
 | Timeout | 120000 ms | `CONFIRMED_FROM_OFFICIAL_APP` |
 | `Accept`, `Connection` | no custom value found | `UNKNOWN`/platform default |
 
+## Live-preparation gates
+
+The app's `Created` source is an NTP receive timestamp. Taxy's live harness now
+models `NTP` and `SYSTEM_CLOCK_FALLBACK` explicitly, but no verified NTP provider
+is configured yet. The harness forbids the system-clock fallback and terminates
+with `NTP_TIME_UNAVAILABLE` before an AT request.
+
+`CanalOrigem` and its `Sistema`, `Versao` child order are confirmed from the
+official app. `Sistema=A` is observed there. The concrete Taxy pair
+`A`/`Taxy 0.7.4` is not demonstrated by that evidence, so the combined
+`CHANNEL_VALUES` gate remains `UNKNOWN` and blocks live execution.
+
 ## Envelope and login flow
 
 The envelope order is `Username`, `Password`, `Nonce`, `Created`. `Security` carries SOAP actor `http://at.pt/actor/SPA`, AT namespace `http://at.pt/wsp/auth`, and `at:Version="2"`. Authentication generates fresh security material for every request. The app's login path submits `EcraInicial` and `DadosContribuinte` as two authenticated calls; it does not establish a reusable SOAP session.
@@ -39,4 +51,8 @@ The wire operation found for the app concept previously called `ecraInicialF` is
 
 ## Runtime boundary
 
-No element is marked `RUNTIME_CONFIRMED`. FactIntWS acceptance of `TesteWebservices.pfx`, the Taxy username, the reconstructed authentication fields, and any operation remains unknown until a separately approved single request. Fatshare remains unchanged and is not a fallback.
+No successful protocol element is marked `RUNTIME_CONFIRMED`. A previous
+authorized attempt failed at TLS before HTTP and promoted no submitted protocol
+element. FactIntWS acceptance of `TesteWebservices.pfx`, the Taxy username, the
+reconstructed authentication fields, and any operation remains unknown.
+Fatshare remains unchanged and is not a fallback.

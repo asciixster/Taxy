@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { generateKeyPairSync } from 'node:crypto';
+import { constants, generateKeyPairSync, privateDecrypt } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
-  assessFactIntWsReadiness, buildFactIntWsEnvelope, buildFactIntWsSecurityMaterial,
+  assessFactIntWsReadiness, assertFactIntWsLiveReadiness, buildFactIntWsEnvelope, buildFactIntWsSecurityMaterial,
   FACTINTWS_ACTOR, FACTINTWS_AUTH_NAMESPACE, FACTINTWS_ENDPOINT_443,
   FACTINTWS_ENDPOINT_8443, FACTINTWS_NAMESPACE, FACTINTWS_OPERATION,
   FACTINTWS_PLANNED_CLIENT_IDENTITY, FACTINTWS_WSSE_NAMESPACE,
@@ -11,6 +11,7 @@ import {
   factIntWsProtocolEvidence, FactIntWsEvidenceStatus, runFactIntWsFeasibility,
   sanitizedFactIntWsResearchEnvelope, serializeFactIntWsOperation,
 } from '../../src/factintws.mjs';
+import { FactIntWsCreatedSource, resolveFactIntWsCreated, validateFactIntWsCreated } from '../../src/factintws_time.mjs';
 import { parseFactIntInvoice, parseFactIntMoneyCents, parseFactIntWsResponse, toAtInvoiceDomain } from '../../src/factintws_parser.mjs';
 import { redact } from '../../src/redaction.mjs';
 
@@ -37,13 +38,33 @@ test('digest vector proves exact SHA-1 input order and UTF-8 encoding', () => {
 });
 
 test('security material encrypts password, digest and nonce without exposing plaintext', () => {
-  const { publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-  const material = buildFactIntWsSecurityMaterial({ aesKey: Buffer.alloc(16, 7), created: '2026-08-29T12:34:56.789Z',
+  const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const aesKey = Buffer.from('000102030405060708090a0b0c0d0e0f', 'hex');
+  const material = buildFactIntWsSecurityMaterial({ aesKey, created: '2026-08-29T12:34:56.789Z',
     password: 'synthetic-password', rsaPublicKey: publicKey });
-  assert.match(material.encryptedPassword, /^[A-Za-z0-9+/]+=*$/);
-  assert.match(material.encryptedDigest, /^[A-Za-z0-9+/]+=*$/);
+  assert.equal(material.encryptedPassword, '5+VGcbAcFdzx/kpX/SVhJ/5t1gRuHOUuQYX7311plKo=');
+  assert.equal(material.encryptedDigest, 'AjdFwLJlXEKpjMHctroOhu/BUA3ZGCEREDzLpg5mAdM=');
   assert.match(material.encryptedNonce, /^[A-Za-z0-9+/]+=*$/);
+  assert.deepEqual(privateDecrypt({ key: privateKey, padding: constants.RSA_PKCS1_PADDING },
+    Buffer.from(material.encryptedNonce, 'base64')), aesKey);
   assert.equal(JSON.stringify(material).includes('synthetic-password'), false);
+});
+
+test('Created requires exact UTC milliseconds and NTP source fails closed', async () => {
+  assert.equal(validateFactIntWsCreated('2026-08-29T12:34:56.789Z'), '2026-08-29T12:34:56.789Z');
+  assert.throws(() => validateFactIntWsCreated('2026-08-29T12:34:56Z'));
+  const fromNtp = await resolveFactIntWsCreated({ ntpTimeProvider: async () => new Date('2026-08-29T12:34:56.789Z') });
+  assert.deepEqual(fromNtp, { created: '2026-08-29T12:34:56.789Z', source: FactIntWsCreatedSource.NTP });
+  await assert.rejects(resolveFactIntWsCreated(), /NTP/);
+  await assert.rejects(resolveFactIntWsCreated({ ntpTimeProvider: async () => { throw new Error('offline'); } }), /NTP/);
+});
+
+test('live harness resolves verified time and channel gates before any AT request', () => {
+  const harness = readFileSync(new URL('../../bin/factintws-live-once.mjs', import.meta.url), 'utf8');
+  assert.equal(harness.includes('new Date().toISOString()'), false);
+  assert(harness.includes('allowSystemClockFallback: false'));
+  assert(harness.indexOf('resolveFactIntWsCreated') < harness.indexOf('networkRequests = 1'));
+  assert(harness.indexOf('assertFactIntWsLiveReadiness') < harness.indexOf('networkRequests = 1'));
 });
 
 test('four read-only request schemas serialize in official field order', () => {
@@ -72,17 +93,20 @@ test('SOAP envelope and HTTP contract match official-app serialization', () => {
   assert(xml.indexOf('<wss:Password') < xml.indexOf('<wss:Nonce>'));
   assert(xml.indexOf('<wss:Nonce>') < xml.indexOf('<wss:Created>'));
   const http = factIntWsHttpContract();
-  assert.equal(http.headers.SOAPAction, `${FACTINTWS_NAMESPACE}/EcraInicial`);
+  assert.equal(http.headers.SOAPAction, 'http://factemi.at.min_financas.pt/factintws/EcraInicial');
   assert.equal(http.headers['Content-Type'], 'text/xml;charset=utf-8');
   assert.equal(http.timeoutMs, 120000);
 });
 
-test('protocol is offline-ready while feasibility command remains zero-network', async () => {
-  assert.equal(assessFactIntWsReadiness().ready, true);
+test('protocol remains fail-closed while concrete CanalOrigem values are unknown', async () => {
+  assert.equal(factIntWsProtocolEvidence.channelStructure.status, FactIntWsEvidenceStatus.OFFICIAL_APP);
+  assert.equal(factIntWsProtocolEvidence.channelValues.status, FactIntWsEvidenceStatus.UNKNOWN);
+  assert.equal(assessFactIntWsReadiness().ready, false);
+  assert.throws(() => assertFactIntWsLiveReadiness(), /channelValues/);
   const result = await runFactIntWsFeasibility({ transport: () => { throw new Error('must not run'); } });
-  assert.equal(result.ready, true);
+  assert.equal(result.ready, false);
   assert.equal(result.networkRequests, 0);
-  assert.equal(result.classification, 'READY_FOR_SEPARATELY_APPROVED_SINGLE_LIVE_TEST');
+  assert.equal(result.classification, 'FACTINTWS_CHANNEL_VALUES_UNKNOWN');
 });
 
 test('money parser returns integer cents without floating point', () => {
