@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { generateKeyPairSync } from 'node:crypto';
 import test from 'node:test';
 import { AtErrorCode } from '../../src/errors.mjs';
@@ -40,6 +41,44 @@ test('historical request reproduces exact SOAP contract and timestamp precision'
     assert.match(encoded, /^[A-Za-z0-9+/]+={0,2}$/);
   }
   assert.equal(request.soapAction, null);
+});
+
+test('current request serializes required body fields in exact order without hidden filters', () => {
+  const xml = buildHistoricalEnvelope(base).xml;
+  const body = xml.match(/<S:Body>([\s\S]*?)<\/S:Body>/)[1];
+  const orderedTags = [...body.matchAll(/<(?:fat:)?([A-Za-z][A-Za-z0-9]*)(?:\s[^>]*)?>/g)]
+    .map((match) => match[1]);
+  assert.deepEqual(orderedTags, [
+    'InvoicesRequest', 'CustomerTaxID', 'StartDate', 'EndDate',
+    'Pagination', 'nPage', 'nDocsPage',
+  ]);
+  for (const absent of [
+    'TaxRegistrationNumber', 'Status', 'InvoiceType', 'Sector', 'Country',
+    'Origin', 'Situation', 'Role', 'FiscalYear', 'Channel', 'Software', 'Mode',
+  ]) assert.equal(body.includes(`<fat:${absent}>`), false, `${absent} must remain absent`);
+});
+
+test('sanitized historical contract records the material current-versus-source diff', () => {
+  const fixtureUrl = new URL('../fixtures/sanitized/historical-fatshare-request-contract.json', import.meta.url);
+  const contract = JSON.parse(readFileSync(fixtureUrl, 'utf8'));
+  assert.equal(contract.source, 'HISTORICAL_CODE_EVIDENCE');
+  assert.equal(contract.requestRoot, 'InvoicesRequest');
+  assert.equal(contract.namespace, HISTORICAL_NAMESPACE);
+  assert.equal(contract.customerRolePartyElement, 'CustomerTaxID');
+  assert.equal(contract.defaultPartyElement, 'TaxRegistrationNumber');
+  assert.deepEqual(contract.fieldOrder, ['party', 'StartDate', 'EndDate', 'Pagination']);
+  assert.equal(contract.dateFormat, 'YYYY-MM-DD');
+  assert.equal(contract.pageDefault, 1);
+  assert.equal(contract.pageSizeDefault, 300);
+  assert.equal(contract.pageSizeMinimum, 1);
+  assert.equal(contract.pageSizeMaximum, 5000);
+  assert.equal(contract.containsAdditionalBodyFilters, false);
+
+  const current = buildHistoricalEnvelope(base).xml;
+  assert(current.includes('<fat:CustomerTaxID>'));
+  assert.equal(current.includes('<fat:TaxRegistrationNumber>'), false);
+  assert(current.includes('<fat:nPage>1</fat:nPage>'));
+  assert(current.includes('<fat:nDocsPage>500</fat:nDocsPage>'));
 });
 
 test('live harness accepts only an ordered, small date interval', () => {

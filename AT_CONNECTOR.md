@@ -76,6 +76,8 @@ Set `AT_START_DATE` and `AT_END_DATE` explicitly. The command validates complete
 
 The opt-in live command is `AT_LIVE_TEST=1 node tools/at_connector/bin/historical-soap-fetch.js`. It makes at most one test request, has no retry, uses 15/60-second connection/total limits, and prints only TLS/HTTP/status/count metadata plus anonymous parsed field presence. Authentication supports a taxpayer's primary NIF credentials and, where applicable, supported AT subuser credentials. `CustomerTaxID` is the primary NIF or the NIF-base of a subuser.
 
+The current request body and its differences from the original local implementation are audited in [FATSHARE_REQUEST_SEMANTICS.md](FATSHARE_REQUEST_SEMANTICS.md) and [FATSHARE_REQUEST_DIFF.md](FATSHARE_REQUEST_DIFF.md). The audit is offline evidence only and does not change the live protocol.
+
 Before creating a socket, the harness checks the configured PKCS#12 exactly once with `AT_CLIENT_PFX_PATH` and `AT_CLIENT_PFX_PASSWORD` (legacy aliases remain accepted). Missing/invalid passphrases, missing certificate/key material and parse failures receive distinct classifications. The preflight never tries an empty or alternative password and never exposes certificate metadata.
 
 ## Official endpoints

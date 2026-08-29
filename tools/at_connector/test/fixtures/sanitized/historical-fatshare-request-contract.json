@@ -1,0 +1,22 @@
+{
+  "source": "HISTORICAL_CODE_EVIDENCE",
+  "sourceReference": "dev-contabilidades baseline 2a874f0 connectors/index.js",
+  "requestRoot": "InvoicesRequest",
+  "namespace": "http://factemi.at.min_financas.pt/fatshareInvoices",
+  "customerRolePartyElement": "CustomerTaxID",
+  "defaultPartyElement": "TaxRegistrationNumber",
+  "fieldOrder": [
+    "party",
+    "StartDate",
+    "EndDate",
+    "Pagination"
+  ],
+  "dateFormat": "YYYY-MM-DD",
+  "maximumDateRangeDays": null,
+  "pageDefault": 1,
+  "pageSizeDefault": 300,
+  "pageSizeMinimum": 1,
+  "pageSizeMaximum": 5000,
+  "soapAction": "Invoices",
+  "containsAdditionalBodyFilters": false
+}

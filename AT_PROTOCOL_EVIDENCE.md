@@ -52,4 +52,8 @@ Three successful authenticated requests returned `EstadoOperacao` 486 and an emp
 
 Before another live request, an offline review must establish the exact date semantics, `CustomerTaxID` role, invoice direction/type selected by `InvoicesRequest`, implicit filters, pagination meaning and differences from the historical source implementation. No broader interval, different month or request parameter is inferred from the empty results.
 
+## Offline request-semantics audit
+
+The completed zero-network audit is recorded in [FATSHARE_REQUEST_SEMANTICS.md](FATSHARE_REQUEST_SEMANTICS.md) and [FATSHARE_REQUEST_DIFF.md](FATSHARE_REQUEST_DIFF.md). It reconstructs the original local serializer from baseline commit `2a874f0` and finds a material role-selector difference: historical code defaulted to `TaxRegistrationNumber` and used `CustomerTaxID` only for an explicit customer role, whereas the current live harness always sends `CustomerTaxID`. This is `HISTORICAL_CODE_EVIDENCE`, not official proof. No request behavior was changed; the next single-variable experiment is documented but not executed.
+
 Official sources remain the AT manuals for [generic aspects](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Outras_entidades/Suporte_tecnologico/Webservice/e_Fatura/Documents/Comunicacao_dos_elementos_dos_documentos_de_faturacao_aspetos_gerais.pdf), [specific aspects](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Outras_entidades/Suporte_tecnologico/Webservice/e_Fatura/Documents/Comunicacao_dos_elementos_dos_documentos_de_faturacao.pdf), and [FAQ 4996](https://info.portaldasfinancas.gov.pt/pt/faturas/Pages/faqs-00996.aspx).
