@@ -9,6 +9,9 @@ This demonstrates:
 - built-in-root validation first, then explicit CA validation in the custom manager;
 - a preferred cipher-suite socket-factory wrapper.
 
-No independent public-key comparison or hostname pin value was found in the reconstructed call path. Therefore `CERTIFICATE_PINNING = UNKNOWN`; `CUSTOM_TRUST_STORE = YES`. TrustKit's presence alone is not proof of pinning.
+The APK network-security configuration contains an enforced TrustKit SHA-256
+pin-set scoped to the service hostname (without subdomains). Therefore
+`CERTIFICATE_PINNING = YES` and `CUSTOM_TRUST_STORE = YES`. Pin values are not
+copied into Taxy: this task records behavior and does not import app trust data.
 
 The APK asset inventory includes production/quality client certificates and private-key containers, a master CA bundle, BKS public-encryption-key material, and legacy PFX assets. These were inventoried by role only. None was read, exported, used, or committed. Taxy must use only its separately legitimate PFX and trusted public AT encryption key material.

@@ -53,6 +53,7 @@ export const factIntWsProtocolEvidence = Object.freeze({
   operationRequiredBody: Object.freeze({ value: Object.freeze(['app:Nif', 'app:Ano', 'app:CanalOrigem']), status: officialApp }),
   soapAction: Object.freeze({ value: `${FACTINTWS_NAMESPACE}/EcraInicial`, status: officialApp }),
   contentType: Object.freeze({ value: 'text/xml;charset=utf-8', status: officialApp }),
+  certificatePinning: Object.freeze({ value: 'TrustKit SHA-256 pin-set, enforced for the service hostname', status: officialApp }),
 });
 
 const criticalFields = Object.freeze([

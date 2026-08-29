@@ -26,6 +26,7 @@ test('official-app protocol constants are evidence, never runtime claims', () =>
   assert.equal(FACTINTWS_AUTH_NAMESPACE, 'http://at.pt/wsp/auth');
   assert.equal(FACTINTWS_ACTOR, 'http://at.pt/actor/SPA');
   assert.equal(FACTINTWS_OPERATION, 'EcraInicial');
+  assert.match(factIntWsProtocolEvidence.certificatePinning.value, /enforced/);
   for (const value of Object.values(factIntWsProtocolEvidence)) assert.notEqual(value.status, FactIntWsEvidenceStatus.RUNTIME);
 });
 
