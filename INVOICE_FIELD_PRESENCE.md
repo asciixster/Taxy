@@ -1,6 +1,6 @@
 # Taxy 0.7.3 — e-Fatura invoice field presence
 
-This table distinguishes runtime observation from offline parser coverage. The latest 0.7.3 preflight on 29 August 2026 found the configured PKCS#12 file but stopped with `PFX_PASSWORD_MISSING` before opening it (`networkRequests: 0`). Consequently, no invoice payload was received and **no field is claimed as runtime-observed**.
+This table distinguishes runtime observation from offline parser coverage. The latest 0.7.3 preflight on 29 August 2026 opened the configured PKCS#12 and confirmed both certificate and private key. The one authorized request then failed during mTLS (`TLS_ERROR`, `networkRequests: 1`) before any HTTP/SOAP response. Consequently, no invoice payload was received and **no field is claimed as runtime-observed**.
 
 The parser coverage column is exercised only with clearly synthetic, sanitized XML. It is not evidence of the AT response contract.
 
@@ -24,9 +24,10 @@ The parser coverage column is exercised only with clearly synthetic, sanitized X
 ## Runtime conclusion
 
 - Interval selected: `2026-08-28` through `2026-08-28`.
-- Actual network requests: `0`.
+- Actual network requests: `1`.
 - HTTP/SOAP/business response: `NOT_AVAILABLE`.
-- Preflight classification: `PFX_PASSWORD_MISSING`.
+- Preflight classification: `READY`.
+- mTLS classification: `TLS_ERROR`.
 - Real invoices parsed: `0`.
 - Protocol changes: none.
 

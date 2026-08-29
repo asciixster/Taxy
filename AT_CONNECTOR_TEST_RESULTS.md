@@ -13,7 +13,7 @@ Updated: 29 August 2026. Environment: AT test only.
 | Empty SOAP 1.1 connectivity probe | HTTP 500, `env:Client / Internal Error` |
 | Single `?wsdl` discovery request | HTTP 500, SOAP XML, no WSDL definitions |
 | Historical authenticated consultation | Experiment 3: HTTP 200, no fault, EstadoOperacao 486, empty list |
-| Real invoice parsing 0.7.3 | Local preflight found the PFX but stopped with `PFX_PASSWORD_MISSING` before opening it (`0` requests). No runtime invoice evidence claimed. |
+| Real invoice parsing 0.7.3 | PFX preflight passed; the one authorized request then failed during mTLS (`TLS_ERROR`, `1` request), before HTTP/SOAP. No runtime invoice evidence claimed. |
 | Production request | **BLOCKED** |
 
 Experiment 1 established the namespace rejection. Experiment 2 changed only that namespace and made one read-only request, but a local TLS-metadata timing bug prevented capture of the response summary. It was fixed and regression-tested offline; the live request was not repeated.

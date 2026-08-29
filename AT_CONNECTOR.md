@@ -107,5 +107,5 @@ The official document does **not** identify RSA padding. The historical path sel
 - No IRS, Modelo 3 or assessment service is inferred from e-Fatura.
 - No automatic persistence of responses. Committed XML fixtures are explicitly sanitized and synthetic; none is represented as a captured AT invoice response.
 - No automatic pagination; the live harness requests only page 1.
-- No real invoice response was captured in 0.7.3. The latest preflight found the file but stopped with `PFX_PASSWORD_MISSING` before opening the bundle or creating a network request. Synthetic fixtures validate parser behavior but are not runtime evidence.
+- No real invoice response was captured in 0.7.3. The latest preflight opened the bundle and confirmed its certificate and private key, but the single authorized request failed during mTLS before HTTP/SOAP. Synthetic fixtures validate parser behavior but are not runtime evidence.
 - No integration with Flutter or `TaxEngine`.
