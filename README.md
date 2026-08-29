@@ -1,6 +1,8 @@
-# taxy.pt — 0.7 First Official AT Validation
+# taxy.pt — 0.7.5 FactIntWS real invoice retrieval
 
 Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
+
+The developer-only connector now implements the read-only `FaturasPorClassificar` and `FaturasPorSetor` operations. Both are runtime-confirmed for controlled empty results on the official-app endpoint at port 8443. They are not exposed in the production UI, and real invoice-item parsing remains explicitly unconfirmed until the AT returns a non-empty list.
 
 A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
