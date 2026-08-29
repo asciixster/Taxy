@@ -26,6 +26,7 @@ row records only a transport failure and does not promote the submitted protocol
 | Taxy client identity acceptance | none | `UNKNOWN` | not tested against FactIntWS | unknown |
 | Business-code semantics | names only | `UNKNOWN` | preserved as opaque values | not blocking transport test |
 | Controlled FactIntWS attempt | `secureConnect`, then OpenSSL `bad record mac` before HTTP | `RUNTIME_CONFIRMED` (transport failure only) | classified `TLS_ERROR`; no SOAP/channel promotion | blocked at transport |
+| TLS 1.2-only experiment | TLS alert 40 before `secureConnect` | `RUNTIME_CONFIRMED` (failure only) | TLS 1.2 did not resolve transport; no protocol promotion | no |
 
 ## Readiness
 
@@ -38,6 +39,6 @@ row records only a transport failure and does not promote the submitted protocol
 
 Best first candidate remains `EcraInicial`, because it is read-only, requires no
 paging/sector choice, and returns aggregates rather than an invoice list or
-taxpayer name. All offline gates pass. The single live request exposed a transport
-failure after `secureConnect` and before HTTP; no second request is authorized by
-this experiment.
+taxpayer name. All offline gates pass. The TLS 1.2-only single-variable experiment
+failed with TLS alert 40 before `secureConnect`; TLS 1.2 is not runtime-confirmed.
+No retry, fallback, cipher variation or second request was made.

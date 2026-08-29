@@ -68,3 +68,8 @@ sanitized OpenSSL category `decryption failed or bad record mac`, before HTTP.
 This promotes neither the channel nor any submitted SOAP/authentication element.
 FactIntWS acceptance of the Taxy username and operation remains unknown.
 Fatshare remains unchanged and is not a fallback.
+
+A subsequent single-variable TLS 1.2-only request failed earlier, with TLS alert
+40 during the handshake and before `secureConnect`. It produced no HTTP or SOAP
+evidence and did not promote TLS 1.2, the operation, or any authentication field
+to runtime-confirmed status.

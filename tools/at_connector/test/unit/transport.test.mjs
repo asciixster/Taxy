@@ -7,16 +7,19 @@ test('TLS metadata is captured before the response releases its socket', () => {
     authorized: true,
     authorizationError: null,
     getProtocol: () => 'TLSv1.3',
-    getCipher: () => ({ standardName: 'TLS_AES_256_GCM_SHA384' }),
+    getCipher: () => ({ standardName: 'TLS_AES_256_GCM_SHA384', version: 'TLSv1.3' }),
+    alpnProtocol: 'http/1.1',
   });
   assert.deepEqual(metadata, {
-    authorized: true, authorizationError: null, protocol: 'TLSv1.3', cipher: 'TLS_AES_256_GCM_SHA384',
+    authorized: true, authorizationError: null, protocol: 'TLSv1.3',
+    cipher: 'TLS_AES_256_GCM_SHA384', cipherVersion: 'TLSv1.3', alpnProtocol: 'http/1.1',
   });
 });
 
 test('released TLS socket is handled without throwing or exposing internals', () => {
   assert.deepEqual(tlsMetadataFromSocket(null), {
     authorized: false, authorizationError: null, protocol: null, cipher: null,
+    cipherVersion: null, alpnProtocol: null,
   });
 });
 

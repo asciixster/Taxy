@@ -8,7 +8,7 @@ import {
   FACTINTWS_ACTOR, FACTINTWS_AUTH_NAMESPACE, FACTINTWS_ENDPOINT_443,
   FACTINTWS_ENDPOINT_8443, FACTINTWS_NAMESPACE, FACTINTWS_OPERATION,
   FACTINTWS_PLANNED_CLIENT_IDENTITY, FACTINTWS_WSSE_NAMESPACE,
-  factIntWsDigestBytes, factIntWsHttpContract, factIntWsOperations,
+  factIntWsDigestBytes, factIntWsHttpContract, factIntWsOperations, factIntWsTlsOptions,
   factIntWsProtocolEvidence, FactIntWsChannelValueStatus, FactIntWsEvidenceStatus,
   resolveFactIntWsChannelFromEnvironment, runFactIntWsFeasibility,
   sanitizedFactIntWsResearchEnvelope, serializeFactIntWsOperation,
@@ -98,6 +98,13 @@ test('SOAP envelope and HTTP contract match official-app serialization', () => {
   assert.equal(http.headers.SOAPAction, 'http://factemi.at.min_financas.pt/factintws/EcraInicial');
   assert.equal(http.headers['Content-Type'], 'text/xml;charset=utf-8');
   assert.equal(http.timeoutMs, 120000);
+});
+
+test('FactIntWS experiment is TLS 1.2 only without custom ciphers', () => {
+  assert.deepEqual(factIntWsTlsOptions(), { minVersion: 'TLSv1.2', maxVersion: 'TLSv1.2' });
+  assert.equal('ciphers' in factIntWsTlsOptions(), false);
+  const harness = readFileSync(new URL('../../bin/factintws-live-once.mjs', import.meta.url), 'utf8');
+  assert(harness.includes('...factIntWsTlsOptions()'));
 });
 
 test('CanalOrigem uses explicit runtime-device metadata and remains fail-closed when absent', async () => {

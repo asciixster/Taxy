@@ -8,7 +8,7 @@ import { inspectAtCipherPublicKey, readAtPublicKey } from '../src/crypto.mjs';
 import {
   buildFactIntWsEnvelope, buildFactIntWsLiveReadinessMatrix, buildFactIntWsSecurityMaterial,
   resolveFactIntWsChannelFromEnvironment,
-  FACTINTWS_ENDPOINT_443, FACTINTWS_OPERATION, factIntWsHttpContract,
+  FACTINTWS_ENDPOINT_443, FACTINTWS_OPERATION, factIntWsHttpContract, factIntWsTlsOptions,
 } from '../src/factintws.mjs';
 import { parseFactIntWsResponse } from '../src/factintws_parser.mjs';
 import { redact } from '../src/redaction.mjs';
@@ -40,12 +40,13 @@ function sendOnce({ xml, pfx, passphrase }) {
   const contract = factIntWsHttpContract(FACTINTWS_OPERATION);
   return new Promise((resolve, reject) => {
     let tlsStage = 'socket-creation';
+    let tlsAtSecureConnect = null;
     const request = https.request(contract.endpoint, {
       method: contract.method,
       pfx,
       passphrase,
       rejectUnauthorized: true,
-      minVersion: 'TLSv1.2',
+      ...factIntWsTlsOptions(),
       headers: { ...contract.headers, 'Content-Length': Buffer.byteLength(xml) },
       timeout: 20_000,
     }, (response) => {
@@ -62,10 +63,17 @@ function sendOnce({ xml, pfx, passphrase }) {
     });
     request.on('socket', (socket) => {
       tlsStage = 'tls-handshake';
-      socket.once('secureConnect', () => { tlsStage = 'http-response'; });
+      socket.once('secureConnect', () => {
+        tlsAtSecureConnect = tlsMetadataFromSocket(socket);
+        tlsStage = 'http-response';
+      });
     });
     request.on('timeout', () => request.destroy(new Error('connection timeout')));
-    request.on('error', (error) => { error.tlsStage = tlsStage; reject(error); });
+    request.on('error', (error) => {
+      error.tlsStage = tlsStage;
+      error.tlsMetadata = tlsAtSecureConnect;
+      reject(error);
+    });
     request.end(xml);
   });
 }
@@ -123,7 +131,8 @@ async function main() {
       channelValueStatus: channelResolution.status,
       mTLS: response.tls.authorized ? 'SUCCESS' : 'FAILED', authorized: response.tls.authorized,
       authorizationError: response.tls.authorizationError, tlsVersion: response.tls.protocol,
-      cipher: response.tls.cipher, httpStatus: response.httpStatus, soapResponse: 'YES',
+      cipher: response.tls.cipher, cipherVersion: response.tls.cipherVersion,
+      alpnProtocol: response.tls.alpnProtocol, httpStatus: response.httpStatus, soapResponse: 'YES',
       soapFault: parsed.fault || null, estadoOperacao: parsed.result?.estadoOperacao ?? null,
       desc: parsed.result?.desc ?? null, operationResponseDetected: !parsed.fault,
       aggregateFieldPresence: parsed.totals ? Object.fromEntries(Object.entries(parsed.totals).map(([key, value]) => [key, value != null])) : {},
@@ -142,8 +151,18 @@ main().catch((error) => {
   }
   const identityRejected = /certificate required|bad certificate|certificate unknown/i.test(error.message);
   const tlsError = identityRejected || /ssl|tls|handshake|bad record mac/i.test(error.message);
+  const tls12BadRecordMac = error.code === 'ERR_SSL_DECRYPTION_FAILED_OR_BAD_RECORD_MAC';
   const diagnostic = tlsFailureDiagnostic(error, error.tlsStage || 'handshake');
-  output({ networkRequests, classification: identityRejected ? 'FACTINTWS_TLS_IDENTITY_NOT_ACCEPTED' : (tlsError ? 'TLS_ERROR' : 'UNKNOWN'),
+  output({ networkRequests, classification: tls12BadRecordMac
+    ? 'TLS12_DID_NOT_RESOLVE_BAD_RECORD_MAC'
+    : (identityRejected ? 'FACTINTWS_TLS_IDENTITY_NOT_ACCEPTED' : (tlsError ? 'TLS_ERROR' : 'UNKNOWN')),
+    secureConnectReached: error.tlsMetadata != null,
+    authorized: error.tlsMetadata?.authorized ?? null,
+    authorizationError: error.tlsMetadata?.authorizationError ?? null,
+    tlsVersion: error.tlsMetadata?.protocol ?? null,
+    cipher: error.tlsMetadata?.cipher ?? null,
+    cipherVersion: error.tlsMetadata?.cipherVersion ?? null,
+    alpnProtocol: error.tlsMetadata?.alpnProtocol ?? null,
     ...diagnostic });
   process.exitCode = 2;
 });

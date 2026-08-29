@@ -27,3 +27,10 @@ OpenSSL category without certificate or secret material. This is offline
 readiness, not runtime acceptance by FactIntWS.
 
 The APK asset inventory includes production/quality client certificates and private-key containers, a master CA bundle, BKS public-encryption-key material, and legacy PFX assets. These were inventoried by role only. None was read, exported, used, or committed. Taxy must use only its separately legitimate PFX and trusted public AT encryption key material.
+
+## TLS 1.2-only experiment
+
+One controlled request set both `minVersion` and `maxVersion` to `TLSv1.2`, with
+no custom cipher list and no other protocol change. The endpoint returned TLS
+alert 40 (`handshake failure`) before `secureConnect`. No protocol, cipher, ALPN,
+HTTP or SOAP metadata was available. TLS 1.2 is therefore not runtime-confirmed.

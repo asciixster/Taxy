@@ -27,11 +27,14 @@ export function buildSoapHeaders(xml, soapAction) {
 }
 
 export function tlsMetadataFromSocket(socket) {
+  const cipher = socket?.getCipher?.() || null;
   return Object.freeze({
     authorized: socket?.authorized === true,
     authorizationError: socket?.authorizationError || null,
     protocol: socket?.getProtocol?.() || null,
-    cipher: socket?.getCipher?.()?.standardName || socket?.getCipher?.()?.name || null,
+    cipher: cipher?.standardName || cipher?.name || null,
+    cipherVersion: cipher?.version || null,
+    alpnProtocol: socket?.alpnProtocol || null,
   });
 }
 

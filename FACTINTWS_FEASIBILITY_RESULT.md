@@ -51,3 +51,19 @@ channel, second certificate, or second operation was attempted.
 
 The next work should target only the post-handshake TLS transport failure. It must
 not vary `CanalOrigem` or SOAP fields without new evidence.
+
+## TLS 1.2-only single-variable experiment
+
+Exactly one later request changed only the TLS maximum version, producing the
+range `TLSv1.2`–`TLSv1.2`. It used no custom cipher list. The server returned
+OpenSSL code `EPROTO` with sanitized TLS alert 40 (`handshake failure`) during the
+handshake, before `secureConnect`.
+
+- network requests: 1;
+- negotiated protocol/cipher/ALPN: not available;
+- HTTP/SOAP: not available;
+- TLS 1.2 runtime-confirmed: no;
+- retries, fallback and additional variations: none.
+
+The next investigation should remain TLS-only and evidence-led. SOAP,
+`CanalOrigem`, credentials and application operations were not implicated.

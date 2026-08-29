@@ -192,6 +192,10 @@ export function factIntWsHttpContract(operation = FACTINTWS_OPERATION) {
       'Content-Type': 'text/xml;charset=utf-8', 'Accept-Encoding': 'gzip' }), timeoutMs: 120000 });
 }
 
+export function factIntWsTlsOptions() {
+  return Object.freeze({ minVersion: 'TLSv1.2', maxVersion: 'TLSv1.2' });
+}
+
 export function sanitizedFactIntWsResearchEnvelope() {
   return buildFactIntWsEnvelope({ username: '[REDACTED_USERNAME]',
     credentials: { encryptedDigest: '[REDACTED]', encryptedPassword: '[REDACTED]', encryptedNonce: '[REDACTED]', created: '[REDACTED]' },
