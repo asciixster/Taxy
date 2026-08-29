@@ -6,6 +6,7 @@ import 'package:taxy_pt/modules/efatura/application/efatura_read_only_service.da
 import 'package:taxy_pt/modules/efatura/domain/efatura_models.dart';
 import 'package:taxy_pt/modules/efatura/infrastructure/efatura_runtime_bridge.dart';
 import 'package:taxy_pt/modules/efatura/screens/efatura_screen.dart';
+import 'package:taxy_pt/l10n/app_localizations.dart';
 
 void main() {
   const sector = AtExpenseSector(
@@ -38,17 +39,15 @@ void main() {
     await _pump(tester, _FakeGateway(overview: overview), _readyStore());
     await tester.pumpAndSettle();
     expect(find.text('Resumo e-Fatura'), findsOneWidget);
-    expect(find.text('Benefício provisório: 12,00 €'), findsOneWidget);
-    expect(
-      find.text('Não tens faturas pendentes de classificação.'),
-      findsOneWidget,
-    );
+    expect(find.text('Benefício provisório'), findsOneWidget);
+    expect(find.textContaining('12,00'), findsOneWidget);
+    expect(find.text('Sem faturas por validar'), findsOneWidget);
   });
   testWidgets('mostra setores sem inventar contagem', (tester) async {
     await _pump(tester, _FakeGateway(overview: overview), _readyStore());
     await tester.pumpAndSettle();
     expect(find.text('Saúde'), findsOneWidget);
-    expect(find.textContaining('Benefício provisório: 2,50 €'), findsOneWidget);
+    expect(find.textContaining('2,50'), findsOneWidget);
     expect(find.textContaining('faturas no setor'), findsNothing);
   });
   testWidgets('mostra invoice sintética sem identificadores técnicos', (
@@ -60,26 +59,25 @@ void main() {
       _readyStore(),
     );
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('sector-C05')));
+    await tester.scrollUntilVisible(find.byKey(const Key('sector-C05')), 200);
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('sector-C05')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Emitente sintético'), 250);
     expect(find.text('Emitente sintético'), findsOneWidget);
-    expect(find.text('23,45 €'), findsOneWidget);
+    expect(find.textContaining('23,45'), findsOneWidget);
     expect(find.textContaining('IdDocumento'), findsNothing);
     expect(find.textContaining('NIF'), findsNothing);
   });
   testWidgets('mostra empty state de setor', (tester) async {
     await _pump(tester, _FakeGateway(overview: overview), _readyStore());
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('sector-C05')));
+    await tester.scrollUntilVisible(find.byKey(const Key('sector-C05')), 200);
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('sector-C05')));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Não foram encontrados documentos.'),
-      250,
-    );
-    expect(find.text('Não foram encontrados documentos.'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Sem faturas neste setor'), 250);
+    expect(find.text('Sem faturas neste setor'), findsOneWidget);
   });
   testWidgets('erro de autenticação tem mensagem específica', (tester) async {
     await _pump(
@@ -105,7 +103,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Ligar ao Portal das Finanças'), findsOneWidget);
+    expect(find.text('Ligar ao e-Fatura'), findsWidgets);
     expect(find.text('Erro desconhecido'), findsNothing);
   });
   testWidgets('login guarda com segurança, valida com overview e limpa senha', (
@@ -145,6 +143,9 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
+          locale: const Locale('pt', 'PT'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           home: EfaturaScreen(
             service: EfaturaReadOnlyService(
               _FakeGateway(overview: overview),
@@ -181,9 +182,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('efatura-disconnect')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('efatura-disconnect-confirm')));
+    await tester.pumpAndSettle();
     expect(store.clearCalls, 1);
     expect(find.text('Resumo e-Fatura'), findsNothing);
-    expect(find.text('Ligar ao Portal das Finanças'), findsOneWidget);
+    expect(find.text('Ligar ao e-Fatura'), findsWidgets);
   });
   testWidgets('refresh é apenas manual', (tester) async {
     final gateway = _FakeGateway(overview: overview);
@@ -196,14 +199,100 @@ void main() {
     await tester.pumpAndSettle();
     expect(gateway.overviewCalls, 2);
   });
+
+  testWidgets('English copy and localized sector are rendered naturally', (
+    tester,
+  ) async {
+    await _pumpLocalized(
+      tester,
+      _FakeGateway(overview: overview),
+      _readyStore(),
+      locale: const Locale('en'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('e-Fatura overview'), findsOneWidget);
+    expect(find.text('Provisional tax benefit'), findsOneWidget);
+    expect(find.text('No invoices to validate'), findsOneWidget);
+    expect(find.text('Health'), findsOneWidget);
+  });
+
+  testWidgets('local validation blocks malformed credentials', (tester) async {
+    final store = _FakeStore(
+      readiness: const EfaturaRuntimeReadiness(
+        hasCredentials: false,
+        hasClientIdentity: true,
+        hasCipherCertificate: true,
+      ),
+    );
+    await _pump(tester, _FakeGateway(overview: overview), store);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('efatura-nif')), '12');
+    await tester.tap(find.byKey(const Key('efatura-connect')));
+    await tester.pump();
+    expect(find.text('Introduz um NIF com 9 algarismos.'), findsOneWidget);
+    expect(find.text('Introduz a senha.'), findsOneWidget);
+    expect(store.saveCalls, 0);
+  });
+
+  testWidgets('small dark screen with large text has no overflow', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await _pumpLocalized(
+      tester,
+      _FakeGateway(overview: overview),
+      _readyStore(),
+      locale: const Locale('en'),
+      themeMode: ThemeMode.dark,
+      textScaler: const TextScaler.linear(2),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Experimental'), findsOneWidget);
+  });
+
+  for (final entry in <EfaturaFailureKind, String>{
+    EfaturaFailureKind.serviceUnavailable: 'Serviço indisponível',
+    EfaturaFailureKind.parsing: 'Resposta inesperada',
+  }.entries) {
+    testWidgets('${entry.key.name} tem copy humana', (tester) async {
+      await _pump(tester, _FailingGateway(entry.key), _readyStore());
+      await tester.pumpAndSettle();
+      expect(find.text(entry.value), findsOneWidget);
+      expect(find.textContaining('SOAP'), findsNothing);
+      expect(find.textContaining('NTP'), findsNothing);
+    });
+  }
 }
 
 Future<void> _pump(
   WidgetTester tester,
   EfaturaReadOnlyGateway gateway,
   EfaturaCredentialStore store,
-) => tester.pumpWidget(
+) => _pumpLocalized(tester, gateway, store);
+
+Future<void> _pumpLocalized(
+  WidgetTester tester,
+  EfaturaReadOnlyGateway gateway,
+  EfaturaCredentialStore store, {
+  Locale locale = const Locale('pt', 'PT'),
+  ThemeMode themeMode = ThemeMode.light,
+  TextScaler textScaler = TextScaler.noScaling,
+}) => tester.pumpWidget(
   MaterialApp(
+    locale: locale,
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    themeMode: themeMode,
+    theme: ThemeData.light(useMaterial3: true),
+    darkTheme: ThemeData.dark(useMaterial3: true),
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+      child: child!,
+    ),
     home: EfaturaScreen(service: EfaturaReadOnlyService(gateway, store)),
   ),
 );

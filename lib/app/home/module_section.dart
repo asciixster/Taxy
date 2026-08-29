@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../modules/taxy_module.dart';
 
 final class ModuleSection extends StatelessWidget {
@@ -16,6 +17,7 @@ final class ModuleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final active = TaxyModuleRegistry.byId('irs');
     final comingCount = TaxyModuleRegistry.modules
         .where((module) => !module.isActive)
@@ -23,7 +25,7 @@ final class ModuleSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Simuladores', style: Theme.of(context).textTheme.titleLarge),
+        Text(l10n.simulators, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         Card(
           child: ListTile(
@@ -36,7 +38,7 @@ final class ModuleSection extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
             subtitle: Text(active.description),
-            trailing: const Chip(label: Text('Disponível')),
+            trailing: Chip(label: Text(l10n.available)),
             onTap: onOpenIrs,
           ),
         ),
@@ -51,28 +53,26 @@ final class ModuleSection extends StatelessWidget {
                 'e-Fatura',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
-              subtitle: const Text(
-                'Consulta read-only · funcionalidade interna',
-              ),
-              trailing: const Chip(label: Text('Experimental')),
+              subtitle: Text(l10n.efaturaModuleDescription),
+              trailing: Chip(label: Text(l10n.experimental)),
               onTap: onOpenEfatura,
             ),
           ),
         ],
         const SizedBox(height: 10),
         Semantics(
-          label: '$comingCount simuladores futuros em preparação',
+          label: l10n.futureSimulatorsSemantics(comingCount),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.schedule_rounded, size: 18),
-                SizedBox(width: 9),
-                Expanded(child: Text('Outros simuladores · Em breve')),
+                const Icon(Icons.schedule_rounded, size: 18),
+                const SizedBox(width: 9),
+                Expanded(child: Text(l10n.futureSimulators)),
               ],
             ),
           ),

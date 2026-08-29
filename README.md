@@ -16,6 +16,11 @@ native module performs NTP, cryptography, mTLS, SOAP and parsing. Neither a PFX
 nor a Node runtime is bundled. The feature remains off by default and requires
 explicit certificate provisioning on a real Android device.
 
+The experimental UI supports Portuguese (Portugal) and English, follows the
+system language by default, and offers an immediate persisted language override
+under Settings. Currency, dates and pluralization are locale-aware; the feature
+flag remains disabled by default.
+
 The controlled 0.7.6 discovery used two FactIntWS requests. The 2026 overview
 returned sectors `C01` through `C15` and `C99`, all without activity; the 2025
 overview returned business status `419`. No sector had evidence justifying an
