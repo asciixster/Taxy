@@ -9,17 +9,18 @@ Evidence: `CONFIRMED_FROM_OFFICIAL_APP`. Wire operation: `EcraInicial`.
   <app:Nif>[REDACTED_IDENTIFIER]</app:Nif>
   <app:Ano>[YEAR]</app:Ano>
   <app:CanalOrigem>
-    <app:Sistema>[SYSTEM]</app:Sistema>
-    <app:Versao>[VERSION]</app:Versao>
+    <app:Sistema>A</app:Sistema>
+    <app:Versao>Android SDK: &lt;SDK_INT&gt; (&lt;RELEASE&gt;)</app:Versao>
   </app:CanalOrigem>
 </app:EcraInicialRequest>
 ```
 
-The app uses system `A`; the version string describes Android SDK/API. The
-structure and observed app value are evidence, but they do not prove that the
-candidate Taxy pair `A` / `Taxy 0.7.4` is accepted. The combined concrete-value
-status is therefore `CHANNEL_VALUES = UNKNOWN`, and live execution is blocked
-until that choice is documented with adequate evidence.
+The app uses system `A`; the exact version formula is
+`Android SDK: <SDK_INT> (<RELEASE>)`. Both are confirmed from the official Android
+app. The placeholders deliberately are not live values: the APK contains no fixed
+runtime SDK/release pair. The combined concrete-value status therefore remains
+`CHANNEL_VALUES = UNKNOWN`, and live execution is blocked until that pair is
+obtained without guessing.
 
 ## Response fields
 

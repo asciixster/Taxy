@@ -4,15 +4,18 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { validateAtUsername } from '../src/auth.mjs';
-import { readAtPublicKey } from '../src/crypto.mjs';
+import { inspectAtCipherPublicKey, readAtPublicKey } from '../src/crypto.mjs';
 import {
-  assertFactIntWsLiveReadiness, buildFactIntWsEnvelope, buildFactIntWsSecurityMaterial,
+  buildFactIntWsEnvelope, buildFactIntWsLiveReadinessMatrix, buildFactIntWsSecurityMaterial,
+  buildOfficialAppChannel,
   FACTINTWS_ENDPOINT_443, FACTINTWS_OPERATION, factIntWsHttpContract,
 } from '../src/factintws.mjs';
 import { parseFactIntWsResponse } from '../src/factintws_parser.mjs';
 import { redact } from '../src/redaction.mjs';
 import { tlsMetadataFromSocket } from '../src/transport.mjs';
 import { resolveFactIntWsCreated } from '../src/factintws_time.mjs';
+import { ntpProviderFromEnvironment } from '../src/ntp.mjs';
+import { inspectPfxReadiness, PfxPreflightClassification, tlsFailureDiagnostic } from '../src/tls_preflight.mjs';
 
 const required = ['AT_USERNAME', 'AT_PASSWORD', 'AT_CIPHER_CERT_PATH', 'AT_CLIENT_PFX_PATH', 'AT_CLIENT_PFX_PASSWORD'];
 let networkRequests = 0;
@@ -36,6 +39,7 @@ function classifyFault(fault) {
 function sendOnce({ xml, pfx, passphrase }) {
   const contract = factIntWsHttpContract(FACTINTWS_OPERATION);
   return new Promise((resolve, reject) => {
+    let tlsStage = 'socket-creation';
     const request = https.request(contract.endpoint, {
       method: contract.method,
       pfx,
@@ -56,8 +60,12 @@ function sendOnce({ xml, pfx, passphrase }) {
         } catch (error) { reject(error); }
       });
     });
+    request.on('socket', (socket) => {
+      tlsStage = 'tls-handshake';
+      socket.once('secureConnect', () => { tlsStage = 'http-response'; });
+    });
     request.on('timeout', () => request.destroy(new Error('connection timeout')));
-    request.on('error', reject);
+    request.on('error', (error) => { error.tlsStage = tlsStage; reject(error); });
     request.end(xml);
   });
 }
@@ -66,20 +74,40 @@ async function main() {
   if (process.env.AT_LIVE_TEST !== '1') return fail('LIVE_TEST_DISABLED', 'Explicit opt-in is required');
   if (required.some((key) => !process.env[key])) return fail('AUTH_CONFIGURATION_MISSING', 'Required local configuration is missing');
   const username = validateAtUsername(process.env.AT_USERNAME);
-  const pfx = readFileSync(process.env.AT_CLIENT_PFX_PATH);
-  const aesKey = randomBytes(16);
+  const pfxPreflight = inspectPfxReadiness({ pfxPath: process.env.AT_CLIENT_PFX_PATH,
+    pfxPassword: process.env.AT_CLIENT_PFX_PASSWORD });
+  if (pfxPreflight.classification !== PfxPreflightClassification.READY) {
+    return fail(pfxPreflight.classification, 'Local PFX preflight did not pass');
+  }
+  inspectAtCipherPublicKey(process.env.AT_CIPHER_CERT_PATH);
+  // All non-time gates pass before the one permitted NTP exchange.
+  const localReadiness = buildFactIntWsLiveReadinessMatrix({ ntpReady: false,
+    pfxReady: true, tlsDiagnosticReady: true });
+  const localBlockers = Object.entries(localReadiness)
+    .filter(([name, ready]) => name !== 'NTP_READY' && name !== 'READY' && !ready)
+    .map(([name]) => name);
+  if (localBlockers.length) return fail('FACTINTWS_CHANNEL_VALUES_UNKNOWN',
+    `FactIntWS local live gates are not ready: ${localBlockers.join(', ')}`);
+  let pfx;
+  let aesKey;
   try {
-    // Fail closed until a verified NTP provider is wired in. A system-clock
-    // timestamp must never be presented as equivalent to the app's NTP source.
-    const { created, source: createdSource } = await resolveFactIntWsCreated({ allowSystemClockFallback: false });
-    assertFactIntWsLiveReadiness();
+    const ntpTimeProvider = ntpProviderFromEnvironment();
+    const { created, source: createdSource } = await resolveFactIntWsCreated({
+      ntpTimeProvider, allowSystemClockFallback: false,
+    });
+    const finalReadiness = buildFactIntWsLiveReadinessMatrix({ ntpReady: true,
+      pfxReady: true, tlsDiagnosticReady: true });
+    if (!finalReadiness.READY) return fail('FACTINTWS_LIVE_NOT_READY', 'FactIntWS live readiness matrix did not pass');
+    pfx = readFileSync(process.env.AT_CLIENT_PFX_PATH);
+    aesKey = randomBytes(16);
+    const channel = buildOfficialAppChannel({ sdkInt: process.env.FACTINTWS_ANDROID_SDK_INT,
+      release: process.env.FACTINTWS_ANDROID_RELEASE });
     const credentials = buildFactIntWsSecurityMaterial({
       aesKey, created, password: process.env.AT_PASSWORD,
       rsaPublicKey: readAtPublicKey(process.env.AT_CIPHER_CERT_PATH),
     });
     const xml = buildFactIntWsEnvelope({ username, credentials,
-      input: { nif: username.split('/')[0], year: created.slice(0, 4),
-        channel: { system: 'A', version: 'Taxy 0.7.4' } } });
+      input: { nif: username.split('/')[0], year: created.slice(0, 4), channel } });
     networkRequests = 1;
     const response = await sendOnce({ xml, pfx, passphrase: process.env.AT_CLIENT_PFX_PASSWORD });
     let parsed;
@@ -93,15 +121,16 @@ async function main() {
     const classification = parsed.fault ? classifyFault(parsed.fault) : 'SUCCESS';
     output({ networkRequests, operation: FACTINTWS_OPERATION, createdSource,
       mTLS: response.tls.authorized ? 'SUCCESS' : 'FAILED', authorized: response.tls.authorized,
-      tlsVersion: response.tls.protocol, httpStatus: response.httpStatus, soapResponse: 'YES',
+      authorizationError: response.tls.authorizationError, tlsVersion: response.tls.protocol,
+      cipher: response.tls.cipher, httpStatus: response.httpStatus, soapResponse: 'YES',
       soapFault: parsed.fault || null, estadoOperacao: parsed.result?.estadoOperacao ?? null,
       desc: parsed.result?.desc ?? null, operationResponseDetected: !parsed.fault,
       aggregateFieldPresence: parsed.totals ? Object.fromEntries(Object.entries(parsed.totals).map(([key, value]) => [key, value != null])) : {},
       classification });
     if (classification !== 'SUCCESS') process.exitCode = 2;
   } finally {
-    aesKey.fill(0);
-    pfx.fill(0);
+    aesKey?.fill(0);
+    pfx?.fill(0);
   }
 }
 
@@ -112,7 +141,8 @@ main().catch((error) => {
   }
   const identityRejected = /certificate required|bad certificate|certificate unknown/i.test(error.message);
   const tlsError = identityRejected || /ssl|tls|handshake|bad record mac/i.test(error.message);
-  output({ networkRequests, classification: identityRejected ? 'TLS_IDENTITY_REJECTED' : (tlsError ? 'TLS_ERROR' : 'UNKNOWN'),
-    errorCode: error.code || null, message: error.message });
+  const diagnostic = tlsFailureDiagnostic(error, error.tlsStage || 'handshake');
+  output({ networkRequests, classification: identityRejected ? 'FACTINTWS_TLS_IDENTITY_NOT_ACCEPTED' : (tlsError ? 'TLS_ERROR' : 'UNKNOWN'),
+    ...diagnostic });
   process.exitCode = 2;
 });

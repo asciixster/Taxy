@@ -2,12 +2,17 @@ import https from 'node:https';
 import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { AtConnectorError, AtErrorCode } from './errors.mjs';
+import { tlsFailureDiagnostic } from './tls_preflight.mjs';
 
 export class AtTransportError extends AtConnectorError {
-  constructor(message, cause) {
+  constructor(message, cause, tlsStage = 'handshake') {
     const clientRejected = /certificate required|alert bad certificate|certificate unknown/i.test(cause?.message || '');
-    super(clientRejected ? AtErrorCode.CLIENT_CERT_REJECTED : AtErrorCode.TLS_ERROR, message, { cause });
+    const tlsDiagnostic = tlsFailureDiagnostic(cause, tlsStage);
+    super(clientRejected ? AtErrorCode.CLIENT_CERT_REJECTED : AtErrorCode.TLS_ERROR, message, {
+      cause, details: { tlsDiagnostic },
+    });
     this.name = 'AtTransportError';
+    this.tlsDiagnostic = tlsDiagnostic;
   }
 }
 
@@ -35,6 +40,7 @@ export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction, 
   return new Promise((resolve, reject) => {
     let pfx;
     try { pfx = readFileSync(pfxPath); } catch (error) { reject(new AtTransportError('Unable to read client certificate', error)); return; }
+    let tlsStage = 'socket-creation';
     const request = https.request(endpoint, {
       method: 'POST',
       pfx,
@@ -60,10 +66,14 @@ export function sendMtlsSoap({ endpoint, pfxPath, pfxPassword, xml, soapAction, 
       });
     });
     const totalTimer = setTimeout(() => request.destroy(new Error('AT request total timeout exceeded')), totalTimeoutMs);
+    request.on('socket', (socket) => {
+      tlsStage = 'tls-handshake';
+      socket.once('secureConnect', () => { tlsStage = 'http-response'; });
+    });
     request.on('timeout', () => request.destroy(new Error('AT connection timeout exceeded')));
     request.on('error', (error) => {
       clearTimeout(totalTimer);
-      reject(new AtTransportError('AT TLS/HTTP request failed', error));
+      reject(new AtTransportError('AT TLS/HTTP request failed', error, tlsStage));
     });
     request.end(xml);
     pfx.fill(0);

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   assessFactIntWsReadiness, assertFactIntWsLiveReadiness, buildFactIntWsEnvelope, buildFactIntWsSecurityMaterial,
+  buildFactIntWsLiveReadinessMatrix, buildOfficialAppChannel,
   FACTINTWS_ACTOR, FACTINTWS_AUTH_NAMESPACE, FACTINTWS_ENDPOINT_443,
   FACTINTWS_ENDPOINT_8443, FACTINTWS_NAMESPACE, FACTINTWS_OPERATION,
   FACTINTWS_PLANNED_CLIENT_IDENTITY, FACTINTWS_WSSE_NAMESPACE,
@@ -100,9 +101,23 @@ test('SOAP envelope and HTTP contract match official-app serialization', () => {
 
 test('protocol remains fail-closed while concrete CanalOrigem values are unknown', async () => {
   assert.equal(factIntWsProtocolEvidence.channelStructure.status, FactIntWsEvidenceStatus.OFFICIAL_APP);
+  assert.deepEqual(buildOfficialAppChannel({ sdkInt: 35, release: '15' }),
+    { system: 'A', version: 'Android SDK: 35 (15)' });
+  assert.throws(() => buildOfficialAppChannel({ sdkInt: null, release: null }));
   assert.equal(factIntWsProtocolEvidence.channelValues.status, FactIntWsEvidenceStatus.UNKNOWN);
   assert.equal(assessFactIntWsReadiness().ready, false);
   assert.throws(() => assertFactIntWsLiveReadiness(), /channelValues/);
+  const matrix = buildFactIntWsLiveReadinessMatrix({ ntpReady: true, pfxReady: true, tlsDiagnosticReady: true });
+  assert.equal(matrix.DIGEST_READY, true);
+  assert.equal(matrix.NONCE_READY, true);
+  assert.equal(matrix.CREATED_READY, true);
+  assert.equal(matrix.SOAPACTION_READY, true);
+  assert.equal(matrix.ECRAINICIAL_SCHEMA_READY, true);
+  assert.equal(matrix.NTP_READY, true);
+  assert.equal(matrix.CANALORIGEM_READY, false);
+  assert.equal(matrix.PFX_READY, true);
+  assert.equal(matrix.TLS_DIAGNOSTIC_READY, true);
+  assert.equal(matrix.READY, false);
   const result = await runFactIntWsFeasibility({ transport: () => { throw new Error('must not run'); } });
   assert.equal(result.ready, false);
   assert.equal(result.networkRequests, 0);

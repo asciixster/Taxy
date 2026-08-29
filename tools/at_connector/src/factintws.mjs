@@ -16,6 +16,8 @@ export const FACTINTWS_AUTH_NAMESPACE = 'http://at.pt/wsp/auth';
 export const FACTINTWS_ACTOR = 'http://at.pt/actor/SPA';
 export const FACTINTWS_OPERATION = 'EcraInicial';
 export const FACTINTWS_PLANNED_CLIENT_IDENTITY = 'TesteWebservices.pfx';
+export const FACTINTWS_CHANNEL_SYSTEM = 'A';
+export const FACTINTWS_CHANNEL_VERSION_TEMPLATE = 'Android SDK: <SDK_INT> (<RELEASE>)';
 const officialApp = FactIntWsEvidenceStatus.OFFICIAL_APP;
 
 export const factIntWsOperations = Object.freeze({
@@ -54,12 +56,22 @@ export const factIntWsProtocolEvidence = Object.freeze({
   soapAction: Object.freeze({ value: `${FACTINTWS_NAMESPACE}/EcraInicial`, status: officialApp }),
   contentType: Object.freeze({ value: 'text/xml;charset=utf-8', status: officialApp }),
   channelStructure: Object.freeze({ value: Object.freeze(['Sistema', 'Versao']), status: officialApp }),
-  channelSystemValue: Object.freeze({ value: 'A', status: officialApp }),
+  channelSystemValue: Object.freeze({ value: FACTINTWS_CHANNEL_SYSTEM, status: officialApp }),
+  channelVersionFormula: Object.freeze({ value: FACTINTWS_CHANNEL_VERSION_TEMPLATE, status: officialApp }),
   channelVersionValue: Object.freeze({ value: null, status: FactIntWsEvidenceStatus.UNKNOWN }),
   channelValues: Object.freeze({ value: null, status: FactIntWsEvidenceStatus.UNKNOWN }),
   certificatePinning: Object.freeze({ value: 'TrustKit SHA-256 pin-set, enforced for the service hostname', status: officialApp }),
   taxyCertificatePinning: Object.freeze({ value: 'NOT_IMPLEMENTED', status: FactIntWsEvidenceStatus.UNKNOWN }),
 });
+
+export function buildOfficialAppChannel({ sdkInt, release }) {
+  const sdk = String(sdkInt ?? '');
+  const version = String(release ?? '');
+  if (!/^\d{1,3}$/.test(sdk) || !/^[A-Za-z0-9._-]{1,32}$/.test(version)) {
+    throw new TypeError('Official-app channel requires observed Android SDK_INT and RELEASE values');
+  }
+  return Object.freeze({ system: FACTINTWS_CHANNEL_SYSTEM, version: `Android SDK: ${sdk} (${version})` });
+}
 
 const criticalFields = Object.freeze([
   'passwordDigestFormula', 'passwordDigestInputOrder', 'passwordDigestEncoding',
@@ -84,6 +96,24 @@ export function assertFactIntWsLiveReadiness(evidence = factIntWsProtocolEvidenc
   if (!readiness.ready) throw new AtConnectorError(readiness.classification,
     `FactIntWS live gate is not ready: ${readiness.missing.join(', ')}`);
   return readiness;
+}
+
+export function buildFactIntWsLiveReadinessMatrix({ ntpReady = false, pfxReady = false,
+  tlsDiagnosticReady = false, evidence = factIntWsProtocolEvidence } = {}) {
+  const accepted = [FactIntWsEvidenceStatus.OFFICIAL_APP, FactIntWsEvidenceStatus.RUNTIME];
+  const has = (field) => accepted.includes(evidence[field]?.status);
+  const matrix = {
+    DIGEST_READY: has('passwordDigestFormula') && has('passwordDigestInputOrder') && has('passwordDigestEncoding'),
+    NONCE_READY: has('nonceByteLength') && has('nonceGeneration') && has('nonceXmlEncoding'),
+    CREATED_READY: has('createdTimezone') && has('createdPrecision') && has('createdFormat'),
+    SOAPACTION_READY: has('soapAction'),
+    ECRAINICIAL_SCHEMA_READY: has('operationRootElement') && has('operationRequiredBody'),
+    NTP_READY: ntpReady === true,
+    CANALORIGEM_READY: has('channelValues'),
+    PFX_READY: pfxReady === true,
+    TLS_DIAGNOSTIC_READY: tlsDiagnosticReady === true,
+  };
+  return Object.freeze({ ...matrix, READY: Object.values(matrix).every(Boolean) });
 }
 
 function aesEncrypt(key, bytes) {

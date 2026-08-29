@@ -37,9 +37,10 @@ Java PKCS#5 padding for AES is byte-compatible with PKCS#7. The digest is not th
 | Created source | NTP receive timestamp, UTC |
 | Created representation | Joda ISO-8601 UTC with millisecond precision and trailing `Z` |
 
-The live harness no longer substitutes `new Date().toISOString()` silently.
-Until a verified NTP provider is configured it returns `NTP_TIME_UNAVAILABLE`;
-system-clock fallback is represented explicitly but disabled for live use.
+The live harness no longer substitutes `new Date().toISOString()` silently. Its
+one-exchange NTP provider validates the correlated response and supplies the UTC
+timestamp. A real check succeeded against `time.cloudflare.com`. Failures return
+`NTP_TIME_UNAVAILABLE`; system-clock fallback remains disabled for live use.
 
 ## Synthetic vector
 

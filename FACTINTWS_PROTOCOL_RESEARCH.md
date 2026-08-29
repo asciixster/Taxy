@@ -24,15 +24,23 @@ The APK contains client-certificate, private-key and trust-store assets. Only fi
 
 ## Live-preparation gates
 
-The app's `Created` source is an NTP receive timestamp. Taxy's live harness now
-models `NTP` and `SYSTEM_CLOCK_FALLBACK` explicitly, but no verified NTP provider
-is configured yet. The harness forbids the system-clock fallback and terminates
-with `NTP_TIME_UNAVAILABLE` before an AT request.
+The app's `Created` source is an NTP receive timestamp. Taxy's isolated SNTP/NTP
+provider performs one UDP exchange, validates the correlated server response and
+returns its UTC transmit timestamp. A real one-exchange check against the single
+configured server `time.cloudflare.com` succeeded on 2026-08-29. Live use has no
+system-clock fallback and no retry.
 
 `CanalOrigem` and its `Sistema`, `Versao` child order are confirmed from the
-official app. `Sistema=A` is observed there. The concrete Taxy pair
-`A`/`Taxy 0.7.4` is not demonstrated by that evidence, so the combined
-`CHANNEL_VALUES` gate remains `UNKNOWN` and blocks live execution.
+official app. The exact Android value is `Sistema=A`; `Versao` is built as
+`Android SDK: <SDK_INT> (<RELEASE>)`. Both facts are
+`CONFIRMED_FROM_OFFICIAL_APP`, but the APK contains no fixed runtime SDK/release
+pair. With no connected Android runtime providing those values, the composite
+channel remains unknown and blocks live execution.
+
+The legitimate local `TesteWebservices.pfx` passes the offline preflight: it
+opens, contains the private key and three certificates, has a valid chain and TLS
+Web Client Authentication EKU, and validates against the local CA material. This
+proves local readiness only; it does not prove FactIntWS acceptance.
 
 ## Envelope and login flow
 

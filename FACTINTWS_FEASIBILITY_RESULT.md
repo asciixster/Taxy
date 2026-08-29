@@ -2,13 +2,14 @@
 
 ## Offline decision
 
-`CONTINUE OFFLINE — LIVE GATES NOT READY`
+`CONTINUE WITH ONE TARGETED FIX — LIVE GATE NOT READY`
 
 The cryptographic and wire reconstruction gates pass for the `EcraInicial` operation. The
 offline phase made zero network requests and did not open any certificate or
 credential. Readiness means the official app contract is sufficiently
-reconstructed; live execution remains blocked by the unconfigured verified NTP
-source and unknown concrete Taxy `CanalOrigem` values.
+reconstructed. A one-exchange NTP provider and the local PFX preflight now pass;
+live execution remains blocked only by the unknown concrete runtime Android
+SDK/release pair used to construct `CanalOrigem.Versao`.
 
 | Field | Result |
 |---|---|
@@ -18,8 +19,10 @@ source and unknown concrete Taxy `CanalOrigem` values.
 | Request schema | complete |
 | Response schema/parser | complete for documented DTO fields |
 | HTTP/SOAP serialization | complete, including exact unquoted SOAPAction |
-| Created source | NTP required; provider unavailable; system fallback forbidden |
-| Concrete channel values | unknown; live-blocking |
+| Created source | NTP verified in one real UDP exchange; system fallback forbidden |
+| Channel evidence | `Sistema=A`; exact dynamic `Versao` formula confirmed |
+| Concrete channel values | runtime SDK/release unavailable; live-blocking |
+| Local PFX preflight | READY; key present; 3 certs; valid chain/clientAuth EKU |
 | Network requests | 0 |
 | Runtime-confirmed elements | none |
 | Official-app private identity used | no |
@@ -40,7 +43,8 @@ observed, so the run neither confirms nor rejects the Taxy identity.
 
 ## Recommended single live test after both gates pass
 
-Use only the legitimate `TesteWebservices.pfx`, a locally validated AT RSA
-public cipher certificate, the primary endpoint 443 and one `EcraInicial`
-request. Do not retry or fall back. Before authorization, wire a verified NTP
-provider, document the Taxy channel values, and complete the local TLS diagnosis.
+Obtain one evidence-backed Android `SDK_INT` and `RELEASE` pair for the intended
+mobile channel, then use only the legitimate `TesteWebservices.pfx`, the locally
+validated AT RSA public cipher certificate, the primary endpoint 443 and one
+`EcraInicial` request. Do not retry or fall back. No FactIntWS request was made in
+this gate-completion task because the channel gate remained closed.

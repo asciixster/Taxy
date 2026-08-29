@@ -19,4 +19,11 @@ The Taxy live harness currently uses normal platform CA validation with
 That is a client-side hardening difference, not evidence of server protocol
 incompatibility, and certificate validation is not disabled.
 
+The local `TesteWebservices.pfx` preflight is `READY`: the PKCS#12 opens, its
+private key is present, it contains three certificates, its chain validates, and
+the leaf EKU permits TLS Web Client Authentication. Sanitized transport
+diagnostics capture handshake stage, TLS version, cipher, authorization state and
+OpenSSL category without certificate or secret material. This is offline
+readiness, not runtime acceptance by FactIntWS.
+
 The APK asset inventory includes production/quality client certificates and private-key containers, a master CA bundle, BKS public-encryption-key material, and legacy PFX assets. These were inventoried by role only. None was read, exported, used, or committed. Taxy must use only its separately legitimate PFX and trusted public AT encryption key material.
