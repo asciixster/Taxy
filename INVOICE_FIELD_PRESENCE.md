@@ -1,6 +1,6 @@
 # Taxy 0.7.3 — e-Fatura invoice field presence
 
-This table distinguishes runtime observation from offline parser coverage. The latest 0.7.3 preflight on 29 August 2026 opened the configured PKCS#12 and confirmed both certificate and private key. The one authorized request then failed during mTLS (`TLS_ERROR`, `networkRequests: 1`) before any HTTP/SOAP response. Consequently, no invoice payload was received and **no field is claimed as runtime-observed**.
+This table distinguishes runtime observation from offline parser coverage. A 0.7.3 request using the separate CA2 identity failed during mTLS. A later single-variable request restored the exact `TesteWebservices.pfx` identity known to work in 0.7.2 and completed with mTLS authorized, HTTP 200 and `EstadoOperacao` 486. The returned list was empty, so no invoice payload was received and **no invoice field is claimed as runtime-observed**.
 
 The parser coverage column is exercised only with clearly synthetic, sanitized XML. It is not evidence of the AT response contract.
 
@@ -25,10 +25,12 @@ The parser coverage column is exercised only with clearly synthetic, sanitized X
 
 - Interval selected: `2026-08-28` through `2026-08-28`.
 - Actual network requests: `1`.
-- HTTP/SOAP/business response: `NOT_AVAILABLE`.
+- HTTP/SOAP/business response: HTTP 200, SOAP response received, `EstadoOperacao` 486.
 - Preflight classification: `READY`.
-- mTLS classification: `TLS_ERROR`.
+- mTLS classification: `SUCCESS` (`authorized: true`) for the `TesteWebservices.pfx` identity.
 - Real invoices parsed: `0`.
 - Protocol changes: none.
+
+The result confirms only the specific CA1-issued identity for this endpoint. It neither establishes a universal CA1 requirement nor rejects all possible use of the distinct CA2 identity.
 
 No raw XML, certificate material, NIF, document reference, invoice identifier or credential was persisted.

@@ -56,3 +56,23 @@ The protocol and one-day interval were unchanged from experiment 2.
 | Classification | `SUCCESS` |
 
 The operation passed SOAP dispatch and produced a typed business response. Only the `InvoicesRequest` namespace was promoted to `RUNTIME_BEHAVIOR_CONFIRMED`. SOAPAction, cryptography, timestamp precision, username authorization and WFA permissions retain their prior evidence status.
+
+## Experiment 4 — 0.7.3 TLS identity isolation
+
+The current 0.7.3 code, endpoint, SOAP request, one-day interval and TLS options were preserved. The only experimental change was restoring the `TesteWebservices.pfx` client identity that succeeded in 0.7.2. The newer CA2 identity was not retried.
+
+| Field | Result |
+|---|---|
+| Network requests | 1 |
+| TLS/mTLS | SUCCESS (`authorized: true`) |
+| HTTP | 200 |
+| SOAP response | YES |
+| SOAP fault | NONE |
+| `EstadoOperacao` | 486 |
+| `Desc` | Empty invoice list (sanitized) |
+| `totalPages` | NOT_AVAILABLE |
+| Invoice count | 0 |
+| Parsed invoice count | 0 |
+| Classification | `SUCCESS_EMPTY_RESULT` |
+
+This confirms only that the specific `TesteWebservices.pfx` identity is accepted by this test endpoint at runtime. It does not establish that AT Issuing CA1 is universally required, nor that the separate AT Issuing CA2 identity can never work. No invoice field received runtime confirmation because the returned list was empty.

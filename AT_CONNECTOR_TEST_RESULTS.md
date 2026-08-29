@@ -13,12 +13,14 @@ Updated: 29 August 2026. Environment: AT test only.
 | Empty SOAP 1.1 connectivity probe | HTTP 500, `env:Client / Internal Error` |
 | Single `?wsdl` discovery request | HTTP 500, SOAP XML, no WSDL definitions |
 | Historical authenticated consultation | Experiment 3: HTTP 200, no fault, EstadoOperacao 486, empty list |
-| Real invoice parsing 0.7.3 | PFX preflight passed; the one authorized request then failed during mTLS (`TLS_ERROR`, `1` request), before HTTP/SOAP. No runtime invoice evidence claimed. |
+| Real invoice parsing 0.7.3 | The CA2 identity passed local preflight but failed during mTLS. A separate single-variable repeat with the known-good `TesteWebservices.pfx` identity reached mTLS authorized, HTTP 200 and `EstadoOperacao` 486 with an empty list. No runtime invoice fields are claimed. |
 | Production request | **BLOCKED** |
 
 Experiment 1 established the namespace rejection. Experiment 2 changed only that namespace and made one read-only request, but a local TLS-metadata timing bug prevented capture of the response summary. It was fixed and regression-tested offline; the live request was not repeated.
 
 Experiment 3 repeated the same request once after the capture fix. The namespace passed dispatch and was promoted alone to runtime-confirmed evidence. No invoice payload was stored and no retry occurred.
+
+The 0.7.3 identity-isolation experiment changed only the client PFX identity back to `TesteWebservices.pfx`. It returned `SUCCESS_EMPTY_RESULT`. That identity is runtime-confirmed for the test endpoint; no universal CA requirement is inferred and the distinct CA2 identity remains unconfirmed.
 
 ## Offline verification
 
