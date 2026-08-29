@@ -34,3 +34,9 @@ One controlled request set both `minVersion` and `maxVersion` to `TLSv1.2`, with
 no custom cipher list and no other protocol change. The endpoint returned TLS
 alert 40 (`handshake failure`) before `secureConnect`. No protocol, cipher, ALPN,
 HTTP or SOAP metadata was available. TLS 1.2 is therefore not runtime-confirmed.
+
+With the original negotiation restored and only the endpoint changed to port
+8443, the same legitimate client identity reached `secureConnect`, was authorized
+and negotiated TLS 1.3 with `TLS_AES_128_GCM_SHA256`. The request then received
+HTTP 200 and a functional SOAP response. This confirms the 8443 TLS profile for
+the controlled read-only operation; application pinning remains unimplemented.

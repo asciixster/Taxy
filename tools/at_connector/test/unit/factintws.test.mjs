@@ -9,7 +9,8 @@ import {
   FACTINTWS_ENDPOINT_8443, FACTINTWS_NAMESPACE, FACTINTWS_OPERATION,
   FACTINTWS_PLANNED_CLIENT_IDENTITY, FACTINTWS_WSSE_NAMESPACE,
   factIntWsDigestBytes, factIntWsHttpContract, factIntWsOperations, factIntWsTlsOptions,
-  factIntWsProtocolEvidence, FactIntWsChannelValueStatus, FactIntWsEvidenceStatus,
+  factIntWsProtocolEvidence, factIntWsRuntimeEvidence,
+  FactIntWsChannelValueStatus, FactIntWsEvidenceStatus,
   resolveFactIntWsChannelFromEnvironment, runFactIntWsFeasibility,
   sanitizedFactIntWsResearchEnvelope, serializeFactIntWsOperation,
 } from '../../src/factintws.mjs';
@@ -31,6 +32,9 @@ test('official-app protocol constants are evidence, never runtime claims', () =>
   assert.equal(FACTINTWS_OPERATION, 'EcraInicial');
   assert.match(factIntWsProtocolEvidence.certificatePinning.value, /enforced/);
   for (const value of Object.values(factIntWsProtocolEvidence)) assert.notEqual(value.status, FactIntWsEvidenceStatus.RUNTIME);
+  assert.equal(factIntWsRuntimeEvidence.endpoint8443.status, FactIntWsEvidenceStatus.RUNTIME);
+  assert.equal(factIntWsRuntimeEvidence.endpoint8443.value, FACTINTWS_ENDPOINT_8443);
+  assert.equal(factIntWsRuntimeEvidence.operation.value, 'EcraInicial');
 });
 
 test('digest vector proves exact SHA-1 input order and UTF-8 encoding', () => {
@@ -100,11 +104,14 @@ test('SOAP envelope and HTTP contract match official-app serialization', () => {
   assert.equal(http.timeoutMs, 120000);
 });
 
-test('FactIntWS experiment is TLS 1.2 only without custom ciphers', () => {
-  assert.deepEqual(factIntWsTlsOptions(), { minVersion: 'TLSv1.2', maxVersion: 'TLSv1.2' });
+test('FactIntWS restores original TLS negotiation and selects only endpoint 8443', () => {
+  assert.deepEqual(factIntWsTlsOptions(), { minVersion: 'TLSv1.2' });
+  assert.equal('maxVersion' in factIntWsTlsOptions(), false);
   assert.equal('ciphers' in factIntWsTlsOptions(), false);
   const harness = readFileSync(new URL('../../bin/factintws-live-once.mjs', import.meta.url), 'utf8');
   assert(harness.includes('...factIntWsTlsOptions()'));
+  assert(harness.includes('factIntWsHttpContract(FACTINTWS_OPERATION, FACTINTWS_ENDPOINT_8443)'));
+  assert.equal(harness.includes('FACTINTWS_ENDPOINT_443'), false);
 });
 
 test('CanalOrigem uses explicit runtime-device metadata and remains fail-closed when absent', async () => {

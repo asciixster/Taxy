@@ -8,7 +8,7 @@ import { inspectAtCipherPublicKey, readAtPublicKey } from '../src/crypto.mjs';
 import {
   buildFactIntWsEnvelope, buildFactIntWsLiveReadinessMatrix, buildFactIntWsSecurityMaterial,
   resolveFactIntWsChannelFromEnvironment,
-  FACTINTWS_ENDPOINT_443, FACTINTWS_OPERATION, factIntWsHttpContract, factIntWsTlsOptions,
+  FACTINTWS_ENDPOINT_8443, FACTINTWS_OPERATION, factIntWsHttpContract, factIntWsTlsOptions,
 } from '../src/factintws.mjs';
 import { parseFactIntWsResponse } from '../src/factintws_parser.mjs';
 import { redact } from '../src/redaction.mjs';
@@ -37,7 +37,7 @@ function classifyFault(fault) {
 }
 
 function sendOnce({ xml, pfx, passphrase }) {
-  const contract = factIntWsHttpContract(FACTINTWS_OPERATION);
+  const contract = factIntWsHttpContract(FACTINTWS_OPERATION, FACTINTWS_ENDPOINT_8443);
   return new Promise((resolve, reject) => {
     let tlsStage = 'socket-creation';
     let tlsAtSecureConnect = null;
@@ -126,18 +126,20 @@ async function main() {
         classification: 'PARSING_ERROR', parsingError: error.message });
       process.exitCode = 2; return;
     }
-    const classification = parsed.fault ? classifyFault(parsed.fault) : 'SUCCESS';
+    const classification = parsed.fault ? classifyFault(parsed.fault)
+      : 'FACTINTWS_8443_TLS_RUNTIME_CONFIRMED';
     output({ networkRequests, operation: FACTINTWS_OPERATION, createdSource,
       channelValueStatus: channelResolution.status,
       mTLS: response.tls.authorized ? 'SUCCESS' : 'FAILED', authorized: response.tls.authorized,
       authorizationError: response.tls.authorizationError, tlsVersion: response.tls.protocol,
       cipher: response.tls.cipher, cipherVersion: response.tls.cipherVersion,
-      alpnProtocol: response.tls.alpnProtocol, httpStatus: response.httpStatus, soapResponse: 'YES',
+      alpnProtocol: response.tls.alpnProtocol, servername: response.tls.servername,
+      httpStatus: response.httpStatus, soapResponse: 'YES',
       soapFault: parsed.fault || null, estadoOperacao: parsed.result?.estadoOperacao ?? null,
       desc: parsed.result?.desc ?? null, operationResponseDetected: !parsed.fault,
       aggregateFieldPresence: parsed.totals ? Object.fromEntries(Object.entries(parsed.totals).map(([key, value]) => [key, value != null])) : {},
       classification });
-    if (classification !== 'SUCCESS') process.exitCode = 2;
+    if (parsed.fault) process.exitCode = 2;
   } finally {
     aesKey?.fill(0);
     pfx?.fill(0);
@@ -163,6 +165,7 @@ main().catch((error) => {
     cipher: error.tlsMetadata?.cipher ?? null,
     cipherVersion: error.tlsMetadata?.cipherVersion ?? null,
     alpnProtocol: error.tlsMetadata?.alpnProtocol ?? null,
+    servername: error.tlsMetadata?.servername ?? null,
     ...diagnostic });
   process.exitCode = 2;
 });

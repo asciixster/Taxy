@@ -67,3 +67,23 @@ handshake, before `secureConnect`.
 
 The next investigation should remain TLS-only and evidence-led. SOAP,
 `CanalOrigem`, credentials and application operations were not implicated.
+
+## Endpoint 8443 single-variable experiment
+
+The original TLS negotiation was restored (`minVersion=TLSv1.2`, no maximum) and
+only the endpoint changed from 443 to the official-app 8443 alternative. Exactly
+one request produced:
+
+- `secureConnect`: yes;
+- certificate authorization: yes;
+- negotiated TLS: `TLSv1.3`;
+- cipher: `TLS_AES_128_GCM_SHA256`;
+- SNI: service hostname;
+- HTTP 200 and SOAP response without fault;
+- `EstadoOperacao=200`, successful sanitized description;
+- functional `EcraInicialResponse` with the three aggregate fields observed by
+  the current safe presence output.
+
+The endpoint 8443, client TLS acceptance, submitted authentication envelope,
+`CanalOrigem` pair and `EcraInicial` operation are now runtime-confirmed for this
+controlled read-only request. No fallback or second request was made.

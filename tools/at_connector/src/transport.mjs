@@ -35,6 +35,7 @@ export function tlsMetadataFromSocket(socket) {
     cipher: cipher?.standardName || cipher?.name || null,
     cipherVersion: cipher?.version || null,
     alpnProtocol: socket?.alpnProtocol || null,
+    servername: socket?.servername || null,
   });
 }
 

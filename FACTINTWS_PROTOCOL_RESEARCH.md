@@ -73,3 +73,9 @@ A subsequent single-variable TLS 1.2-only request failed earlier, with TLS alert
 40 during the handshake and before `secureConnect`. It produced no HTTP or SOAP
 evidence and did not promote TLS 1.2, the operation, or any authentication field
 to runtime-confirmed status.
+
+The next single-variable experiment restored the original TLS negotiation and
+changed only the endpoint to the official-app port 8443. It negotiated authorized
+TLS 1.3 with `TLS_AES_128_GCM_SHA256`, returned HTTP 200 and a functional
+`EcraInicialResponse` without SOAP fault. Port 8443 and the concrete submitted
+read-only contract are therefore `RUNTIME_CONFIRMED` for this request.

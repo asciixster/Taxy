@@ -5,7 +5,8 @@ row records only a transport failure and does not promote the submitted protocol
 
 | Element | Evidence | Confidence | Implementation status | Live-ready |
 |---|---|---|---|---|
-| Primary/alternate endpoint | APK resources + communication setup | `CONFIRMED_FROM_OFFICIAL_APP` | primary selected, no fallback | yes |
+| Primary endpoint 443 | APK resources + communication setup | `CONFIRMED_FROM_OFFICIAL_APP`; failed runtime attempts | transport failure before HTTP | no |
+| Alternate endpoint 8443 | official-app resource + controlled request | `RUNTIME_CONFIRMED` | mTLS authorized; TLS 1.3; HTTP 200; functional SOAP response | yes |
 | SOAP 1.1 envelope/namespaces/order | envelope constant | `CONFIRMED_FROM_OFFICIAL_APP` | serializer + snapshots | yes |
 | Security actor/version | envelope constant | `CONFIRMED_FROM_OFFICIAL_APP` | implemented | yes |
 | Password/Digest crypto | security manager + crypto helper | `CONFIRMED_FROM_OFFICIAL_APP` | implemented + vector | yes |
@@ -27,18 +28,19 @@ row records only a transport failure and does not promote the submitted protocol
 | Business-code semantics | names only | `UNKNOWN` | preserved as opaque values | not blocking transport test |
 | Controlled FactIntWS attempt | `secureConnect`, then OpenSSL `bad record mac` before HTTP | `RUNTIME_CONFIRMED` (transport failure only) | classified `TLS_ERROR`; no SOAP/channel promotion | blocked at transport |
 | TLS 1.2-only experiment | TLS alert 40 before `secureConnect` | `RUNTIME_CONFIRMED` (failure only) | TLS 1.2 did not resolve transport; no protocol promotion | no |
+| 8443 endpoint experiment | authorized TLS 1.3, HTTP 200, successful `EcraInicialResponse` | `RUNTIME_CONFIRMED` | endpoint, mTLS profile and operation accepted | yes |
 
 ## Readiness
 
 | Operation | AUTH | SOAP | REQUEST_SCHEMA | RESPONSE_SCHEMA | SAFETY | Overall |
 |---|---|---|---|---|---|---|
-| `EcraInicial` | READY offline; TLS runtime blocked | READY | READY | READY | READY | NOT_READY |
+| `EcraInicial` | READY and authenticated on 8443 | READY | READY | READY | READY | READY |
 | `DadosContribuinte` | READY offline; TLS runtime blocked | READY | READY | READY | PARTIAL (PII response) | NOT_READY |
 | `FaturasPorClassificar` | READY offline; TLS runtime blocked | READY | READY | READY | READY | NOT_READY |
 | `FaturasPorSetor` | READY offline; TLS runtime blocked | READY | READY | READY | READY | NOT_READY |
 
 Best first candidate remains `EcraInicial`, because it is read-only, requires no
 paging/sector choice, and returns aggregates rather than an invoice list or
-taxpayer name. All offline gates pass. The TLS 1.2-only single-variable experiment
-failed with TLS alert 40 before `secureConnect`; TLS 1.2 is not runtime-confirmed.
-No retry, fallback, cipher variation or second request was made.
+taxpayer name. The single endpoint-only 8443 experiment completed with authorized
+TLS 1.3, HTTP 200 and a functional response. No retry, fallback or second request
+was made. Other read-only operations remain untested.

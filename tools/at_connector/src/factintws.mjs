@@ -69,6 +69,17 @@ export const factIntWsProtocolEvidence = Object.freeze({
   taxyCertificatePinning: Object.freeze({ value: 'NOT_IMPLEMENTED', status: FactIntWsEvidenceStatus.UNKNOWN }),
 });
 
+export const factIntWsRuntimeEvidence = Object.freeze({
+  endpoint8443: Object.freeze({ value: FACTINTWS_ENDPOINT_8443,
+    status: FactIntWsEvidenceStatus.RUNTIME }),
+  tlsProfile: Object.freeze({ value: Object.freeze({ protocol: 'TLSv1.3',
+    cipher: 'TLS_AES_128_GCM_SHA256' }), status: FactIntWsEvidenceStatus.RUNTIME }),
+  operation: Object.freeze({ value: FACTINTWS_OPERATION,
+    status: FactIntWsEvidenceStatus.RUNTIME }),
+  channel: Object.freeze({ value: Object.freeze({ system: 'A',
+    version: 'Android SDK: 35 (15)' }), status: FactIntWsEvidenceStatus.RUNTIME }),
+});
+
 export function buildOfficialAppChannel({ sdkInt, release }) {
   const sdk = String(sdkInt ?? '');
   const version = String(release ?? '');
@@ -186,14 +197,18 @@ export function buildFactIntWsEnvelope({ username, credentials, operation = FACT
     `</wss:UsernameToken></wss:Security></S:Header><S:Body>${body}</S:Body></S:Envelope>`;
 }
 
-export function factIntWsHttpContract(operation = FACTINTWS_OPERATION) {
-  return Object.freeze({ method: 'POST', endpoint: FACTINTWS_ENDPOINT_443,
+export function factIntWsHttpContract(operation = FACTINTWS_OPERATION,
+  endpoint = FACTINTWS_ENDPOINT_443) {
+  if (endpoint !== FACTINTWS_ENDPOINT_443 && endpoint !== FACTINTWS_ENDPOINT_8443) {
+    throw new TypeError('Unsupported FactIntWS endpoint');
+  }
+  return Object.freeze({ method: 'POST', endpoint,
     headers: Object.freeze({ 'User-Agent': 'ksoap2-android/2.6.0+', SOAPAction: `${FACTINTWS_NAMESPACE}/${operation}`,
       'Content-Type': 'text/xml;charset=utf-8', 'Accept-Encoding': 'gzip' }), timeoutMs: 120000 });
 }
 
 export function factIntWsTlsOptions() {
-  return Object.freeze({ minVersion: 'TLSv1.2', maxVersion: 'TLSv1.2' });
+  return Object.freeze({ minVersion: 'TLSv1.2' });
 }
 
 export function sanitizedFactIntWsResearchEnvelope() {
