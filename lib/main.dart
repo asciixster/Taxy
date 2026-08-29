@@ -9,6 +9,7 @@ import 'domain/models.dart';
 import 'domain/money.dart';
 import 'navigation/app_navigation.dart';
 import 'modules/efatura/application/efatura_read_only_service.dart';
+import 'modules/efatura/infrastructure/efatura_runtime_bridge.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'screens/how_we_calculate_screen.dart';
@@ -706,14 +707,18 @@ Future<void> _openWizard(
   );
 }
 
-Future<void> _openEfatura(BuildContext context) => Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => const EfaturaScreen(
-      service: EfaturaReadOnlyService(UnconfiguredEfaturaGateway()),
+Future<void> _openEfatura(BuildContext context) {
+  final bridge = AndroidEfaturaRuntimeBridge();
+  return Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => EfaturaScreen(
+        service: EfaturaReadOnlyService(bridge, bridge),
+        provisioning: bridge,
+      ),
     ),
-  ),
-);
+  );
+}
 
 void _openResult(
   BuildContext context,

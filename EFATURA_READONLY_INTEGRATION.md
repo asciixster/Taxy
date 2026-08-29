@@ -1,13 +1,17 @@
-# e-Fatura read-only integration (0.7.6)
+# e-Fatura read-only integration (0.7.7)
 
 ## Status
 
 The e-Fatura application surface is **Experimental** and disabled by default.
 It can be compiled in with `--dart-define=TAXY_EFATURA_EXPERIMENTAL=true`.
-The default app wiring uses an unconfigured gateway; no PFX path, password,
-username, SOAP envelope or authentication object crosses into Flutter UI code.
-A future secure native/tooling bridge is required before live data can be shown
-inside the app.
+The app wiring now uses a concrete Android platform bridge. Portal credentials
+are saved through an Android Keystore-backed store and are never returned to
+Flutter after save. The native module owns NTP, crypto, mTLS, SOAP and parsing;
+only normalized overview and invoice fields cross into Flutter.
+
+The bridge remains Experimental and requires user-controlled provisioning of a
+client identity in Android KeyChain plus the public AT cipher certificate. No
+PFX is bundled.
 
 ## Application boundary
 
@@ -40,6 +44,9 @@ The exploration therefore stopped without speculative sector requests.
 
 ## Privacy and storage
 
-No live SOAP payload, NIF, issuer identity, document ID, credential,
+No live SOAP payload, NIF, issuer tax identifier, document ID, credential,
 certificate or passphrase is persisted. Tests use synthetic data only. No cache,
 polling or background synchronization is implemented.
+
+See [EFATURA_RUNTIME_BRIDGE_ARCHITECTURE.md](EFATURA_RUNTIME_BRIDGE_ARCHITECTURE.md)
+and [EFATURA_SECURITY_REVIEW.md](EFATURA_SECURITY_REVIEW.md).

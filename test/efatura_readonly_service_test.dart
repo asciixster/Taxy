@@ -40,6 +40,62 @@ void main() {
     ).loadPendingInvoices();
     expect(result.single.totalCents, 2345);
   });
+  test(
+    'pending gating não chama serviço quando overview indica zero',
+    () async {
+      final gateway = _Gateway(overview: overview);
+      final result = await EfaturaReadOnlyService(gateway)
+          .loadPendingInvoicesIfNeeded(
+            const EfaturaOverview(
+              provisionalBenefitCents: 0,
+              pendingValidation: 0,
+              pendingRevenueAssociation: 0,
+              sectors: [],
+            ),
+          );
+      expect(result, isEmpty);
+      expect(gateway.pendingCalls, 0);
+    },
+  );
+  test('pending gating chama uma vez quando existem pendentes', () async {
+    final gateway = _Gateway(overview: overview, pending: const [invoice]);
+    final result = await EfaturaReadOnlyService(gateway)
+        .loadPendingInvoicesIfNeeded(overview);
+    expect(result, hasLength(1));
+    expect(gateway.pendingCalls, 1);
+  });
+  test('connect guarda e valida credenciais com EcraInicial', () async {
+    final gateway = _Gateway(overview: overview);
+    final store = _Store();
+    final result = await EfaturaReadOnlyService(gateway, store).connect(
+      const EfaturaCredentials(nif: '000000000', password: 'synthetic'),
+    );
+    expect(result, overview);
+    expect(store.saveCalls, 1);
+    expect(gateway.overviewCalls, 1);
+  });
+  test('auth failure limpa credenciais e não cria sessão falsa', () async {
+    final store = _Store();
+    final service = EfaturaReadOnlyService(
+      const _ErrorGateway(EfaturaFailureKind.authentication),
+      store,
+    );
+    await expectLater(
+      service.connect(
+        const EfaturaCredentials(nif: '000000000', password: 'synthetic'),
+      ),
+      throwsA(isA<EfaturaServiceException>()),
+    );
+    expect(store.clearCalls, 1);
+  });
+  test('disconnect limpa apenas o credential store', () async {
+    final store = _Store();
+    await EfaturaReadOnlyService(
+      _Gateway(overview: overview),
+      store,
+    ).disconnect();
+    expect(store.clearCalls, 1);
+  });
   test('loadSectorInvoices usa código validado', () async {
     final gateway = _Gateway(overview: overview, sector: const [invoice]);
     final result = await EfaturaReadOnlyService(gateway)
@@ -107,6 +163,7 @@ final class _Gateway implements EfaturaReadOnlyGateway {
   final List<EfaturaInvoice> pending;
   final List<EfaturaInvoice> sector;
   int overviewCalls = 0;
+  int pendingCalls = 0;
   String? lastSector;
   @override
   Future<EfaturaOverview> fetchOverview() async {
@@ -115,10 +172,55 @@ final class _Gateway implements EfaturaReadOnlyGateway {
   }
 
   @override
-  Future<List<EfaturaInvoice>> fetchPendingInvoices() async => pending;
+  Future<List<EfaturaInvoice>> fetchPendingInvoices() async {
+    pendingCalls++;
+    return pending;
+  }
+
   @override
   Future<List<EfaturaInvoice>> fetchSectorInvoices(String sectorCode) async {
     lastSector = sectorCode;
     return sector;
   }
+}
+
+final class _Store implements EfaturaCredentialStore {
+  int saveCalls = 0;
+  int clearCalls = 0;
+  bool stored = false;
+
+  @override
+  Future<void> save(EfaturaCredentials credentials) async {
+    saveCalls++;
+    stored = true;
+  }
+
+  @override
+  Future<void> clear() async {
+    clearCalls++;
+    stored = false;
+  }
+
+  @override
+  Future<bool> hasCredentials() async => stored;
+
+  @override
+  Future<EfaturaRuntimeReadiness> load() async => EfaturaRuntimeReadiness(
+    hasCredentials: stored,
+    hasClientIdentity: true,
+    hasCipherCertificate: true,
+  );
+}
+
+final class _ErrorGateway implements EfaturaReadOnlyGateway {
+  const _ErrorGateway(this.kind);
+  final EfaturaFailureKind kind;
+  Never _error() => throw EfaturaServiceException(kind, 'Mensagem segura');
+  @override
+  Future<EfaturaOverview> fetchOverview() async => _error();
+  @override
+  Future<List<EfaturaInvoice>> fetchPendingInvoices() async => _error();
+  @override
+  Future<List<EfaturaInvoice>> fetchSectorInvoices(String sectorCode) async =>
+      _error();
 }

@@ -1,4 +1,4 @@
-# taxy.pt — 0.7.6 e-Fatura read-only application integration
+# taxy.pt — 0.7.7 Secure e-Fatura runtime bridge
 
 Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
 
@@ -9,6 +9,12 @@ e-Fatura screen, kept behind the compile-time
 `TAXY_EFATURA_EXPERIMENTAL` flag (off by default). The screen supports explicit
 loading, empty and classified error states, sectors and synthetic invoice
 presentation without exposing SOAP or authentication material.
+
+Version 0.7.7 adds a concrete Android platform bridge. Credentials are encrypted
+with an Android Keystore key, client identity stays in Android KeyChain, and the
+native module performs NTP, cryptography, mTLS, SOAP and parsing. Neither a PFX
+nor a Node runtime is bundled. The feature remains off by default and requires
+explicit certificate provisioning on a real Android device.
 
 The controlled 0.7.6 discovery used two FactIntWS requests. The 2026 overview
 returned sectors `C01` through `C15` and `C99`, all without activity; the 2025

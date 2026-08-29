@@ -49,6 +49,10 @@ flutter {
     source = "../.."
 }
 
+dependencies {
+    testImplementation(kotlin("test"))
+}
+
 // A app não usa plugins Android auto-registados. O único canal nativo vive em
 // MainActivity.kt, pelo que o registrant Java vazio não precisa de compilação.
 tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {

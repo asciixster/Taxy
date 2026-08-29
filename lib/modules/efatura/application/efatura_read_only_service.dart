@@ -1,5 +1,16 @@
 import '../domain/efatura_models.dart';
 
+abstract interface class EfaturaCredentialStore {
+  Future<void> save(EfaturaCredentials credentials);
+
+  /// Returns readiness metadata only; stored secrets are never returned.
+  Future<EfaturaRuntimeReadiness> load();
+
+  Future<void> clear();
+
+  Future<bool> hasCredentials();
+}
+
 abstract interface class EfaturaReadOnlyGateway {
   Future<EfaturaOverview> fetchOverview();
   Future<List<EfaturaInvoice>> fetchPendingInvoices();
@@ -7,12 +18,59 @@ abstract interface class EfaturaReadOnlyGateway {
 }
 
 final class EfaturaReadOnlyService {
-  const EfaturaReadOnlyService(this._gateway);
+  const EfaturaReadOnlyService(this._gateway, [this._credentialStore]);
+
   final EfaturaReadOnlyGateway _gateway;
+  final EfaturaCredentialStore? _credentialStore;
+
+  Future<EfaturaRuntimeReadiness> readiness() async {
+    final store = _credentialStore;
+    if (store == null) {
+      return const EfaturaRuntimeReadiness(
+        hasCredentials: false,
+        hasClientIdentity: false,
+        hasCipherCertificate: false,
+      );
+    }
+    return store.load();
+  }
+
+  Future<EfaturaOverview> connect(EfaturaCredentials credentials) async {
+    final store = _credentialStore;
+    if (store == null) {
+      throw const EfaturaServiceException(
+        EfaturaFailureKind.notConfigured,
+        'A bridge segura e-Fatura não está disponível.',
+      );
+    }
+    await store.save(credentials);
+    try {
+      return await loadOverview();
+    } on EfaturaServiceException catch (error) {
+      if (error.kind == EfaturaFailureKind.authentication ||
+          error.kind == EfaturaFailureKind.authorization) {
+        await store.clear();
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> disconnect() async {
+    final store = _credentialStore;
+    if (store != null) await store.clear();
+  }
 
   Future<EfaturaOverview> loadOverview() => _gateway.fetchOverview();
   Future<List<EfaturaInvoice>> loadPendingInvoices() =>
       _gateway.fetchPendingInvoices();
+
+  Future<List<EfaturaInvoice>> loadPendingInvoicesIfNeeded(
+    EfaturaOverview overview,
+  ) async {
+    if (overview.pendingValidation <= 0) return const [];
+    return loadPendingInvoices();
+  }
+
   Future<List<EfaturaInvoice>> loadSectorInvoices(AtExpenseSector sector) {
     if (!RegExp(r'^C(?:0[1-9]|1[0-5]|99)$').hasMatch(sector.code)) {
       throw const EfaturaServiceException(
