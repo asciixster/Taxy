@@ -136,13 +136,24 @@ selection is by the explicit NIF passed to the operation.
   `EcraInicial` 2025 business response directing the user to IRS deduction
   expenses in Portal das Financas. Any stronger label remains inference.
 
+## Updated runtime constraint
+
+User-confirmed visual evidence from the official app for the intended account
+and year 2026 shows five invoices requiring validation, a non-zero provisional
+benefit and non-zero sector activity. Taxy's `EcraInicial` returned zero for
+the corresponding aggregates. Therefore `GENUINE_OPERATION_EMPTY` is rejected
+for `EcraInicial` and `FaturasPorClassificar` once the selected identity is
+confirmed equal. The divergence occurs before sector filtering; the identity
+comparison in `FACTINTWS_TAXPAYER_IDENTITY_DIFF.md` now takes priority.
+
 ## Ranked hypotheses
 
 | Hypothesis | Confidence | Evidence for | Evidence against / limit |
 |---|---|---|---|
-| `REQUEST_SCHEMA_MISMATCH` (all-sector default unsupported) | **HIGH** | The official homepage deliberately sends `CodSetor=""`; Taxy currently forbids it and only tested `C05` | The `C05` request was structurally accepted, so this is a population-selection mismatch rather than a SOAP dispatch failure |
-| `GENUINE_OPERATION_EMPTY` (pending operation and/or chosen sector) | **HIGH** for `FaturasPorClassificar`, **MEDIUM** for `C05` | Pending is explicitly gated by the overview count; a populated account can have no pending or health invoices | Does not explain absence from an all-sector query, which Taxy has not tested |
-| `ACCOUNT_ROLE_MISMATCH` | **MEDIUM** | Official UI passes a selected taxpayer; Taxy has so far used the configured principal NIF | No evidence yet that the known invoices belong to another selected household member |
+| `TAXPAYER_SELECTION_MISMATCH` | **HIGH** | The official app tracks and can switch a complete selected credential; Taxy derives the population only from its configured login | Equality of the two selected base NIFs has not yet been checked without disclosure |
+| `UNKNOWN_SERVER_POPULATION_RULE` | **MEDIUM** | Transport/auth success does not prove body-population equivalence | No specific undocumented rule was found locally |
+| `REQUEST_SCHEMA_MISMATCH` (all-sector default unsupported) | **MEDIUM** | The official homepage deliberately sends `CodSetor=""`; Taxy currently forbids it and only tested `C05` | Cannot explain the zero `EcraInicial`, which has no sector filter |
+| `GENUINE_OPERATION_EMPTY` | **REJECTED** for the intended 2026 identity | None after the direct official-app observation | Official app shows five pending invoices and non-zero overview values |
 | `YEAR_SEMANTICS_MISMATCH` | **LOW** | Documents can exist in a different year, and 2025 returned 419 | In August the official app defaults to current year; Taxy's 2026 value matches that behavior |
 | `INDEX_PAGINATION_MISMATCH` | **LOW** | Offset is semantically different from a page number | Both models use 0 for the first window, so the tested request is unaffected |
 | `SECTOR_CODE_ENCODING_MISMATCH` | **LOW** | None | `C05` is the exact official-app string form |
@@ -150,8 +161,8 @@ selection is by the explicit NIF passed to the operation.
 
 ## Next single experiment
 
-Use the already validated `FaturasPorSetor` request for the same selected NIF,
-year and `Indice=0`, changing only `CodSetor` from `C05` to the explicit empty
-string used by the official homepage. This is the highest-evidence, lowest-risk
-test because it asks the service for the official app's all-sector population
-without changing authentication, year, taxpayer, pagination or transport.
+Perform the sanitized identity equality gate described in
+`FACTINTWS_TAXPAYER_IDENTITY_DIFF.md`. If the official selected credential and
+Taxy configured login differ, run one `EcraInicial` with the official selected
+login identity while preserving every other parameter. The empty-sector test
+remains relevant only after overview identity is aligned.
