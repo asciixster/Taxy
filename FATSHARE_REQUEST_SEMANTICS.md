@@ -52,6 +52,20 @@ The body contains exactly the elements above, in that order. It contains no expl
 - Separate fiscal-year field: none exists in current or located historical request.
 - Current live harness guard: at most seven elapsed days. This is a Taxy safety restriction, not an established AT contract. One earlier controlled 28-day run was performed before the guard was tightened.
 
+### Offline date-evidence matrix
+
+| Question | Finding | Evidence class |
+|---|---|---|
+| Are the wire values date-only? | Yes: `YYYY-MM-DD`, with no time or offset | `HISTORICAL_CODE_EVIDENCE`; acceptance is `RUNTIME_BEHAVIOR_CONFIRMED` |
+| What business event does `StartDate` represent? | `UNKNOWN` | No official schema, comment, fixture, or non-empty response establishes document, issue, communication, registration, insertion, or fiscal-period date |
+| What business event does `EndDate` represent? | `UNKNOWN` | No direct evidence |
+| Are the bounds inclusive? | `UNKNOWN` | Request acceptance does not demonstrate boundary inclusion |
+| Is a timezone applied? | None on the wire; business timezone is `UNKNOWN` | Serialization evidence only |
+| Is there an AT maximum interval? | `UNKNOWN` | Historical code imposed no maximum; Taxy's cap is local |
+| Was a timestamp alternative or separate fiscal-year field found? | No | Offline source search |
+
+Located historical validation used a same-day supplier/default-role request, page 1 and page size 1. Located runtime evidence includes accepted one-day, seven-day, and earlier 28-day requests, all empty. None establishes the indexed business date: **NO_HISTORICAL_NON_EMPTY_DATE_EVIDENCE**.
+
 ## Party and population
 
 The historical serializer had a two-way selector:
@@ -69,6 +83,14 @@ Hypotheses and boundaries:
 | `TaxRegistrationNumber` selects supplier/issuer-side records | Historical default and explicit `supplier` validation call | medium-high | No non-empty historical response was found |
 | Results are limited to invoices associated with a specific channel/software/certificate | None in body or located historical code | low | No such filter is serialized; server-side scope remains unknown |
 | Results are pending/classifiable-only | No matching request field found | low | No historical non-empty response or official schema was found |
+
+### Wire fields, missing filters, and apparent population
+
+The wire body contains only the party element, `StartDate`, `EndDate`, `Pagination`, `nPage`, and `nDocsPage`. Historical code allowed `CustomerTaxID` as an alternative party element; it was not an additional filter.
+
+Supplier/issuer/customer/buyer/acquirer/seller filters, registration or document identifiers, role/mode, direction, state/status, source/channel/origin, document/invoice type, scope, registration type, and fiscal year are `NOT_PRESENT_IN_CURRENT_REQUEST`. No equivalent field was found in historical builders, operation schemas, scripts, fixtures, comments, or tests. Accordingly, there are **zero demonstrated required missing filters**; server-side defaults or fields in an unlocated official schema remain `UNKNOWN`.
+
+Historical configuration groups this query with a technical/WFA-style family that also names invoice registration, status-change, deletion, and work-registration operations. Combined with supplier/default and customer perspectives, this suggests a technical invoice-document population. It does not prove equivalence with purchases shown to a consumer in the official e-Fatura app. The bounded apparent population is therefore **technical/WFA-style invoice documents with historical supplier/default and customer perspectives; exact population UNKNOWN**.
 
 ## Pagination
 
@@ -88,7 +110,7 @@ The only supported statement is the observed pair: `486` plus `Lista de faturas 
 
 The offline search covered the historical Git source and plausible project, audit, backup, archive, download, and service directories while excluding repositories, dependencies, caches, and browser artifacts. No sanitized or real non-empty `InvoicesResponse` fixture/schema was found. Located historical executions were empty. The old parser extracted only operation code, description, and SOAP fault state; it retained raw XML but did not model invoice fields.
 
-Consequently, compatibility of `AtInvoice`, `AtInvoicePage`, `AtInvoiceQueryResult`, and `AtDateOnly` with a real non-empty historical response is **UNKNOWN**. Existing non-empty parser fixtures are explicitly synthetic and are not runtime evidence.
+Consequently, compatibility of `AtInvoice`, `AtInvoicePage`, `AtInvoiceQueryResult`, and `AtDateOnly` with a real non-empty historical response is **UNKNOWN**. Existing non-empty parser fixtures are explicitly synthetic and are not runtime evidence. The old parser was found, but only modeled operation status, description/message, and SOAP fault state: compatibility is established for observed empty responses, not for invoice fields or pagination.
 
 ## fatshareInvoices versus FactIntWS
 
@@ -103,17 +125,30 @@ Consequently, compatibility of `AtInvoice`, `AtInvoicePage`, `AtInvoiceQueryResu
 
 No FactIntWS request was executed during this audit.
 
+Planning-only assessment of future read-only candidates:
+
+| Operation | Read-only confidence | Expected data sensitivity | Likely auth requirement |
+|---|---|---|---|
+| `dadosContribuinte` | high | high | high |
+| `ecraInicialF` | high | medium | high |
+| `faturasPorClassificar` | high | high | high |
+| `faturasPorSetor` | high | medium-high | high |
+
+These ratings are inference from operation names and the documented historical official-app structure, not runtime evidence. `ecraInicialF` is the safest candidate for a future feasibility test because it appears more bounded than an invoice-level list. Functional overlap between FactIntWS and fatshare remains `UNKNOWN`.
+
 ## Ranked empty-result hypotheses
 
 | Rank | Category | Supporting evidence | Contradicting evidence | Confidence | Required single-variable experiment |
 |---:|---|---|---|---|---|
-| 1 | `DATE_SEMANTICS` | Business meaning and inclusivity are undocumented locally | Three increasingly broad accepted intervals remained empty | medium | Requires independent evidence before another experiment |
-| 2 | `GENUINELY_EMPTY_DATA` | Empty response is internally consistent and no fault occurred for both party fields | Expectation of data remains unverified for the queried service population | medium | Confirm independently that this operation/population contains a known record |
-| 3 | `ROLE/POPULATION_MISMATCH` | Historical code distinguishes the two party fields | The controlled `TaxRegistrationNumber` request returned the same empty result as `CustomerTaxID` | low | Experiment completed; hypothesis not confirmed |
-| 4 | `CUSTOMER_TAX_ID_SEMANTICS` | Authentication identity and query party are separate concepts | Switching away from `CustomerTaxID` did not produce data | low | Experiment completed; hypothesis not confirmed |
-| 5 | `HISTORICAL_PROTOCOL_DRIFT` | Historical transport and defaults differ | Root, namespace, body order, and field names were accepted | low-medium | Not selected |
-| 6 | `PAGINATION_PARAMETER_ERROR` | Official pagination semantics/schema were not found | Positive page/size were accepted; page 1 is historical default | low | Not selected |
-| 7 | `REQUEST_FILTER_ERROR` | Server-side defaults cannot be excluded | No hidden filter exists in current or historical body | low | Not selected |
+| 1 | `FATSHARE_DOCUMENT_POPULATION_MISMATCH` | WFA-style service family, supplier/customer perspectives, distinct consumer-facing FactIntWS operations, and both party selectors empty | No official fatshare schema or non-empty response establishes the population | **high** | A known consumer invoice returned by a documented fatshare query |
+| 2 | `DATE_SEMANTICS_MISMATCH` | Business date and inclusivity are undocumented | Multiple date-only intervals were accepted; no historical timestamp or alternative date field was found | **medium** | Official schema or a known record queried by its documented fatshare date |
+| 3 | `GENUINELY_EMPTY_DATA` | Responses are coherent handled-empty results, not faults | Expected records are not independently proved in this service population | **medium** | A known in-scope fatshare record in the same interval |
+| 4 | `HISTORICAL_PROTOCOL_DRIFT` | Historical transport metadata/defaults differ | Current request reaches business handling with HTTP 200 and status 486 | low | A current schema showing a material changed request field |
+| 5 | `REQUIRED_FILTER_OR_MODE_MISSING` | An unlocated schema/default cannot be excluded | No such field exists in located current or historical evidence | low | Official/current schema identifying a required field |
+
+## Next single step
+
+`FACTINTWS_READONLY_FEASIBILITY_TEST` is the next step with the best evidence/risk ratio, but was **not executed** here. Both available fatshare party selectors produced the same handled-empty result and no local evidence ties fatshare to the consumer purchase list; FactIntWS explicitly exposes consumer-facing read operations in the documented official-app contract. The future candidate is `ecraInicialF`, subject to separate authorization and privacy review.
 
 ## Completed single-variable experiment
 

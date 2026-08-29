@@ -12,11 +12,33 @@
     "Pagination"
   ],
   "dateFormat": "YYYY-MM-DD",
+  "dateSemantics": {
+    "wireType": "date-only",
+    "formatEvidence": "RUNTIME_BEHAVIOR_CONFIRMED",
+    "businessMeaning": "UNKNOWN",
+    "startInclusive": "UNKNOWN",
+    "endInclusive": "UNKNOWN",
+    "timezoneOnWire": "NOT_PRESENT",
+    "businessTimezone": "UNKNOWN",
+    "maximumServiceRangeDays": "UNKNOWN",
+    "timestampAlternativeFound": false,
+    "separateFiscalYearFound": false
+  },
   "maximumDateRangeDays": null,
   "pageDefault": 1,
   "pageSizeDefault": 300,
   "pageSizeMinimum": 1,
   "pageSizeMaximum": 5000,
   "soapAction": "Invoices",
-  "containsAdditionalBodyFilters": false
+  "containsAdditionalBodyFilters": false,
+  "candidateFieldsNotPresent": [
+    "SupplierTaxID", "Issuer", "Customer", "Registration", "Document",
+    "Channel", "State", "Role", "Mode", "Type", "Direction", "Buyer",
+    "Supplier", "Acquirer", "Seller", "Status", "Source", "DocumentType",
+    "InvoiceType", "Scope", "Origin", "RegistrationType"
+  ],
+  "historicalNonEmptyResponseFound": false,
+  "historicalNonEmptyDateEvidenceFound": false,
+  "oldParserScope": ["operationStatus", "description", "soapFault"],
+  "populationSemantics": "UNKNOWN"
 }

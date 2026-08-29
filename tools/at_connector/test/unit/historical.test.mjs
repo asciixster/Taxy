@@ -73,12 +73,34 @@ test('sanitized historical contract records the material current-versus-source d
   assert.equal(contract.pageSizeMinimum, 1);
   assert.equal(contract.pageSizeMaximum, 5000);
   assert.equal(contract.containsAdditionalBodyFilters, false);
+  assert.deepEqual(contract.dateSemantics, {
+    wireType: 'date-only', formatEvidence: 'RUNTIME_BEHAVIOR_CONFIRMED',
+    businessMeaning: 'UNKNOWN', startInclusive: 'UNKNOWN', endInclusive: 'UNKNOWN',
+    timezoneOnWire: 'NOT_PRESENT', businessTimezone: 'UNKNOWN',
+    maximumServiceRangeDays: 'UNKNOWN', timestampAlternativeFound: false,
+    separateFiscalYearFound: false,
+  });
+  assert.equal(contract.historicalNonEmptyResponseFound, false);
+  assert.equal(contract.historicalNonEmptyDateEvidenceFound, false);
+  assert.deepEqual(contract.oldParserScope, ['operationStatus', 'description', 'soapFault']);
+  assert.equal(contract.populationSemantics, 'UNKNOWN');
 
   const current = buildHistoricalEnvelope(base).xml;
   assert(current.includes('<fat:TaxRegistrationNumber>'));
   assert.equal(current.includes('<fat:CustomerTaxID>'), false);
   assert(current.includes('<fat:nPage>1</fat:nPage>'));
   assert(current.includes('<fat:nDocsPage>500</fat:nDocsPage>'));
+});
+
+test('historical evidence records candidate filters as absent without claiming they are required', () => {
+  const fixtureUrl = new URL('../fixtures/sanitized/historical-fatshare-request-contract.json', import.meta.url);
+  const contract = JSON.parse(readFileSync(fixtureUrl, 'utf8'));
+  const body = buildHistoricalEnvelope(base).xml.match(/<S:Body>([\s\S]*?)<\/S:Body>/)[1];
+  assert.equal(contract.containsAdditionalBodyFilters, false);
+  assert(contract.candidateFieldsNotPresent.length > 0);
+  for (const field of contract.candidateFieldsNotPresent) {
+    assert.equal(body.includes(`<fat:${field}>`), false, `${field} must remain absent`);
+  }
 });
 
 test('live harness accepts only an ordered, small date interval', () => {

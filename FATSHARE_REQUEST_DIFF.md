@@ -76,6 +76,24 @@ Item 1 had the strongest historical evidence, so it was tested alone. The reques
 
 The located historical request builder contains no field for invoice status, document type, sector, country, origin, situation, fiscal role beyond the party-element selector, version, channel, software, or search mode. No omitted optional request fields were found in the local source, scripts, tests, schemas, fixtures, or comments. Because no official WSDL/XSD was located, absence from historical code is not proof that the service has no optional server-side defaults.
 
+## Categorized difference analysis
+
+| Difference | Category | Materiality | Impact confidence | Assessment |
+|---|---|---|---|---|
+| Default namespace versus `fat:` prefix | structural | likely immaterial | high | Expanded names match and current form reaches business handling |
+| Role-selectable party element versus fixed `TaxRegistrationNumber` | semantic | potentially material | high | Both selectors returned the same handled-empty result; population remains unknown |
+| Stricter identifier derivation/binding | semantic/security | likely immaterial for tested identity | medium | Same base identifier is emitted; no rejection occurred |
+| Seven-day safety cap versus no historical client cap | local/optional | potentially material to breadth | medium | Cannot explain emptiness inside a submitted range |
+| Fixed first page versus configurable page | optional | likely immaterial for discovery | high | Page 1 is the historical default |
+| Page size 500 versus default 300 | optional | likely immaterial | medium | Both are inside the historical 1..5000 range |
+| SOAPAction absent versus historical `Invoices` metadata | structural/transport | likely immaterial | high | Absence reaches business handling |
+| Unknown business meaning/bounds of dates | unknown | potentially material | medium | Accepted wire format does not establish the indexed date |
+| Consumer purchases versus technical/WFA population | semantic/unknown | likely material | high | Service-family and FactIntWS split suggest different-purpose risk; exact population is unknown |
+
+Candidate fields for role/mode, direction, supplier/issuer/customer, state/status, source/channel, document type, and registration type are absent from both current and located historical serializers. **Required missing filters found: 0.** This does not claim that an unlocated official schema has no optional fields; it prevents guessed filters from being promoted to protocol evidence.
+
+No non-empty historical response or date/result pair was found. The old parser modeled only operation status, description, and fault state, so current non-empty parser compatibility remains `UNKNOWN`.
+
 ## Response compatibility
 
 No non-empty historical `InvoicesResponse` was located. Historical records found offline were empty and the old parser only modeled code/description/fault. Therefore:
