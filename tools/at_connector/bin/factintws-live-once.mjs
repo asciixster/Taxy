@@ -7,7 +7,7 @@ import { validateAtUsername } from '../src/auth.mjs';
 import { inspectAtCipherPublicKey, readAtPublicKey } from '../src/crypto.mjs';
 import {
   buildFactIntWsEnvelope, buildFactIntWsLiveReadinessMatrix, buildFactIntWsSecurityMaterial,
-  buildOfficialAppChannel,
+  resolveFactIntWsChannelFromEnvironment,
   FACTINTWS_ENDPOINT_443, FACTINTWS_OPERATION, factIntWsHttpContract,
 } from '../src/factintws.mjs';
 import { parseFactIntWsResponse } from '../src/factintws_parser.mjs';
@@ -80,9 +80,10 @@ async function main() {
     return fail(pfxPreflight.classification, 'Local PFX preflight did not pass');
   }
   inspectAtCipherPublicKey(process.env.AT_CIPHER_CERT_PATH);
+  const channelResolution = resolveFactIntWsChannelFromEnvironment(process.env);
   // All non-time gates pass before the one permitted NTP exchange.
   const localReadiness = buildFactIntWsLiveReadinessMatrix({ ntpReady: false,
-    pfxReady: true, tlsDiagnosticReady: true });
+    pfxReady: true, tlsDiagnosticReady: true, channelReady: true });
   const localBlockers = Object.entries(localReadiness)
     .filter(([name, ready]) => name !== 'NTP_READY' && name !== 'READY' && !ready)
     .map(([name]) => name);
@@ -96,12 +97,11 @@ async function main() {
       ntpTimeProvider, allowSystemClockFallback: false,
     });
     const finalReadiness = buildFactIntWsLiveReadinessMatrix({ ntpReady: true,
-      pfxReady: true, tlsDiagnosticReady: true });
+      pfxReady: true, tlsDiagnosticReady: true, channelReady: true });
     if (!finalReadiness.READY) return fail('FACTINTWS_LIVE_NOT_READY', 'FactIntWS live readiness matrix did not pass');
     pfx = readFileSync(process.env.AT_CLIENT_PFX_PATH);
     aesKey = randomBytes(16);
-    const channel = buildOfficialAppChannel({ sdkInt: process.env.FACTINTWS_ANDROID_SDK_INT,
-      release: process.env.FACTINTWS_ANDROID_RELEASE });
+    const channel = channelResolution.channel;
     const credentials = buildFactIntWsSecurityMaterial({
       aesKey, created, password: process.env.AT_PASSWORD,
       rsaPublicKey: readAtPublicKey(process.env.AT_CIPHER_CERT_PATH),
@@ -120,6 +120,7 @@ async function main() {
     }
     const classification = parsed.fault ? classifyFault(parsed.fault) : 'SUCCESS';
     output({ networkRequests, operation: FACTINTWS_OPERATION, createdSource,
+      channelValueStatus: channelResolution.status,
       mTLS: response.tls.authorized ? 'SUCCESS' : 'FAILED', authorized: response.tls.authorized,
       authorizationError: response.tls.authorizationError, tlsVersion: response.tls.protocol,
       cipher: response.tls.cipher, httpStatus: response.httpStatus, soapResponse: 'YES',

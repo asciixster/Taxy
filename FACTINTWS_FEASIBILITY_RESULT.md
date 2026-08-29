@@ -2,14 +2,14 @@
 
 ## Offline decision
 
-`CONTINUE WITH ONE TARGETED FIX — LIVE GATE NOT READY`
+`CONTINUE WITH ONE TARGETED FIX — TLS TRANSPORT FAILURE`
 
 The cryptographic and wire reconstruction gates pass for the `EcraInicial` operation. The
 offline phase made zero network requests and did not open any certificate or
 credential. Readiness means the official app contract is sufficiently
-reconstructed. A one-exchange NTP provider and the local PFX preflight now pass;
-live execution remains blocked only by the unknown concrete runtime Android
-SDK/release pair used to construct `CanalOrigem.Versao`.
+reconstructed. The channel semantics were closed as `RUNTIME_DEVICE_METADATA` and
+the first request used the coherent API 35 / Android 15 pair. All offline gates
+passed before the one permitted request.
 
 | Field | Result |
 |---|---|
@@ -21,9 +21,9 @@ SDK/release pair used to construct `CanalOrigem.Versao`.
 | HTTP/SOAP serialization | complete, including exact unquoted SOAPAction |
 | Created source | NTP verified in one real UDP exchange; system fallback forbidden |
 | Channel evidence | `Sistema=A`; exact dynamic `Versao` formula confirmed |
-| Concrete channel values | runtime SDK/release unavailable; live-blocking |
+| Concrete channel values | API 35 / Android 15; explicit runtime metadata |
 | Local PFX preflight | READY; key present; 3 certs; valid chain/clientAuth EKU |
-| Network requests | 0 |
+| Network requests | 1 |
 | Runtime-confirmed elements | none |
 | Official-app private identity used | no |
 
@@ -41,10 +41,13 @@ observed, so the run neither confirms nor rejects the Taxy identity.
 - protocol elements promoted to runtime evidence: none;
 - retries/fallback/alternate endpoint: none.
 
-## Recommended single live test after both gates pass
+## Controlled live result
 
-Obtain one evidence-backed Android `SDK_INT` and `RELEASE` pair for the intended
-mobile channel, then use only the legitimate `TesteWebservices.pfx`, the locally
-validated AT RSA public cipher certificate, the primary endpoint 443 and one
-`EcraInicial` request. Do not retry or fall back. No FactIntWS request was made in
-this gate-completion task because the channel gate remained closed.
+The connection emitted TLS `secureConnect`, then failed before HTTP with
+`ERR_SSL_DECRYPTION_FAILED_OR_BAD_RECORD_MAC`. No SOAP response or fault was
+received, the operation was not recognized, and no channel or authentication
+element was promoted to runtime-confirmed. No retry, 8443 fallback, second
+channel, second certificate, or second operation was attempted.
+
+The next work should target only the post-handshake TLS transport failure. It must
+not vary `CanalOrigem` or SOAP fields without new evidence.

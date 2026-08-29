@@ -31,11 +31,14 @@ configured server `time.cloudflare.com` succeeded on 2026-08-29. Live use has no
 system-clock fallback and no retry.
 
 `CanalOrigem` and its `Sistema`, `Versao` child order are confirmed from the
-official app. The exact Android value is `Sistema=A`; `Versao` is built as
+official app. Its semantics are `RUNTIME_DEVICE_METADATA`: the constructor reads
+`android.os.Build.VERSION.SDK_INT` and `android.os.Build.VERSION.RELEASE` each
+time it is instantiated. The exact Android value is `Sistema=A`; `Versao` is built as
 `Android SDK: <SDK_INT> (<RELEASE>)`. Both facts are
 `CONFIRMED_FROM_OFFICIAL_APP`, but the APK contains no fixed runtime SDK/release
-pair. With no connected Android runtime providing those values, the composite
-channel remains unknown and blocks live execution.
+pair. The first controlled tooling test therefore used the coherent Android pair
+API 35 / Android 15, producing `Android SDK: 35 (15)`. These explicit values are
+not promoted to official-app or server-accepted evidence.
 
 The legitimate local `TesteWebservices.pfx` passes the offline preflight: it
 opens, contains the private key and three certificates, has a valid chain and TLS
@@ -59,8 +62,9 @@ The wire operation found for the app concept previously called `ecraInicialF` is
 
 ## Runtime boundary
 
-No successful protocol element is marked `RUNTIME_CONFIRMED`. A previous
-authorized attempt failed at TLS before HTTP and promoted no submitted protocol
-element. FactIntWS acceptance of `TesteWebservices.pfx`, the Taxy username, the
-reconstructed authentication fields, and any operation remains unknown.
+No successful protocol element is marked `RUNTIME_CONFIRMED`. The single request
+using the explicit channel reached TLS `secureConnect` but then failed with the
+sanitized OpenSSL category `decryption failed or bad record mac`, before HTTP.
+This promotes neither the channel nor any submitted SOAP/authentication element.
+FactIntWS acceptance of the Taxy username and operation remains unknown.
 Fatshare remains unchanged and is not a fallback.

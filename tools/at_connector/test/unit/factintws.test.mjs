@@ -9,7 +9,8 @@ import {
   FACTINTWS_ENDPOINT_8443, FACTINTWS_NAMESPACE, FACTINTWS_OPERATION,
   FACTINTWS_PLANNED_CLIENT_IDENTITY, FACTINTWS_WSSE_NAMESPACE,
   factIntWsDigestBytes, factIntWsHttpContract, factIntWsOperations,
-  factIntWsProtocolEvidence, FactIntWsEvidenceStatus, runFactIntWsFeasibility,
+  factIntWsProtocolEvidence, FactIntWsChannelValueStatus, FactIntWsEvidenceStatus,
+  resolveFactIntWsChannelFromEnvironment, runFactIntWsFeasibility,
   sanitizedFactIntWsResearchEnvelope, serializeFactIntWsOperation,
 } from '../../src/factintws.mjs';
 import { FactIntWsCreatedSource, resolveFactIntWsCreated, validateFactIntWsCreated } from '../../src/factintws_time.mjs';
@@ -65,7 +66,7 @@ test('live harness resolves verified time and channel gates before any AT reques
   assert.equal(harness.includes('new Date().toISOString()'), false);
   assert(harness.includes('allowSystemClockFallback: false'));
   assert(harness.indexOf('resolveFactIntWsCreated') < harness.indexOf('networkRequests = 1'));
-  assert(harness.indexOf('assertFactIntWsLiveReadiness') < harness.indexOf('networkRequests = 1'));
+  assert(harness.indexOf('buildFactIntWsLiveReadinessMatrix') < harness.indexOf('networkRequests = 1'));
 });
 
 test('four read-only request schemas serialize in official field order', () => {
@@ -99,25 +100,31 @@ test('SOAP envelope and HTTP contract match official-app serialization', () => {
   assert.equal(http.timeoutMs, 120000);
 });
 
-test('protocol remains fail-closed while concrete CanalOrigem values are unknown', async () => {
+test('CanalOrigem uses explicit runtime-device metadata and remains fail-closed when absent', async () => {
   assert.equal(factIntWsProtocolEvidence.channelStructure.status, FactIntWsEvidenceStatus.OFFICIAL_APP);
   assert.deepEqual(buildOfficialAppChannel({ sdkInt: 35, release: '15' }),
     { system: 'A', version: 'Android SDK: 35 (15)' });
+  assert.deepEqual(resolveFactIntWsChannelFromEnvironment({
+    FACTINTWS_ANDROID_SDK_INT: '35', FACTINTWS_ANDROID_RELEASE: '15',
+  }), { channel: { system: 'A', version: 'Android SDK: 35 (15)' },
+    status: FactIntWsChannelValueStatus.RUNTIME_DEVICE_METADATA,
+    source: 'EXPLICIT_ANDROID_RUNTIME_METADATA' });
   assert.throws(() => buildOfficialAppChannel({ sdkInt: null, release: null }));
   assert.equal(factIntWsProtocolEvidence.channelValues.status, FactIntWsEvidenceStatus.UNKNOWN);
   assert.equal(assessFactIntWsReadiness().ready, false);
   assert.throws(() => assertFactIntWsLiveReadiness(), /channelValues/);
-  const matrix = buildFactIntWsLiveReadinessMatrix({ ntpReady: true, pfxReady: true, tlsDiagnosticReady: true });
+  const matrix = buildFactIntWsLiveReadinessMatrix({ ntpReady: true, pfxReady: true,
+    tlsDiagnosticReady: true, channelReady: true });
   assert.equal(matrix.DIGEST_READY, true);
   assert.equal(matrix.NONCE_READY, true);
   assert.equal(matrix.CREATED_READY, true);
   assert.equal(matrix.SOAPACTION_READY, true);
   assert.equal(matrix.ECRAINICIAL_SCHEMA_READY, true);
   assert.equal(matrix.NTP_READY, true);
-  assert.equal(matrix.CANALORIGEM_READY, false);
+  assert.equal(matrix.CANALORIGEM_READY, true);
   assert.equal(matrix.PFX_READY, true);
   assert.equal(matrix.TLS_DIAGNOSTIC_READY, true);
-  assert.equal(matrix.READY, false);
+  assert.equal(matrix.READY, true);
   const result = await runFactIntWsFeasibility({ transport: () => { throw new Error('must not run'); } });
   assert.equal(result.ready, false);
   assert.equal(result.networkRequests, 0);

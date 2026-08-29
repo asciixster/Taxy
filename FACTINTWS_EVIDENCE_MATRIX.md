@@ -13,8 +13,8 @@ row records only a transport failure and does not promote the submitted protocol
 | Created format/source | NTP client + Joda UTC output | `CONFIRMED_FROM_OFFICIAL_APP`; provider behavior locally verified | exact format; one-exchange provider implemented; system fallback disabled | yes |
 | SOAPAction/HTTP headers | SOAP caller + transport | `CONFIRMED_FROM_OFFICIAL_APP` | contract implemented | yes |
 | `CanalOrigem` structure | request builders | `CONFIRMED_FROM_OFFICIAL_APP` | exact child order implemented | yes |
-| Channel system/formula | Android `ChanelType` constructor and call sites | `CONFIRMED_FROM_OFFICIAL_APP` | `Sistema=A`; `Versao=Android SDK: <SDK_INT> (<RELEASE>)` | partial |
-| Concrete Taxy channel values | APK has no fixed runtime SDK/release pair | `UNKNOWN` | composite channel live gate blocked | no |
+| Channel semantics/system/formula | Android `ChanelType` constructor and call sites | `CONFIRMED_FROM_OFFICIAL_APP` | `RUNTIME_DEVICE_METADATA`; `Sistema=A`; dynamic Android version | yes |
+| First tooling channel values | coherent Android platform pair | `EXPLICIT_RUNTIME_METADATA` | API 35 / Android 15; not server-confirmed | yes for request construction |
 | Certificate pinning | APK network-security config | `CONFIRMED_FROM_OFFICIAL_APP` | documented; app pin values not imported | not required for offline gate |
 | Taxy certificate pinning | Taxy harness | `UNKNOWN` | `NOT_IMPLEMENTED`; native CA validation remains enabled | not a SOAP blocker |
 | `EcraInicial` | builder + response DTO | `CONFIRMED_FROM_OFFICIAL_APP` | serializer/parser | yes |
@@ -25,18 +25,19 @@ row records only a transport failure and does not promote the submitted protocol
 | Taxy PFX local readiness | local PKCS#12/X.509 preflight | `OFFLINE_VERIFIED` | opens; key present; 3 certs; chain valid; clientAuth EKU valid | yes locally |
 | Taxy client identity acceptance | none | `UNKNOWN` | not tested against FactIntWS | unknown |
 | Business-code semantics | names only | `UNKNOWN` | preserved as opaque values | not blocking transport test |
-| First Taxy TLS attempt | OpenSSL `bad record mac` before HTTP | `RUNTIME_CONFIRMED` (failure only) | classified `TLS_ERROR`; no protocol promotion | blocked pending TLS diagnosis |
+| Controlled FactIntWS attempt | `secureConnect`, then OpenSSL `bad record mac` before HTTP | `RUNTIME_CONFIRMED` (transport failure only) | classified `TLS_ERROR`; no SOAP/channel promotion | blocked at transport |
 
 ## Readiness
 
 | Operation | AUTH | SOAP | REQUEST_SCHEMA | RESPONSE_SCHEMA | SAFETY | Overall |
 |---|---|---|---|---|---|---|
-| `EcraInicial` | PARTIAL (concrete channel gate) | READY | READY | READY | READY | NOT_READY |
-| `DadosContribuinte` | PARTIAL (concrete channel gate) | READY | READY | READY | PARTIAL (PII response) | NOT_READY |
-| `FaturasPorClassificar` | PARTIAL (concrete channel gate) | READY | READY | READY | READY | NOT_READY |
-| `FaturasPorSetor` | PARTIAL (concrete channel gate) | READY | READY | READY | READY | NOT_READY |
+| `EcraInicial` | READY offline; TLS runtime blocked | READY | READY | READY | READY | NOT_READY |
+| `DadosContribuinte` | READY offline; TLS runtime blocked | READY | READY | READY | PARTIAL (PII response) | NOT_READY |
+| `FaturasPorClassificar` | READY offline; TLS runtime blocked | READY | READY | READY | READY | NOT_READY |
+| `FaturasPorSetor` | READY offline; TLS runtime blocked | READY | READY | READY | READY | NOT_READY |
 
 Best first candidate remains `EcraInicial`, because it is read-only, requires no
 paging/sector choice, and returns aggregates rather than an invoice list or
-taxpayer name. NTP and local PFX gates pass; no operation is live-ready until the
-concrete Android SDK/release pair for `CanalOrigem` is known without guessing.
+taxpayer name. All offline gates pass. The single live request exposed a transport
+failure after `secureConnect` and before HTTP; no second request is authorized by
+this experiment.

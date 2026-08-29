@@ -18,6 +18,11 @@ export const FACTINTWS_OPERATION = 'EcraInicial';
 export const FACTINTWS_PLANNED_CLIENT_IDENTITY = 'TesteWebservices.pfx';
 export const FACTINTWS_CHANNEL_SYSTEM = 'A';
 export const FACTINTWS_CHANNEL_VERSION_TEMPLATE = 'Android SDK: <SDK_INT> (<RELEASE>)';
+export const FactIntWsChannelValueStatus = Object.freeze({
+  RUNTIME_DEVICE_METADATA: 'RUNTIME_DEVICE_METADATA',
+  FIXED_APP_VALUE: 'FIXED_APP_VALUE',
+  UNKNOWN: 'UNKNOWN',
+});
 const officialApp = FactIntWsEvidenceStatus.OFFICIAL_APP;
 
 export const factIntWsOperations = Object.freeze({
@@ -73,6 +78,16 @@ export function buildOfficialAppChannel({ sdkInt, release }) {
   return Object.freeze({ system: FACTINTWS_CHANNEL_SYSTEM, version: `Android SDK: ${sdk} (${version})` });
 }
 
+export function resolveFactIntWsChannelFromEnvironment(env = process.env) {
+  const channel = buildOfficialAppChannel({
+    sdkInt: env.FACTINTWS_ANDROID_SDK_INT,
+    release: env.FACTINTWS_ANDROID_RELEASE,
+  });
+  return Object.freeze({ channel,
+    status: FactIntWsChannelValueStatus.RUNTIME_DEVICE_METADATA,
+    source: 'EXPLICIT_ANDROID_RUNTIME_METADATA' });
+}
+
 const criticalFields = Object.freeze([
   'passwordDigestFormula', 'passwordDigestInputOrder', 'passwordDigestEncoding',
   'nonceByteLength', 'nonceGeneration', 'nonceXmlEncoding', 'createdTimezone',
@@ -99,7 +114,7 @@ export function assertFactIntWsLiveReadiness(evidence = factIntWsProtocolEvidenc
 }
 
 export function buildFactIntWsLiveReadinessMatrix({ ntpReady = false, pfxReady = false,
-  tlsDiagnosticReady = false, evidence = factIntWsProtocolEvidence } = {}) {
+  tlsDiagnosticReady = false, channelReady = false, evidence = factIntWsProtocolEvidence } = {}) {
   const accepted = [FactIntWsEvidenceStatus.OFFICIAL_APP, FactIntWsEvidenceStatus.RUNTIME];
   const has = (field) => accepted.includes(evidence[field]?.status);
   const matrix = {
@@ -109,7 +124,7 @@ export function buildFactIntWsLiveReadinessMatrix({ ntpReady = false, pfxReady =
     SOAPACTION_READY: has('soapAction'),
     ECRAINICIAL_SCHEMA_READY: has('operationRootElement') && has('operationRequiredBody'),
     NTP_READY: ntpReady === true,
-    CANALORIGEM_READY: has('channelValues'),
+    CANALORIGEM_READY: channelReady === true,
     PFX_READY: pfxReady === true,
     TLS_DIAGNOSTIC_READY: tlsDiagnosticReady === true,
   };

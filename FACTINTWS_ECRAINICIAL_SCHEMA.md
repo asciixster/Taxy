@@ -17,10 +17,13 @@ Evidence: `CONFIRMED_FROM_OFFICIAL_APP`. Wire operation: `EcraInicial`.
 
 The app uses system `A`; the exact version formula is
 `Android SDK: <SDK_INT> (<RELEASE>)`. Both are confirmed from the official Android
-app. The placeholders deliberately are not live values: the APK contains no fixed
-runtime SDK/release pair. The combined concrete-value status therefore remains
-`CHANNEL_VALUES = UNKNOWN`, and live execution is blocked until that pair is
-obtained without guessing.
+app. The constructor reads both values directly from `android.os.Build.VERSION`,
+so the semantic status is `RUNTIME_DEVICE_METADATA`, not `FIXED_APP_VALUE`.
+
+The first controlled tooling request used the coherent Android pair API 35 /
+Android 15: `Sistema=A`, `Versao=Android SDK: 35 (15)`. The request failed after
+TLS `secureConnect` and before HTTP, so server acceptance of this channel remains
+`UNKNOWN`.
 
 ## Response fields
 
