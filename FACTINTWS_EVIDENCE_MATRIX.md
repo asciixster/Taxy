@@ -19,6 +19,7 @@ No row is runtime-confirmed in this release.
 | Four mutating operations | builders + response DTOs | `CONFIRMED_FROM_OFFICIAL_APP` | documented, blocked | no |
 | Taxy client identity acceptance | none | `UNKNOWN` | not tested | unknown |
 | Business-code semantics | names only | `UNKNOWN` | preserved as opaque values | not blocking transport test |
+| First Taxy TLS attempt | OpenSSL `bad record mac` before HTTP | `RUNTIME_CONFIRMED` (failure only) | classified `TLS_ERROR`; no protocol promotion | blocked pending TLS diagnosis |
 
 ## Readiness
 

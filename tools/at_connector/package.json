@@ -12,6 +12,7 @@
     "authenticated:dry-run": "node bin/test-authenticated-consultation.mjs --dry-run",
     "historical:dry-run": "node bin/historical-soap-fetch.js --dry-run",
     "historical:live": "node bin/historical-soap-fetch.js",
-    "factintws:feasibility": "node bin/factintws-feasibility.mjs"
+    "factintws:feasibility": "node bin/factintws-feasibility.mjs",
+    "factintws:live-once": "node bin/factintws-live-once.mjs"
   }
 }

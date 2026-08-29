@@ -1,10 +1,14 @@
 # Taxy 0.7.4 — offline FactIntWS feasibility result
 
-## Decision
+## Offline decision
 
 `READY FOR A SEPARATELY APPROVED SINGLE LIVE FACTINTWS TEST`
 
-The offline reconstruction gates now pass for the `EcraInicial` wire operation. This task made zero network requests and did not open any certificate or credential. Readiness means the official app contract is sufficiently reconstructed; it does not mean Taxy's TLS identity or credentials are accepted by FactIntWS.
+The offline reconstruction gates pass for the `EcraInicial` wire operation. The
+offline phase made zero network requests and did not open any certificate or
+credential. Readiness means the official app contract is sufficiently
+reconstructed; it does not mean Taxy's TLS identity or credentials are accepted
+by FactIntWS.
 
 | Field | Result |
 |---|---|
@@ -18,6 +22,22 @@ The offline reconstruction gates now pass for the `EcraInicial` wire operation. 
 | Runtime-confirmed elements | none |
 | Official-app private identity used | no |
 
+## First controlled live attempt (subsequent explicit authorization)
+
+Exactly one request was attempted against the primary 443 endpoint. It failed
+during TLS before any HTTP or SOAP response with the sanitized OpenSSL category
+`decryption failed or bad record mac`. This is classified `TLS_ERROR`, not
+`TLS_IDENTITY_REJECTED`: no certificate-required/bad-certificate alert was
+observed, so the run neither confirms nor rejects the Taxy identity.
+
+- network requests: 1;
+- HTTP: not available;
+- SOAP/operation response: not received;
+- protocol elements promoted to runtime evidence: none;
+- retries/fallback/alternate endpoint: none.
+
 ## Recommended single live test
 
-Use the legitimate Taxy PFX, primary endpoint 443, one `EcraInicial` request for the current year, a single fresh security token, no retry and no 8443 fallback. Capture only TLS/HTTP/fault/operation-presence metadata and sanitized aggregate field presence. Do not run another operation automatically.
+Audit the Node/OpenSSL TLS failure locally before authorizing another request.
+Do not change SOAP, authentication fields, endpoint, operation or credentials
+until the transport-level cause is isolated.
