@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+  <S:Body>
+    <InvoicesResponse>
+      <PaginationTotal>
+        <totalDocs>1</totalDocs>
+        <totalDocsSent>1</totalDocsSent>
+        <totalPages>1</totalPages>
+        <nPage>1</nPage>
+      </PaginationTotal>
+      <Invoice>
+        <InvoiceNo>ANON_DOCUMENT</InvoiceNo>
+        <InvoiceDate>2025-02-03</InvoiceDate>
+        <InvoiceType>FT</InvoiceType>
+        <TaxRegistrationNumber>ANON_ISSUER</TaxRegistrationNumber>
+        <InvoiceId>ANON_INVOICE</InvoiceId>
+        <TaxPayable>23.45</TaxPayable>
+        <NetTotal>1000.99</NetTotal>
+        <GrossTotal>1024.44</GrossTotal>
+        <TaxRate>23.00</TaxRate>
+        <SectorCode>STANDARD</SectorCode>
+        <ClassificationStatus>CLASSIFIED</ClassificationStatus>
+        <PendingStatus>false</PendingStatus>
+        <Source>WEB_SERVICE</Source>
+        <FutureField>synthetic-unknown</FutureField>
+      </Invoice>
+      <EstadoOperacao>200</EstadoOperacao>
+      <Desc>synthetic success</Desc>
+    </InvoicesResponse>
+  </S:Body>
+</S:Envelope>

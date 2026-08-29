@@ -1,7 +1,7 @@
 {
   "name": "taxy-at-connector",
   "private": true,
-  "version": "0.7.2",
+  "version": "0.7.3",
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
@@ -11,6 +11,7 @@
     "inspect": "node src/cli.mjs inspect",
     "authenticated:dry-run": "node bin/test-authenticated-consultation.mjs --dry-run",
     "historical:dry-run": "node bin/historical-soap-fetch.js --dry-run",
-    "historical:live": "node bin/historical-soap-fetch.js"
+    "historical:live": "node bin/historical-soap-fetch.js",
+    "pfx:audit": "node bin/audit-pfx.js"
   }
 }

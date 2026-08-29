@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { generateKeyPairSync } from 'node:crypto';
 import test from 'node:test';
 import { AtErrorCode } from '../../src/errors.mjs';
@@ -33,13 +34,73 @@ test('historical request reproduces exact SOAP contract and timestamp precision'
   assert.equal(request.createdPlaintext, '2026-08-28T11:22:33.000Z');
   assert(request.xml.includes(`xmlns:fat="${HISTORICAL_NAMESPACE}"`));
   assert(request.xml.includes('<fat:InvoicesRequest>'));
-  assert(request.xml.includes('<fat:CustomerTaxID>123456789</fat:CustomerTaxID>'));
+  assert(request.xml.includes('<fat:TaxRegistrationNumber>123456789</fat:TaxRegistrationNumber>'));
   assert(request.xml.includes('<fat:nPage>1</fat:nPage><fat:nDocsPage>500</fat:nDocsPage>'));
   for (const field of ['Password', 'Nonce', 'Created']) {
     const encoded = request.xml.match(new RegExp(`<wss:${field}>([^<]+)</wss:${field}>`))[1];
     assert.match(encoded, /^[A-Za-z0-9+/]+={0,2}$/);
   }
   assert.equal(request.soapAction, null);
+});
+
+test('current request serializes required body fields in exact order without hidden filters', () => {
+  const xml = buildHistoricalEnvelope(base).xml;
+  const body = xml.match(/<S:Body>([\s\S]*?)<\/S:Body>/)[1];
+  const orderedTags = [...body.matchAll(/<(?:fat:)?([A-Za-z][A-Za-z0-9]*)(?:\s[^>]*)?>/g)]
+    .map((match) => match[1]);
+  assert.deepEqual(orderedTags, [
+    'InvoicesRequest', 'TaxRegistrationNumber', 'StartDate', 'EndDate',
+    'Pagination', 'nPage', 'nDocsPage',
+  ]);
+  for (const absent of [
+    'CustomerTaxID', 'Status', 'InvoiceType', 'Sector', 'Country',
+    'Origin', 'Situation', 'Role', 'FiscalYear', 'Channel', 'Software', 'Mode',
+  ]) assert.equal(body.includes(`<fat:${absent}>`), false, `${absent} must remain absent`);
+});
+
+test('sanitized historical contract records the material current-versus-source diff', () => {
+  const fixtureUrl = new URL('../fixtures/sanitized/historical-fatshare-request-contract.json', import.meta.url);
+  const contract = JSON.parse(readFileSync(fixtureUrl, 'utf8'));
+  assert.equal(contract.source, 'HISTORICAL_CODE_EVIDENCE');
+  assert.equal(contract.requestRoot, 'InvoicesRequest');
+  assert.equal(contract.namespace, HISTORICAL_NAMESPACE);
+  assert.equal(contract.customerRolePartyElement, 'CustomerTaxID');
+  assert.equal(contract.defaultPartyElement, 'TaxRegistrationNumber');
+  assert.deepEqual(contract.fieldOrder, ['party', 'StartDate', 'EndDate', 'Pagination']);
+  assert.equal(contract.dateFormat, 'YYYY-MM-DD');
+  assert.equal(contract.pageDefault, 1);
+  assert.equal(contract.pageSizeDefault, 300);
+  assert.equal(contract.pageSizeMinimum, 1);
+  assert.equal(contract.pageSizeMaximum, 5000);
+  assert.equal(contract.containsAdditionalBodyFilters, false);
+  assert.deepEqual(contract.dateSemantics, {
+    wireType: 'date-only', formatEvidence: 'RUNTIME_BEHAVIOR_CONFIRMED',
+    businessMeaning: 'UNKNOWN', startInclusive: 'UNKNOWN', endInclusive: 'UNKNOWN',
+    timezoneOnWire: 'NOT_PRESENT', businessTimezone: 'UNKNOWN',
+    maximumServiceRangeDays: 'UNKNOWN', timestampAlternativeFound: false,
+    separateFiscalYearFound: false,
+  });
+  assert.equal(contract.historicalNonEmptyResponseFound, false);
+  assert.equal(contract.historicalNonEmptyDateEvidenceFound, false);
+  assert.deepEqual(contract.oldParserScope, ['operationStatus', 'description', 'soapFault']);
+  assert.equal(contract.populationSemantics, 'UNKNOWN');
+
+  const current = buildHistoricalEnvelope(base).xml;
+  assert(current.includes('<fat:TaxRegistrationNumber>'));
+  assert.equal(current.includes('<fat:CustomerTaxID>'), false);
+  assert(current.includes('<fat:nPage>1</fat:nPage>'));
+  assert(current.includes('<fat:nDocsPage>500</fat:nDocsPage>'));
+});
+
+test('historical evidence records candidate filters as absent without claiming they are required', () => {
+  const fixtureUrl = new URL('../fixtures/sanitized/historical-fatshare-request-contract.json', import.meta.url);
+  const contract = JSON.parse(readFileSync(fixtureUrl, 'utf8'));
+  const body = buildHistoricalEnvelope(base).xml.match(/<S:Body>([\s\S]*?)<\/S:Body>/)[1];
+  assert.equal(contract.containsAdditionalBodyFilters, false);
+  assert(contract.candidateFieldsNotPresent.length > 0);
+  for (const field of contract.candidateFieldsNotPresent) {
+    assert.equal(body.includes(`<fat:${field}>`), false, `${field} must remain absent`);
+  }
 });
 
 test('live harness accepts only an ordered, small date interval', () => {
@@ -62,10 +123,12 @@ test('sanitized envelope contains no credentials, NIF, ciphertext or key materia
 
 test('client permits at most one request and uses no retry', async () => {
   let calls = 0;
+  let countedNetworkRequests = 0;
   const client = new HistoricalAtConsultationClient({
     environment: 'test', username: base.username, password: base.password,
     cipherCertificatePath: 'unused', pfxPath: 'unused', pfxPassword: 'unused',
-  }, { envelopeBuilder: (input) => buildHistoricalEnvelope({ ...input, cipherPublicKey: publicKey }), transport: async () => {
+  }, { envelopeBuilder: (input) => buildHistoricalEnvelope({ ...input, cipherPublicKey: publicKey }), onNetworkRequest: () => { countedNetworkRequests += 1; }, transport: async ({ onRequestStart }) => {
+    onRequestStart();
     calls += 1;
     return { statusCode: 200, headers: {}, body: '<InvoicesResponse><EstadoOperacao>200</EstadoOperacao><Desc>OK</Desc><totalPages>0</totalPages></InvoicesResponse>', tls: { authorized: true } };
   } });
@@ -74,6 +137,7 @@ test('client permits at most one request and uses no retry', async () => {
   assert.deepEqual(response.runtimeConfirmedFields, ['namespace']);
   await assert.rejects(() => client.fetchOnce({ startDate: '2025-01-01', endDate: '2025-01-02' }), (error) => error.code === AtErrorCode.RATE_LIMIT_EXCEEDED);
   assert.equal(calls, 1);
+  assert.equal(countedNetworkRequests, 1);
 });
 
 test('functional primary-login response confirms namespace but not username authorization', async () => {

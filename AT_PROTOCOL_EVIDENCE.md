@@ -12,6 +12,8 @@ Evidence is classified without promoting historical code to official documentati
 | Test endpoint | port 725 `fatshareFaturas` | OFFICIAL_DOCUMENTATION |
 | Production endpoint | port 425; execution blocked | OFFICIAL_DOCUMENTATION |
 | TLS / client certificate | HTTPS with AT PFX | OFFICIAL_DOCUMENTATION |
+| `TesteWebservices.pfx` client identity | Accepted by the port 725 test endpoint | RUNTIME_BEHAVIOR_CONFIRMED; identity-specific only |
+| Separate AT Issuing CA2 identity | Local chain valid; endpoint acceptance not confirmed | UNKNOWN |
 | SOAP | 1.1 | OFFICIAL_DOCUMENTATION |
 | Subuser username | `NIF/UserId` | OFFICIAL_DOCUMENTATION |
 | Primary username | 9-digit taxpayer NIF | HISTORICAL_CODE_EVIDENCE; remote authorization UNKNOWN |
@@ -37,5 +39,23 @@ One controlled request on 28 August 2026 completed mTLS but returned HTTP 500 / 
 A subsequent single-variable experiment used exactly that namespace. One response reached the client, but local TLS metadata collection failed after Node released the response socket. The run is `PARSING_ERROR`: HTTP, SOAP body and namespace acceptance are not available, so the namespace was **not** promoted. No second request was made. The metadata timing bug now has an offline regression fix.
 
 The authorized repeat after that fix made one request with the protocol unchanged: mTLS authorized, HTTP 200, no SOAP fault, and a parsed `EstadoOperacao` 486 indicating an empty invoice list. This confirms dispatch of `InvoicesRequest` with the namespace above. Only the namespace is promoted; the response does not independently promote SOAPAction, RSA/AES parameters, Created precision, username authorization or WFA permissions.
+
+## Client identity isolation
+
+A later single-variable 0.7.3 experiment restored the exact `TesteWebservices.pfx` identity used in the successful 0.7.2 execution while preserving the current code, endpoint, SOAP request, date interval and TLS options. The request completed with mTLS authorized, HTTP 200, no SOAP fault and `EstadoOperacao` 486. The specific `TesteWebservices.pfx` identity is therefore `RUNTIME_BEHAVIOR_CONFIRMED` for this endpoint.
+
+This evidence is identity-specific. It does not prove that AT Issuing CA1 is universally required. The separate AT Issuing CA2 identity has different certificate and public-key fingerprints and remains unconfirmed for this endpoint after its TLS-handshake failure; it was not retested in this experiment.
+
+## Request-semantics review required
+
+Three successful authenticated requests returned `EstadoOperacao` 486 and an empty invoice list for one-day, seven-day and 28-day August 2026 intervals. The last experiment changed only the date range and made exactly one page-1 request. This is classified `EMPTY_RESULT_REQUIRES_REQUEST_SEMANTICS_REVIEW`.
+
+Before another live request, an offline review must establish the exact date semantics, `CustomerTaxID` role, invoice direction/type selected by `InvoicesRequest`, implicit filters, pagination meaning and differences from the historical source implementation. No broader interval, different month or request parameter is inferred from the empty results.
+
+## Offline request-semantics audit
+
+The completed zero-network audit is recorded in [FATSHARE_REQUEST_SEMANTICS.md](FATSHARE_REQUEST_SEMANTICS.md) and [FATSHARE_REQUEST_DIFF.md](FATSHARE_REQUEST_DIFF.md). It reconstructed the original local serializer from baseline commit `2a874f0` and identified the party selector as the strongest single-variable experiment.
+
+That experiment subsequently changed only `CustomerTaxID` to `TaxRegistrationNumber`, preserving the identifier, 28-day interval, endpoint, namespace, SOAPAction absence, cryptography, credentials, certificate, page, page size, and parser. One request completed with authorized mTLS, HTTP 200, no SOAP fault, `EstadoOperacao` 486, and zero invoices. The result is `SUCCESS_EMPTY_RESULT` and `ROLE_POPULATION_HYPOTHESIS_NOT_CONFIRMED`. Because no invoice population was observed, `TaxRegistrationNumber` is not promoted to runtime-confirmed semantics.
 
 Official sources remain the AT manuals for [generic aspects](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Outras_entidades/Suporte_tecnologico/Webservice/e_Fatura/Documents/Comunicacao_dos_elementos_dos_documentos_de_faturacao_aspetos_gerais.pdf), [specific aspects](https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Outras_entidades/Suporte_tecnologico/Webservice/e_Fatura/Documents/Comunicacao_dos_elementos_dos_documentos_de_faturacao.pdf), and [FAQ 4996](https://info.portaldasfinancas.gov.pt/pt/faturas/Pages/faqs-00996.aspx).

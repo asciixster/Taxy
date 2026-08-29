@@ -1,4 +1,4 @@
-const SENSITIVE_KEY = /^(?:password|passphrase|private.?key|pfx(?:content|password)?|nonce|token|authorization)$/i;
+const SENSITIVE_KEY = /^(?:username|password|passphrase|private.?key|pfx(?:content|password)?|nonce|token|authorization|nif|(?:issuer|customer|tax).*(?:id|identifier)|invoice.*id|document.*reference|atcud)$/i;
 const AT_USERNAME = /(?<!\d)\d{9}\/\d{1,4}(?!\d)/g;
 const LONG_NUMERIC_IDENTIFIER = /(?<!\d)\d{9,}(?!\d)/g;
 const DOCUMENT_LIKE_IDENTIFIER = /\b[A-Z]{1,5}[-/]\d{4,}\b/gi;

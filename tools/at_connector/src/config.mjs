@@ -1,5 +1,29 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { AtConnectorError, AtErrorCode } from './errors.mjs';
+
+export const REPOSITORY_ENV_LOCAL = fileURLToPath(new URL('../../../.env.local', import.meta.url));
+
+function parseEnvValue(rawValue) {
+  const value = rawValue.trim();
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+export function loadEnvLocalFallback(env = process.env, envFilePath = REPOSITORY_ENV_LOCAL) {
+  const merged = { ...env };
+  if (!existsSync(envFilePath)) return Object.freeze({ env: Object.freeze(merged), found: false });
+  const contents = readFileSync(envFilePath, 'utf8');
+  for (const line of contents.split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+    if (!match) continue;
+    const [, key, rawValue] = match;
+    if (merged[key] == null || merged[key] === '') merged[key] = parseEnvValue(rawValue);
+  }
+  return Object.freeze({ env: Object.freeze(merged), found: true });
+}
 
 export class AtConfigurationError extends Error {
   constructor(message) {
@@ -17,8 +41,8 @@ export function loadConfig(env = process.env, { requireAtCredentials = false } =
     throw new AtConnectorError(AtErrorCode.PRODUCTION_BLOCKED, 'Production calls are disabled in Taxy 0.7.1');
   }
 
-  const pfxPath = env.AT_CLIENT_PFX_PATH || env.AT_PFX_PATH;
-  const pfxPassword = env.AT_CLIENT_PFX_PASSWORD || env.AT_PFX_PASSWORD;
+  const pfxPath = env.AT_CLIENT_PFX_PATH ?? env.AT_PFX_PATH;
+  const pfxPassword = env.AT_CLIENT_PFX_PASSWORD ?? env.AT_PFX_PASSWORD;
   const normalized = { ...env, AT_CLIENT_PFX_PATH: pfxPath, AT_CLIENT_PFX_PASSWORD: pfxPassword };
   const required = ['AT_CLIENT_PFX_PATH', 'AT_CLIENT_PFX_PASSWORD'];
   if (requireAtCredentials) {
