@@ -18,7 +18,8 @@ import { tlsMetadataFromSocket } from '../src/transport.mjs';
 
 const required = ['AT_USERNAME', 'AT_PASSWORD', 'AT_CIPHER_CERT_PATH', 'AT_CLIENT_PFX_PATH', 'AT_CLIENT_PFX_PASSWORD'];
 const requested = process.argv[2];
-const operation = requested === 'pending' ? FactIntWsOperation.PENDING
+const operation = requested === 'overview' ? FactIntWsOperation.ECRAINICIAL
+  : requested === 'pending' ? FactIntWsOperation.PENDING
   : requested === 'sector' ? FactIntWsOperation.BY_SECTOR : null;
 let networkRequests = 0;
 const output = (value) => process.stdout.write(`${JSON.stringify(redact(value), null, 2)}\n`);
@@ -47,7 +48,7 @@ function sendOnceFactory({ pfx, passphrase }) {
 }
 
 async function main() {
-  if (!operation) return fail('INVALID_OPERATION', 'Use pending or sector');
+  if (!operation) return fail('INVALID_OPERATION', 'Use overview, pending or sector');
   if (process.env.AT_LIVE_TEST !== '1') return fail('LIVE_TEST_DISABLED', 'Explicit opt-in is required');
   if (required.some((key) => !process.env[key])) return fail('AUTH_CONFIGURATION_MISSING', 'Required local configuration is missing');
   const username = validateAtUsername(process.env.AT_USERNAME);
@@ -66,9 +67,11 @@ async function main() {
     const common = { username, credentials, input: { nif: username.split('/')[0], year: process.env.FACTINTWS_YEAR ?? created.slice(0, 4), channel: channelResolution.channel } };
     const client = new FactIntWsClient({ endpoint: FACTINTWS_ENDPOINT_8443, transport: sendOnceFactory({ pfx, passphrase: process.env.AT_CLIENT_PFX_PASSWORD }) });
     const repository = new FactIntWsRepository(client);
-    const result = operation === FactIntWsOperation.PENDING
-      ? await repository.pendingInvoices(common)
-      : await repository.invoicesBySector({ ...common, input: { ...common.input, sector: process.env.FACTINTWS_SECTOR_CODE, index: '0' } });
+    const result = operation === FactIntWsOperation.ECRAINICIAL
+      ? await repository.initialScreen(common)
+      : operation === FactIntWsOperation.PENDING
+        ? await repository.pendingInvoices(common)
+        : await repository.invoicesBySector({ ...common, input: { ...common.input, sector: process.env.FACTINTWS_SECTOR_CODE, index: '0' } });
     const parsed = result.parsed;
     output({ networkRequests, operation, createdSource, httpStatus: result.httpStatus,
       mTLS: result.tls.authorized ? 'SUCCESS' : 'FAILED', authorized: result.tls.authorized,
@@ -76,6 +79,11 @@ async function main() {
       desc: parsed.result?.desc ?? null, invoiceCount: parsed.invoices?.length ?? 0,
       parsedInvoiceCount: result.domainInvoices?.length ?? 0, totalPages: parsed.totalPages,
       pageIndex: parsed.index, paginationRuntimeObserved: parsed.totalPages != null,
+      overview: parsed.totals ? { totals: parsed.totals,
+        sectors: parsed.sectors.map((sector) => ({ sectorCode: sector.sectorCode,
+          provisionalBenefitCents: sector.provisionalBenefitCents,
+          totalExpensesCents: sector.totalExpensesCents,
+          totalVatExpensesCents: sector.totalVatExpensesCents })) } : null,
       invoiceFieldPresence: (parsed.invoices ?? []).map((invoice, invoiceIndex) => ({ invoiceIndex, fields: factIntInvoiceFieldPresence(invoice) })),
       classification: result.classification });
     if (parsed.fault) process.exitCode = 2;

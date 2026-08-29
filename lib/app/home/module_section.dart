@@ -3,9 +3,16 @@ import 'package:flutter/material.dart';
 import '../modules/taxy_module.dart';
 
 final class ModuleSection extends StatelessWidget {
-  const ModuleSection({super.key, required this.onOpenIrs});
+  const ModuleSection({
+    super.key,
+    required this.onOpenIrs,
+    this.onOpenEfatura,
+    this.showExperimentalEfatura = false,
+  });
 
   final VoidCallback onOpenIrs;
+  final VoidCallback? onOpenEfatura;
+  final bool showExperimentalEfatura;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +40,25 @@ final class ModuleSection extends StatelessWidget {
             onTap: onOpenIrs,
           ),
         ),
+        if (showExperimentalEfatura) ...[
+          const SizedBox(height: 10),
+          Card(
+            child: ListTile(
+              key: const Key('efatura-module-entry'),
+              contentPadding: const EdgeInsets.all(18),
+              leading: const CircleAvatar(child: Icon(Icons.receipt_outlined)),
+              title: const Text(
+                'e-Fatura',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              subtitle: const Text(
+                'Consulta read-only · funcionalidade interna',
+              ),
+              trailing: const Chip(label: Text('Experimental')),
+              onTap: onOpenEfatura,
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         Semantics(
           label: '$comingCount simuladores futuros em preparação',

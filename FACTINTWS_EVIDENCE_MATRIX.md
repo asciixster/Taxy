@@ -1,7 +1,8 @@
 # FactIntWS evidence matrix
 
-No successful FactIntWS protocol element is runtime-confirmed. The sole runtime
-row records only a transport failure and does not promote the submitted protocol.
+FactIntWS transport and the three read-only operations listed below are
+runtime-confirmed on endpoint 8443. No non-empty invoice item has yet been
+observed, so invoice field contracts remain official-app/offline evidence only.
 
 | Element | Evidence | Confidence | Implementation status | Live-ready |
 |---|---|---|---|---|
@@ -24,7 +25,7 @@ row records only a transport failure and does not promote the submitted protocol
 | `FaturasPorSetor` | builder + response DTO + HTTP 200/EstadoOperacao 204 for `C05`, index 0, endpoint 8443 | `RUNTIME_CONFIRMED` | serializer, typed parser, client/repository | yes |
 | Four mutating operations | builders + response DTOs | `CONFIRMED_FROM_OFFICIAL_APP` | documented, blocked | no |
 | Taxy PFX local readiness | local PKCS#12/X.509 preflight | `OFFLINE_VERIFIED` | opens; key present; 3 certs; chain valid; clientAuth EKU valid | yes locally |
-| Taxy client identity acceptance | none | `UNKNOWN` | not tested against FactIntWS | unknown |
+| Taxy client identity acceptance | controlled calls on endpoint 8443 | `RUNTIME_CONFIRMED` | authorized mTLS, TLS 1.3, HTTP 200 | yes |
 | Business-code semantics | names only | `UNKNOWN` | preserved as opaque values | not blocking transport test |
 | Controlled FactIntWS attempt | `secureConnect`, then OpenSSL `bad record mac` before HTTP | `RUNTIME_CONFIRMED` (transport failure only) | classified `TLS_ERROR`; no SOAP/channel promotion | blocked at transport |
 | TLS 1.2-only experiment | TLS alert 40 before `secureConnect` | `RUNTIME_CONFIRMED` (failure only) | TLS 1.2 did not resolve transport; no protocol promotion | no |
@@ -39,8 +40,8 @@ row records only a transport failure and does not promote the submitted protocol
 | `FaturasPorClassificar` | READY and runtime accepted | READY | READY | READY; real item shape not yet observed | READY | READY |
 | `FaturasPorSetor` | READY and runtime accepted for `C05`/index 0 | READY | READY | READY; real item shape not yet observed | READY | READY |
 
-Best first candidate remains `EcraInicial`, because it is read-only, requires no
-paging/sector choice, and returns aggregates rather than an invoice list or
-taxpayer name. The single endpoint-only 8443 experiment completed with authorized
-TLS 1.3, HTTP 200 and a functional response. No retry, fallback or second request
-was made. Other read-only operations remain untested.
+The 0.7.6 controlled discovery called `EcraInicial` for 2026 and 2025. The
+2026 response exposed sectors `C01`–`C15` and `C99`, all with zero observed
+aggregates; the 2025 response returned business status `419`. With no runtime
+signal of invoice data, no random sector request was made. Real non-empty
+invoice response and parsing remain `UNKNOWN`.

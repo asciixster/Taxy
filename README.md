@@ -1,8 +1,20 @@
-# taxy.pt — 0.7.5 FactIntWS real invoice retrieval
+# taxy.pt — 0.7.6 e-Fatura read-only application integration
 
 Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
 
-The developer-only connector now implements the read-only `FaturasPorClassificar` and `FaturasPorSetor` operations. Both are runtime-confirmed for controlled empty results on the official-app endpoint at port 8443. They are not exposed in the production UI, and real invoice-item parsing remains explicitly unconfirmed until the AT returns a non-empty list.
+The FactIntWS connector implements the read-only `EcraInicial`,
+`FaturasPorClassificar` and `FaturasPorSetor` operations. The application now
+has a credential-free `EfaturaReadOnlyService` boundary and a first read-only
+e-Fatura screen, kept behind the compile-time
+`TAXY_EFATURA_EXPERIMENTAL` flag (off by default). The screen supports explicit
+loading, empty and classified error states, sectors and synthetic invoice
+presentation without exposing SOAP or authentication material.
+
+The controlled 0.7.6 discovery used two FactIntWS requests. The 2026 overview
+returned sectors `C01` through `C15` and `C99`, all without activity; the 2025
+overview returned business status `419`. No sector had evidence justifying an
+invoice request. Real invoice-item parsing therefore remains explicitly
+unconfirmed, and the experimental label stays in place.
 
 A aplicação é Android-first, determinística e privada: guarda simulações no dispositivo, não submete declarações e não acede ao Portal das Finanças. Casos fora do contrato validado falham fechados, sem ignorar rendimentos nem aplicar aproximações silenciosas.
 
@@ -66,6 +78,7 @@ lib/
   app/home/              shell e home modular
   app/modules/           TaxyModule e registry
   modules/irs/           fronteira pública do módulo IRS
+  modules/efatura/       domínio, application service e UI read-only experimental
   domain/                modelos fiscais legados em migração incremental
   tax_engine/            motores determinísticos e rule repository
   question_engine/       fluxo guiado e scope check

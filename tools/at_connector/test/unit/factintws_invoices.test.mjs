@@ -81,4 +81,5 @@ test('live harness is explicit opt-in and does not paginate automatically', asyn
   const source = await import('node:fs').then(({ readFileSync }) => readFileSync(new URL('../../bin/factintws-invoices-live.mjs', import.meta.url), 'utf8'));
   assert(source.includes("AT_LIVE_TEST !== '1'")); assert.equal(source.includes('page 2'), false); assert.equal(source.includes('retry'), false);
   assert(source.includes("index: '0'"));
+  assert(source.includes("requested === 'overview'"));
 });

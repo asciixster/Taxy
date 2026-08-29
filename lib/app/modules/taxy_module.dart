@@ -1,4 +1,4 @@
-enum TaxyModuleAvailability { active, comingSoon }
+enum TaxyModuleAvailability { active, experimental, comingSoon }
 
 final class TaxyModule {
   const TaxyModule({
@@ -17,7 +17,7 @@ final class TaxyModule {
   final TaxyModuleAvailability availability;
   final String version;
 
-  bool get isActive => availability == TaxyModuleAvailability.active;
+  bool get isActive => availability != TaxyModuleAvailability.comingSoon;
 }
 
 abstract final class TaxyModuleRegistry {
@@ -29,6 +29,14 @@ abstract final class TaxyModuleRegistry {
       iconName: 'receipt_long',
       availability: TaxyModuleAvailability.active,
       version: '0.3.0',
+    ),
+    TaxyModule(
+      id: 'efatura',
+      title: 'e-Fatura',
+      description: 'Consulta o resumo, setores e faturas sem alterar dados.',
+      iconName: 'receipt_long',
+      availability: TaxyModuleAvailability.experimental,
+      version: '0.7.6',
     ),
     TaxyModule(
       id: 'salary',
