@@ -26,3 +26,7 @@ This document records offline historical observations supplied for research. It 
 - The only client identity permitted for Taxy live work is the separately and legitimately supplied `taxy-at-client.pfx`, kept outside Git.
 - Historical observations do not authorize endpoint probing or protocol experimentation.
 - The confirmed fatshare `InvoicesRequest` implementation remains isolated and unchanged.
+
+## Structural SecurityContext observation
+
+The observed official application uses its own `SecurityContext` containing a client certificate, private key and trusted certificate/CA material. This is structural historical evidence that chain/trust configuration may matter. It does **not** identify or prove which chain is required for the separate Taxy/WFA client certificate and does not authorize reuse of the official application's identity or trust material.

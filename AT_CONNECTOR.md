@@ -29,6 +29,7 @@ The 0.7.2 path reproduces supplied historical SOAP code without presenting it as
 - `soap.mjs`: XML escaping and SOAP/WS-Security envelope serialization.
 - `transport.mjs`: HTTPS transport with the PFX passed directly to Node.js.
 - `pfx-preflight.mjs`: local, non-network PKCS#12 validation with stable fail-closed classifications.
+- `pfx-audit.mjs`: sanitized local certificate-count, key-match, EKU and intermediate-chain audit.
 - `parser.mjs`: structured SOAP response/fault parsing.
 - `redaction.mjs`: recursive log redaction.
 - `client.mjs`: orchestration through `AtSoapClient`.
@@ -107,5 +108,5 @@ The official document does **not** identify RSA padding. The historical path sel
 - No IRS, Modelo 3 or assessment service is inferred from e-Fatura.
 - No automatic persistence of responses. Committed XML fixtures are explicitly sanitized and synthetic; none is represented as a captured AT invoice response.
 - No automatic pagination; the live harness requests only page 1.
-- No real invoice response was captured in 0.7.3. The latest preflight opened the bundle and confirmed its certificate and private key, but the single authorized request failed during mTLS before HTTP/SOAP. Synthetic fixtures validate parser behavior but are not runtime evidence.
+- No real invoice response was captured in 0.7.3. The latest preflight opened the bundle and confirmed its certificate and private key, but the single authorized request failed during mTLS before HTTP/SOAP. The subsequent zero-network audit found one client certificate issued by `AT Issuing CA2` and no intermediate certificate (`CHAIN_INTERMEDIATE_MISSING`). Synthetic fixtures validate parser behavior but are not runtime evidence.
 - No integration with Flutter or `TaxEngine`.

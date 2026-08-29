@@ -22,7 +22,7 @@ Experiment 3 repeated the same request once after the capture fix. The namespace
 
 ## Offline verification
 
-- Connector tests: 75 passed; 4 opt-in local integration tests skipped offline.
+- Connector tests: 81 passed; 4 opt-in local integration tests skipped offline.
 - Flutter tests: 371 passed; `flutter analyze` reported no issues.
 - Local opt-in certificate/connectivity tests: 4 passed.
 
@@ -32,5 +32,6 @@ Experiment 3 repeated the same request once after the capture fix. The namespace
 - UsernameToken, timestamp validation, XML escaping, consultation DTOs, evidence gate, redaction and error taxonomy are tested.
 - Historical dry-run is fail-closed, sanitizes the envelope and performs zero network requests.
 - PKCS#12 preflight uses ephemeral synthetic bundles for valid, invalid-password and certificate-without-key regressions. No test certificate is committed.
+- PKCS#12 chain audit uses ephemeral synthetic leaf-only, complete-intermediate and unrelated-CA bundles. TLS error regression tests retain only stable sanitized categories.
 
 No raw AT response, NIF, username, password, Nonce, AES key or certificate content is persisted.

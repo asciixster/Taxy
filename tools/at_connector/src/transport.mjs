@@ -3,10 +3,28 @@ import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { AtConnectorError, AtErrorCode } from './errors.mjs';
 
+export function sanitizedTlsFailure(cause) {
+  const message = String(cause?.message || '');
+  const code = /^[A-Z0-9_]{2,64}$/.test(String(cause?.code || '')) ? String(cause.code) : 'NOT_AVAILABLE';
+  let reason = 'UNKNOWN_TLS_FAILURE';
+  if (/certificate required/i.test(message)) reason = 'CERTIFICATE_REQUIRED';
+  else if (/certificate unknown/i.test(message)) reason = 'CERTIFICATE_UNKNOWN';
+  else if (/unknown ca/i.test(message)) reason = 'UNKNOWN_CA';
+  else if (/bad certificate/i.test(message)) reason = 'BAD_CERTIFICATE';
+  else if (/handshake failure/i.test(message)) reason = 'HANDSHAKE_FAILURE';
+  else if (/socket hang up|reset by peer|ECONNRESET/i.test(message)) reason = 'CONNECTION_RESET_DURING_TLS';
+  else {
+    const alert = message.match(/alert(?: number)?\s*(\d{1,3})/i);
+    if (alert) reason = `TLS_ALERT_${alert[1]}`;
+  }
+  const stage = /ENOTFOUND|ECONNREFUSED|ETIMEDOUT/i.test(`${code} ${message}`) ? 'NETWORK_CONNECT' : 'TLS_HANDSHAKE';
+  return Object.freeze({ tlsErrorCode: code, tlsErrorReasonSanitized: reason, tlsStage: stage });
+}
+
 export class AtTransportError extends AtConnectorError {
   constructor(message, cause) {
     const clientRejected = /certificate required|alert bad certificate|certificate unknown/i.test(cause?.message || '');
-    super(clientRejected ? AtErrorCode.CLIENT_CERT_REJECTED : AtErrorCode.TLS_ERROR, message, { cause });
+    super(clientRejected ? AtErrorCode.CLIENT_CERT_REJECTED : AtErrorCode.TLS_ERROR, message, { cause, details: sanitizedTlsFailure(cause) });
     this.name = 'AtTransportError';
   }
 }
