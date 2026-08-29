@@ -20,8 +20,8 @@ row records only a transport failure and does not promote the submitted protocol
 | Taxy certificate pinning | Taxy harness | `UNKNOWN` | `NOT_IMPLEMENTED`; native CA validation remains enabled | not a SOAP blocker |
 | `EcraInicial` | builder + response DTO | `CONFIRMED_FROM_OFFICIAL_APP` | serializer/parser | yes |
 | `DadosContribuinte` | builder + response DTO | `CONFIRMED_FROM_OFFICIAL_APP` | serializer/parser | yes, but sensitive |
-| `FaturasPorClassificar` | builder + response DTO | `CONFIRMED_FROM_OFFICIAL_APP` | serializer/parser | yes |
-| `FaturasPorSetor` | builder + response DTO | `CONFIRMED_FROM_OFFICIAL_APP` | serializer/parser | yes |
+| `FaturasPorClassificar` | builder + response DTO + HTTP 200/EstadoOperacao 204 on endpoint 8443 | `RUNTIME_CONFIRMED` | serializer, typed parser, client/repository | yes |
+| `FaturasPorSetor` | builder + response DTO + HTTP 200/EstadoOperacao 204 for `C05`, index 0, endpoint 8443 | `RUNTIME_CONFIRMED` | serializer, typed parser, client/repository | yes |
 | Four mutating operations | builders + response DTOs | `CONFIRMED_FROM_OFFICIAL_APP` | documented, blocked | no |
 | Taxy PFX local readiness | local PKCS#12/X.509 preflight | `OFFLINE_VERIFIED` | opens; key present; 3 certs; chain valid; clientAuth EKU valid | yes locally |
 | Taxy client identity acceptance | none | `UNKNOWN` | not tested against FactIntWS | unknown |
@@ -36,8 +36,8 @@ row records only a transport failure and does not promote the submitted protocol
 |---|---|---|---|---|---|---|
 | `EcraInicial` | READY and authenticated on 8443 | READY | READY | READY | READY | READY |
 | `DadosContribuinte` | READY offline; TLS runtime blocked | READY | READY | READY | PARTIAL (PII response) | NOT_READY |
-| `FaturasPorClassificar` | READY offline; TLS runtime blocked | READY | READY | READY | READY | NOT_READY |
-| `FaturasPorSetor` | READY offline; TLS runtime blocked | READY | READY | READY | READY | NOT_READY |
+| `FaturasPorClassificar` | READY and runtime accepted | READY | READY | READY; real item shape not yet observed | READY | READY |
+| `FaturasPorSetor` | READY and runtime accepted for `C05`/index 0 | READY | READY | READY; real item shape not yet observed | READY | READY |
 
 Best first candidate remains `EcraInicial`, because it is read-only, requires no
 paging/sector choice, and returns aggregates rather than an invoice list or

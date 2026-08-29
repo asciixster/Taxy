@@ -1,7 +1,7 @@
 {
   "name": "taxy-at-connector",
   "private": true,
-  "version": "0.7.4",
+  "version": "0.7.5",
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
@@ -13,6 +13,7 @@
     "historical:dry-run": "node bin/historical-soap-fetch.js --dry-run",
     "historical:live": "node bin/historical-soap-fetch.js",
     "factintws:feasibility": "node bin/factintws-feasibility.mjs",
-    "factintws:live-once": "node bin/factintws-live-once.mjs"
+    "factintws:live-once": "node bin/factintws-live-once.mjs",
+    "factintws:invoices-live": "node bin/factintws-invoices-live.mjs"
   }
 }

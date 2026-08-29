@@ -1,5 +1,7 @@
 # FactIntWS SecurityContext
 
+Taxy 0.7.5 continues to use native CA validation and the legitimately available `TesteWebservices.pfx`. It does not reproduce official-app pinning, use official-app private identity material, or commit any PFX, password, `.env.local`, authenticated SOAP response, tax identifier, or invoice identifier. Live invoice operations are explicit opt-in, one request per operation, with no retry or fatshare fallback.
+
 The official app constructs a PKCS#12-backed key manager for mTLS. On newer Android it uses the platform trust managers; on older Android it initializes TrustKit from network security configuration and supplies that hostname-specific trust manager. A separate PEM CA loader/custom trust manager exists as a fallback path that augments built-in root validation.
 
 This demonstrates:

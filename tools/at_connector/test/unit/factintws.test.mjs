@@ -78,7 +78,7 @@ test('four read-only request schemas serialize in official field order', () => {
     ['EcraInicial', { nif: syntheticNif, year: '2026', channel }, ['Nif', 'Ano', 'CanalOrigem']],
     ['DadosContribuinte', { nif: syntheticNif, channel }, ['Nif', 'CanalOrigem']],
     ['FaturasPorClassificar', { nif: syntheticNif, year: '2026', channel }, ['Nif', 'Ano', 'CanalOrigem']],
-    ['FaturasPorSetor', { nif: syntheticNif, sector: '01', year: '2026', index: '0', channel }, ['NifAdquirente', 'CodSetor', 'Ano', 'Indice', 'CanalOrigem']],
+    ['FaturasPorSetor', { nif: syntheticNif, sector: 'C05', year: '2026', index: '0', channel }, ['NifAdquirente', 'CodSetor', 'Ano', 'Indice', 'CanalOrigem']],
   ];
   const snapshots = ['ecra_inicial_request.xml', 'dados_contribuinte_request.xml', 'faturas_por_classificar_request.xml', 'faturas_por_setor_request.xml'];
   for (const [index, [operation, input, fields]] of cases.entries()) {
@@ -156,14 +156,19 @@ test('typed invoice parser maps wire response separately from domain', () => {
   assert.equal(invoice.wireType, 'FactIntInvoiceResponse');
   assert.equal(invoice.totalCents, 2345);
   assert.equal(invoice.vatCents, 439);
-  assert.equal(invoice.documentType, 'FT');
+  assert.deepEqual(invoice.documentType, { kind: 'unknown', rawCode: 'FT' });
   assert.equal(invoice.consumerIncentiveCents, 50);
   assert.equal(invoice.generalExpenseBenefitCents, 35);
   assert.equal(invoice.sectorBenefitCents, 25);
-  assert.equal(invoice.originChannel, 'SYNTHETIC');
-  assert.equal(invoice.recipe, 'N');
-  assert.equal(invoice.buyerCanManipulateInvoices, 'S');
-  assert.deepEqual(toAtInvoiceDomain(invoice), { source: 'FACTINTWS', date: '2026-01-02', totalCents: 2345, vatCents: 439, sectorCode: '01', sourceReferencePresent: true });
+  assert.deepEqual(invoice.originChannel, { kind: 'unknown', rawCode: 'SYNTHETIC' });
+  assert.deepEqual(invoice.recipe, { kind: 'known', code: 'N', value: false });
+  assert.deepEqual(invoice.buyerCanManipulateInvoices, { kind: 'known', code: 'S', value: true });
+  const domain = toAtInvoiceDomain(invoice);
+  assert.equal(domain.source, 'FACTINTWS');
+  assert.equal(domain.date, '2026-01-02');
+  assert.equal(domain.totalCents, 2345);
+  assert.equal(domain.vatCents, 439);
+  assert.equal(domain.sectorCode, '01');
 });
 
 test('response parser handles success, empty, multiple, optional and unknown elements', () => {
@@ -191,8 +196,8 @@ test('response parser fails closed on malformed invoice and parses SOAP fault', 
 test('EcraInicial and DadosContribuinte synthetic response shapes parse without exposing data', () => {
   const initial = parseFactIntWsResponse(fixture('ecra_inicial_response.xml'), 'EcraInicial');
   assert.deepEqual(initial.totals, { pendingValidation: 2, pendingRevenueAssociation: 1, provisionalBenefitCents: 1234 });
-  assert.equal(initial.buyerCanManipulateInvoices, 'S');
-  assert.equal(initial.canShowPreviousYear, 'S');
+  assert.deepEqual(initial.buyerCanManipulateInvoices, { kind: 'known', code: 'S', value: true });
+  assert.deepEqual(initial.canShowPreviousYear, { kind: 'known', code: 'S', value: true });
   assert.deepEqual(initial.sectors, [{ sectorCode: '01', provisionalBenefitCents: 1234,
     totalExpensesCents: 10000, totalVatExpensesCents: 2300 }]);
   const taxpayer = parseFactIntWsResponse(fixture('dados_contribuinte_response.xml'), 'DadosContribuinte');

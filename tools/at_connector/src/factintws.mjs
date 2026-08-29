@@ -15,6 +15,11 @@ export const FACTINTWS_WSSE_NAMESPACE = 'http://schemas.xmlsoap.org/ws/2002/12/s
 export const FACTINTWS_AUTH_NAMESPACE = 'http://at.pt/wsp/auth';
 export const FACTINTWS_ACTOR = 'http://at.pt/actor/SPA';
 export const FACTINTWS_OPERATION = 'EcraInicial';
+export const FactIntWsOperation = Object.freeze({
+  ECRAINICIAL: 'EcraInicial',
+  PENDING: 'FaturasPorClassificar',
+  BY_SECTOR: 'FaturasPorSetor',
+});
 export const FACTINTWS_PLANNED_CLIENT_IDENTITY = 'TesteWebservices.pfx';
 export const FACTINTWS_CHANNEL_SYSTEM = 'A';
 export const FACTINTWS_CHANNEL_VERSION_TEMPLATE = 'Android SDK: <SDK_INT> (<RELEASE>)';
@@ -78,6 +83,31 @@ export const factIntWsRuntimeEvidence = Object.freeze({
     status: FactIntWsEvidenceStatus.RUNTIME }),
   channel: Object.freeze({ value: Object.freeze({ system: 'A',
     version: 'Android SDK: 35 (15)' }), status: FactIntWsEvidenceStatus.RUNTIME }),
+});
+
+export const factIntWsInvoiceOperationEvidence = Object.freeze({
+  FaturasPorClassificar: Object.freeze({
+    status: FactIntWsEvidenceStatus.OFFICIAL_APP,
+    soapAction: `${FACTINTWS_NAMESPACE}/FaturasPorClassificar`,
+    requestFields: Object.freeze(['Nif', 'Ano', 'CanalOrigem']),
+    responseList: 'ListaFaturasPorClassificar',
+  }),
+  FaturasPorSetor: Object.freeze({
+    status: FactIntWsEvidenceStatus.OFFICIAL_APP,
+    soapAction: `${FACTINTWS_NAMESPACE}/FaturasPorSetor`,
+    requestFields: Object.freeze(['NifAdquirente', 'CodSetor', 'Ano', 'Indice', 'CanalOrigem']),
+    responseList: 'ListaFaturasPorSetor',
+    observedOffsets: Object.freeze([0, 20, 40, 60, 80]),
+  }),
+});
+
+export const factIntWsInvoiceRuntimeEvidence = Object.freeze({
+  FaturasPorClassificar: Object.freeze({ status: FactIntWsEvidenceStatus.RUNTIME,
+    endpoint: FACTINTWS_ENDPOINT_8443, httpStatus: 200, estadoOperacao: '204',
+    result: 'SUCCESS_EMPTY_RESULT' }),
+  FaturasPorSetor: Object.freeze({ status: FactIntWsEvidenceStatus.RUNTIME,
+    endpoint: FACTINTWS_ENDPOINT_8443, sector: 'C05', index: 0,
+    httpStatus: 200, estadoOperacao: '204', result: 'SUCCESS_EMPTY_RESULT' }),
 });
 
 export function buildOfficialAppChannel({ sdkInt, release }) {
@@ -171,6 +201,16 @@ function channelXml(channel) {
 }
 
 export function serializeFactIntWsOperation(operation, input = {}) {
+  const requireDigits = (value, name, minimum, maximum) => {
+    const normalized = String(value ?? '');
+    if (!/^\d+$/.test(normalized)) throw new TypeError(`${name} must contain digits only`);
+    const number = Number(normalized);
+    if (!Number.isSafeInteger(number) || number < minimum || number > maximum) {
+      throw new TypeError(`${name} is outside the supported range`);
+    }
+    return normalized;
+  };
+  const year = input.year == null ? null : requireDigits(input.year, 'Ano', 2000, 9999);
   let children;
   switch (operation) {
     case 'EcraInicial':
@@ -178,9 +218,10 @@ export function serializeFactIntWsOperation(operation, input = {}) {
     case 'DadosContribuinte':
       children = `<app:Nif>${escapeXml(input.nif)}</app:Nif>${channelXml(input.channel)}`; break;
     case 'FaturasPorClassificar':
-      children = `<app:Nif>${escapeXml(input.nif)}</app:Nif><app:Ano>${escapeXml(input.year)}</app:Ano>${channelXml(input.channel)}`; break;
+      children = `<app:Nif>${escapeXml(input.nif)}</app:Nif><app:Ano>${escapeXml(year)}</app:Ano>${channelXml(input.channel)}`; break;
     case 'FaturasPorSetor':
-      children = `<app:NifAdquirente>${escapeXml(input.nif)}</app:NifAdquirente><app:CodSetor>${escapeXml(input.sector ?? '')}</app:CodSetor><app:Ano>${escapeXml(input.year)}</app:Ano><app:Indice>${escapeXml(input.index ?? '0')}</app:Indice>${channelXml(input.channel)}`; break;
+      if (!/^[A-Z]\d{2}$/.test(String(input.sector ?? ''))) throw new TypeError('CodSetor must use an official-app sector code');
+      children = `<app:NifAdquirente>${escapeXml(input.nif)}</app:NifAdquirente><app:CodSetor>${escapeXml(input.sector)}</app:CodSetor><app:Ano>${escapeXml(year)}</app:Ano><app:Indice>${escapeXml(requireDigits(input.index ?? '0', 'Indice', 0, 1000000))}</app:Indice>${channelXml(input.channel)}`; break;
     default: throw new TypeError(`Unsupported read-only FactIntWS operation: ${operation}`);
   }
   return `<app:${operation}Request xmlns:app="${FACTINTWS_NAMESPACE}"> ${children} </app:${operation}Request>`;
@@ -214,7 +255,7 @@ export function factIntWsTlsOptions() {
 export function sanitizedFactIntWsResearchEnvelope() {
   return buildFactIntWsEnvelope({ username: '[REDACTED_USERNAME]',
     credentials: { encryptedDigest: '[REDACTED]', encryptedPassword: '[REDACTED]', encryptedNonce: '[REDACTED]', created: '[REDACTED]' },
-    input: { nif: '[REDACTED_IDENTIFIER]', year: '[YEAR]', channel: { system: '[SYSTEM]', version: '[VERSION]' } } });
+    input: { nif: '[REDACTED_IDENTIFIER]', year: '2000', channel: { system: '[SYSTEM]', version: '[VERSION]' } } });
 }
 
 export async function runFactIntWsFeasibility() {
