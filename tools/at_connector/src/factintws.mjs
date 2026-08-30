@@ -17,6 +17,7 @@ export const FACTINTWS_ACTOR = 'http://at.pt/actor/SPA';
 export const FACTINTWS_OPERATION = 'EcraInicial';
 export const FactIntWsOperation = Object.freeze({
   ECRAINICIAL: 'EcraInicial',
+  TAXPAYER: 'DadosContribuinte',
   PENDING: 'FaturasPorClassificar',
   BY_SECTOR: 'FaturasPorSetor',
 });

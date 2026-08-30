@@ -78,3 +78,20 @@ changes. If the final overview remains zero, the sequence hypothesis is
 falsified and investigation should move to the client-application identity /
 server-population policy boundary; the official private identity must not be
 used.
+
+## Controlled bootstrap execution — 2026-08-30
+
+The approved sequence was prepared with the authentication `EcraInicial` year
+derived from verified NTP time (current civil year), followed by
+`DadosContribuinte` and a final `EcraInicial(2026)`. All protocol, credential,
+TLS, channel and HTTP parameters remained frozen.
+
+The first FactIntWS request received a response but failed closed before an
+operation result could be established: the response was not recognized as a
+SOAP Envelope (`PARSING_ERROR`, field `Envelope`). Per the experiment rules,
+the sequence stopped immediately. `DadosContribuinte` and the final overview
+were not requested; there was no retry.
+
+Consequently, this execution is `BOOTSTRAP_SEQUENCE_INCOMPLETE`. It neither
+confirms nor rejects `BOOTSTRAP_CALL_MISSING`, and it provides no population
+comparison. No raw response or personal data was persisted.
