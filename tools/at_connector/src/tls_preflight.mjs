@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createSecureContext } from 'node:tls';
+import { X509Certificate } from 'node:crypto';
 
 export const PfxPreflightClassification = Object.freeze({
   READY: 'READY',
@@ -134,6 +135,16 @@ export function inspectPfxReadiness({ pfxPath, pfxPassword, opensslPath = resolv
     const cas = runOpenSsl(opensslPath, ['pkcs12', '-in', pfxPath, '-passin', 'stdin', '-cacerts', '-nokeys', '-out', caPath], { password: pfxPassword });
     if (!client.ok) return failure(PfxPreflightClassification.CERTIFICATE_MISSING, { pfxOpened: true, privateKeyPresent, certificateCount });
 
+    let clientCertificateFingerprint = null;
+    try {
+      const certificate = new X509Certificate(readFileSync(clientPath));
+      clientCertificateFingerprint = certificate.fingerprint256.replaceAll(':', '').toLowerCase();
+    } catch {
+      return failure(PfxPreflightClassification.CERTIFICATE_MISSING, {
+        pfxOpened: true, privateKeyPresent, certificateCount,
+      });
+    }
+
     const text = runOpenSsl(opensslPath, ['x509', '-in', clientPath, '-noout', '-text']);
     const ekuClientAuth = text.ok
       ? /TLS Web Client Authentication/i.test(text.stdout)
@@ -159,6 +170,7 @@ export function inspectPfxReadiness({ pfxPath, pfxPassword, opensslPath = resolv
       chainClassification,
       ekuClientAuth,
       caValidation,
+      clientCertificateFingerprint,
     });
   } finally {
     rmSync(work, { recursive: true, force: true });

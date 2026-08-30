@@ -69,6 +69,7 @@ export function analyzeHttpResponseFraming({ bytes, headers = {}, httpStatus = n
   const jsonDetected = /^[{[]/.test(trimmed);
   const gzipSignature = bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
   const zlibSignature = hasZlibSignature(bytes);
+  const decodedBinary = /[^\x09\x0a\x0d\x20-\x7e]/.test(text.slice(0, 128));
   return Object.freeze({
     httpStatus,
     contentType,
@@ -91,7 +92,8 @@ export function analyzeHttpResponseFraming({ bytes, headers = {}, httpStatus = n
     soap11EnvelopeDetected: root.localName === 'Envelope' && root.namespaceUri === SOAP11_NAMESPACE,
     htmlDetected,
     jsonDetected,
-    binaryOrCompressed: gzipSignature || zlibSignature || (!xmlDetected && !jsonDetected && /[^\x09\x0a\x0d\x20-\x7e]/.test(text.slice(0, 128))),
+    decodedBinary,
+    binaryOrCompressed: gzipSignature || zlibSignature || (!xmlDetected && !jsonDetected && decodedBinary),
     autoDecompressionStatus: decoded.status,
     decodedText: text,
   });

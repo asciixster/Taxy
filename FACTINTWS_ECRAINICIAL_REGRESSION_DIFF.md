@@ -192,3 +192,30 @@ fingerprints, RSA type/size/exponent, validity and public-only/client-EKU
 separation, and support a fail-closed expected-fingerprint assertion. A future
 successful live run must record the selected public certificate fingerprint in
 sanitized evidence so this ambiguity cannot recur.
+
+## Current-configuration controlled live result — 2026-08-30
+
+Exactly one `EcraInicial(2026)` request was made. No bootstrap, retry, fallback
+or other FactIntWS operation was executed. The reproducibility record was built
+before the HTTPS request:
+
+| Element | SHA-256 / value |
+|---|---|
+| AT cipher certificate | `43b40f7e82bf35fecce2a36778b7dd6eb4ff7bd41e88474108cb1731d3326383` |
+| AT cipher SPKI | `b19983ae125123d3b82afb0845018c2fe4fc8f9556686142b1e371a031a54968` |
+| AT cipher RSA size / validity | 4096 bits / valid |
+| Client identity certificate | `8c274b8bbebdfd5f86bd55e132897a87a44357b6b892e0697c362e0ecab88807` |
+| TLS configuration | `9bec9a86ba7b0b8e263098b90907744a5e65182e9a1992c85123e628aa9807f5` |
+| Serializer implementation | `cd20f12df4b5e8c1333d45ade78cb61934e1cb6793a9f1ec3a87391da721a2fe` |
+| Request contract | `168cc2362f3dd17b38e01662f7f0ab6b33f510b0c9737dc7412990867646016f` |
+| Sanitized request | `bb22efdac55ee088496ed921e7d7870b502f28c73ad53e49157649280b7cbec1` |
+
+The TLS handshake reached `secureConnect`, the peer was authorized, and the
+negotiated profile was TLS 1.3 with `TLS_AES_128_GCM_SHA256`. The server then
+returned HTTP 500, `Content-Type: text/xml`, `Content-Encoding: gzip`, chunked
+transfer and 23 response bytes. After exactly one in-memory decompression, the
+shape was `NON_XML`; there was no SOAP Envelope, fault or functional result.
+
+Classification: `CURRENT_CONFIG_REPRODUCES_HTTP_500`. The current configuration
+is now formally tied to this result. The response body was neither logged nor
+persisted, and population semantics were not evaluated.
