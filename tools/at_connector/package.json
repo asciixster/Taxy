@@ -15,6 +15,7 @@
     "factintws:feasibility": "node bin/factintws-feasibility.mjs",
     "factintws:live-once": "node bin/factintws-live-once.mjs",
     "factintws:bootstrap-live": "node bin/factintws-bootstrap-live.mjs",
+    "factintws:framing-live": "node bin/factintws-framing-live.mjs",
     "factintws:invoices-live": "node bin/factintws-invoices-live.mjs"
   }
 }

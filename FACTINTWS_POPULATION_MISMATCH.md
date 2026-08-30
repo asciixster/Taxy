@@ -95,3 +95,17 @@ were not requested; there was no retry.
 Consequently, this execution is `BOOTSTRAP_SEQUENCE_INCOMPLETE`. It neither
 confirms nor rejects `BOOTSTRAP_CALL_MISSING`, and it provides no population
 comparison. No raw response or personal data was persisted.
+
+### Framing-only follow-up — 2026-08-30
+
+One separately authorized `EcraInicial` request reproduced the same request
+configuration and captured transport metadata before parsing. The server
+returned HTTP 500 with `Content-Type: text/xml`, `Content-Encoding: gzip`,
+chunked transfer and a 23-byte compressed entity. The entity had the gzip
+signature and required exactly one in-memory decompression by the Node HTTPS
+client path; the decoded shape was neither XML, HTML nor JSON and contained no
+detectable SOAP 1.1 Envelope.
+
+This explains the earlier `Envelope` parsing failure without implicating SOAP
+prefix handling. The response is classified `COMPRESSED_BYTES`; no raw entity
+was logged or persisted. The bootstrap sequence was not retried.

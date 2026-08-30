@@ -130,7 +130,10 @@ function parseInvoices(responseBlock, operation) {
 }
 
 export function parseFactIntWsResponse(xml, operation) {
-  if (typeof xml !== 'string' || !/<(?:[\w.-]+:)?Envelope\b/i.test(xml)) throw new FactIntWsParsingError('Envelope', 'SOAP Envelope', 'missing');
+  const root = typeof xml === 'string' ? inspectXmlRoot(xml) : inspectXmlRoot('');
+  if (root.localName !== 'Envelope' || root.namespaceUri !== SOAP11_NAMESPACE) {
+    throw new FactIntWsParsingError('Envelope', 'SOAP 1.1 Envelope', root.detected ? 'wrong root or namespace' : 'missing');
+  }
   if (text(xml, 'faultcode') || text(xml, 'faultstring')) return Object.freeze({ operation, fault: Object.freeze({ code: text(xml, 'faultcode'), reason: text(xml, 'faultstring') }) });
   if (text(xml, 'AuthenticationFailed') || text(xml, 'AuthenticationException')) return Object.freeze({ operation, fault: Object.freeze({ code: 'AuthenticationFailed', reason: text(xml, 'message') }) });
   const responseBlock = blocks(xml, `${operation}Response`)[0];
@@ -154,3 +157,4 @@ export function parseFactIntWsResponse(xml, operation) {
   const fields = { operation, result, invoices, index, totalPages, summary };
   return operation === 'FaturasPorSetor' ? new FactIntSectorResponse(fields) : new FactIntInvoicePageResponse(fields);
 }
+import { inspectXmlRoot, SOAP11_NAMESPACE } from './response_framing.mjs';
