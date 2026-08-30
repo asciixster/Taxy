@@ -174,6 +174,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Erro de ligação'), findsOneWidget);
   });
+  testWidgets('erro após guardar credenciais continua a permitir desligar', (
+    tester,
+  ) async {
+    final store = _readyStore();
+    await _pump(
+      tester,
+      const _FailingGateway(EfaturaFailureKind.network),
+      store,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('efatura-disconnect')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('efatura-disconnect-confirm')));
+    await tester.pumpAndSettle();
+    expect(store.clearCalls, 1);
+    expect(find.text('Ligar ao e-Fatura'), findsWidgets);
+  });
   testWidgets('desligar limpa credenciais e estado transitório', (
     tester,
   ) async {

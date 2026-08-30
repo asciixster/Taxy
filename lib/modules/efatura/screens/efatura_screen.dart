@@ -235,7 +235,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       appBar: AppBar(
         title: Text(l10n.efaturaTitle),
         actions: [
-          if (_overview != null)
+          if (_overview != null || (_readiness?.hasCredentials ?? false))
             IconButton(
               key: const Key('efatura-disconnect'),
               tooltip: l10n.disconnectEfatura,
