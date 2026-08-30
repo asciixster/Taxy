@@ -6,7 +6,7 @@ import { validateAtUsername } from '../src/auth.mjs';
 import { inspectAtCipherPublicKey, readAtPublicKey } from '../src/crypto.mjs';
 import { buildFactIntWsEnvelope, buildFactIntWsLiveReadinessMatrix,
   buildFactIntWsSecurityMaterial, FACTINTWS_ENDPOINT_8443, FACTINTWS_OPERATION,
-  factIntWsHttpContract, factIntWsTlsOptions,
+  FactIntWsOperation, factIntWsHttpContract, factIntWsTlsOptions,
   resolveFactIntWsChannelFromEnvironment } from '../src/factintws.mjs';
 import { buildFactIntWsLiveMetadata } from '../src/factintws_live_metadata.mjs';
 import { parseFactIntWsResponse } from '../src/factintws_parser.mjs';
@@ -22,6 +22,14 @@ const required = ['AT_USERNAME', 'AT_PASSWORD', 'AT_CIPHER_CERT_PATH',
   'AT_CLIENT_PFX_PATH', 'AT_CLIENT_PFX_PASSWORD'];
 let networkRequests = 0;
 let reproducibilityMetadata = null;
+
+function diagnosticOperation(env = process.env) {
+  const operation = env.FACTINTWS_DIAGNOSTIC_OPERATION || FACTINTWS_OPERATION;
+  if (![FACTINTWS_OPERATION, FactIntWsOperation.TAXPAYER].includes(operation)) {
+    throw new TypeError('Only read-only EcraInicial or DadosContribuinte diagnostics are permitted');
+  }
+  return operation;
+}
 
 function output(value) {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
@@ -72,6 +80,7 @@ async function main() {
     return fail('AUTH_CONFIGURATION_MISSING', 'Required local configuration is missing');
   }
   const username = validateAtUsername(process.env.AT_USERNAME);
+  const operation = diagnosticOperation();
   const pfxPreflight = inspectPfxReadiness({ pfxPath: process.env.AT_CLIENT_PFX_PATH,
     pfxPassword: process.env.AT_CLIENT_PFX_PASSWORD });
   if (pfxPreflight.classification !== PfxPreflightClassification.READY) {
@@ -96,9 +105,11 @@ async function main() {
     const credentials = buildFactIntWsSecurityMaterial({ aesKey, created,
       password: process.env.AT_PASSWORD,
       rsaPublicKey: readAtPublicKey(process.env.AT_CIPHER_CERT_PATH) });
-    const xml = buildFactIntWsEnvelope({ username, credentials,
-      input: { nif: username.split('/')[0], year: '2026', channel } });
-    const baseContract = factIntWsHttpContract(FACTINTWS_OPERATION, FACTINTWS_ENDPOINT_8443);
+    const input = operation === FACTINTWS_OPERATION
+      ? { nif: username.split('/')[0], year: '2026', channel }
+      : { nif: username.split('/')[0], channel };
+    const xml = buildFactIntWsEnvelope({ username, credentials, operation, input });
+    const baseContract = factIntWsHttpContract(operation, FACTINTWS_ENDPOINT_8443);
     const contract = Object.freeze({ ...baseContract,
       headers: Object.freeze({ ...baseContract.headers,
         'Content-Length': Buffer.byteLength(xml, 'utf8') }) });
@@ -115,7 +126,7 @@ async function main() {
       headers: response.headers, httpStatus: response.httpStatus });
     let parsed = null; let parserError = null;
     if (analysis.soap11EnvelopeDetected) {
-      try { parsed = parseFactIntWsResponse(analysis.decodedText, FACTINTWS_OPERATION); }
+      try { parsed = parseFactIntWsResponse(analysis.decodedText, operation); }
       catch (error) { parserError = { code: error.code ?? 'PARSING_ERROR',
         field: error.field ?? null, expectedType: error.expectedType ?? null }; }
     }
@@ -124,7 +135,7 @@ async function main() {
         : analysis.jsonDetected ? 'JSON'
           : analysis.xmlDetected ? 'NON_SOAP_XML'
             : analysis.decodedBinary ? 'BINARY_OR_UNKNOWN' : 'NON_XML';
-    const totals = parsed?.totals ?? null;
+    const totals = operation === FACTINTWS_OPERATION ? parsed?.totals ?? null : null;
     const nonZeroSectorCount = (parsed?.sectors ?? []).filter((sector) => [
       sector.provisionalBenefitCents, sector.totalExpensesCents,
       sector.totalVatExpensesCents,
@@ -135,7 +146,7 @@ async function main() {
       && nonZeroSectorCount === 0;
     const http500Reproduced = response.httpStatus === 500 && !analysis.soap11EnvelopeDetected;
     const framing = sanitizedFramingMetadata(analysis);
-    output({ reproducibilityMetadata, networkRequests, retries: 0,
+    output({ reproducibilityMetadata, operation, networkRequests, retries: 0,
       secureConnectReached: response.secureConnectReached,
       authorized: response.tlsAtSecureConnect?.authorized ?? response.tls.authorized,
       tlsVersion: response.tlsAtSecureConnect?.protocol ?? response.tls.protocol,
@@ -153,7 +164,8 @@ async function main() {
       currentConfigFunctional: functional,
       populationMismatchRemains,
       currentConfigReproducesHttp500: http500Reproduced,
-      classification: functional ? 'ECRAINICIAL_CURRENT_CONFIG_FUNCTIONAL'
+      classification: functional ? (operation === FACTINTWS_OPERATION
+        ? 'ECRAINICIAL_CURRENT_CONFIG_FUNCTIONAL' : 'READ_ONLY_OPERATION_FUNCTIONAL')
         : http500Reproduced ? 'CURRENT_CONFIG_REPRODUCES_HTTP_500'
           : parsed?.fault ? 'SOAP_FAULT' : parserError ? 'PARSING_ERROR' : 'UNKNOWN_RESPONSE' });
     if (!functional) process.exitCode = 2;

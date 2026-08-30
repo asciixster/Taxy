@@ -219,3 +219,33 @@ shape was `NON_XML`; there was no SOAP Envelope, fault or functional result.
 Classification: `CURRENT_CONFIG_REPRODUCES_HTTP_500`. The current configuration
 is now formally tied to this result. The response body was neither logged nor
 persisted, and population semantics were not evaluated.
+
+## Bounded autonomous recovery — 2026-08-30
+
+Five read-only FactIntWS requests tested three concrete hypotheses, with no
+automatic retry and with the sanitized reproducibility record created before
+every request:
+
+1. the preserved official-app production public encryption key (public-only,
+   2048-bit and expired) replaced the current 4096-bit AT encryption key;
+   `EcraInicial` still returned the same 23-byte HTTP 500 non-XML response;
+2. with the current AT encryption key, `DadosContribuinte` returned HTTP 200,
+   a valid SOAP Envelope and business status 415. This proves that the current
+   TLS, security material, public-key encryption and HTTP response path can
+   reach the FactIntWS application;
+3. the official functional order was executed using one keep-alive HTTPS
+   agent: `EcraInicial(2026)`, `DadosContribuinte`, `EcraInicial(2026)`. Both
+   overview calls returned HTTP 200, valid parseable SOAP and business status
+   200. The middle call returned the same functional SOAP/status 415.
+
+The very first request in the sequence already recovered, before the taxpayer
+call could create application state. Node 24's default global HTTPS agent also
+has keep-alive enabled, so the result does not prove an agent or bootstrap fix.
+The earlier identical HTTP 500 is best classified as a transient server/edge
+failure; no deterministic client regression was found.
+
+The recovered overviews both contained zero pending invoices, zero provisional
+benefit and zero sectors with non-zero aggregates. Transport recovery is
+confirmed, but the separately evidenced account-population mismatch remains.
+No pending-invoice call was made because the runtime pending count was zero.
+No raw response, identifier or credential was logged or persisted.

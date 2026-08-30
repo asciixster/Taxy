@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { buildFactIntWsEnvelope, FACTINTWS_ENDPOINT_8443,
   factIntWsHttpContract, factIntWsTlsOptions } from '../../src/factintws.mjs';
@@ -52,4 +53,18 @@ test('missing certificate fingerprints block live metadata generation', () => {
   assert.throws(() => buildFactIntWsLiveMetadata({ cipherCertificate: {},
     clientCertificateFingerprint: null, endpoint: FACTINTWS_ENDPOINT_8443,
     tlsOptions: {}, contract: {}, xml: xml() }), /explicit SHA-256/);
+});
+
+test('bounded recovery sequence records metadata before each read-only request', () => {
+  const harness = readFileSync(new URL('../../bin/factintws-recovery-sequence-live.mjs',
+    import.meta.url), 'utf8');
+  assert(harness.includes("{ operation: FactIntWsOperation.ECRAINICIAL, phase: 'authentication'"));
+  assert(harness.includes("{ operation: FactIntWsOperation.TAXPAYER, phase: 'taxpayer'"));
+  assert(harness.includes("{ operation: FactIntWsOperation.ECRAINICIAL, phase: 'final'"));
+  assert(harness.indexOf('buildFactIntWsLiveMetadata') < harness.indexOf('await send({ agent'));
+  assert(harness.includes('new https.Agent({ keepAlive: true, maxSockets: 1 })'));
+  for (const writeOperation of ['ClassificarFatura', 'RegistarFaturaQRCode',
+    'EliminarFaturaQRCode', 'AssociarReceita']) {
+    assert.equal(harness.includes(writeOperation), false);
+  }
 });
