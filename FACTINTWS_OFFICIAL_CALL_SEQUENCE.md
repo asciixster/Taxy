@@ -61,6 +61,13 @@ No operation that activates a body-only taxpayer on the server was found. The
 official selector switches a complete credential, not an independent household
 member parameter.
 
+The selector is backed by a principal credential plus a locally encrypted
+multi-login credential list. Selection updates `numeroFiscal`, display name and
+the complete WS-Security credential together before the activity restarts. No
+response field from `DadosContribuinte` is copied into a later request as a
+population selector, and no separate household-member activation call was
+found.
+
 ## Taxy comparison
 
 The controlled Taxy tooling executes one requested operation at a time. Its

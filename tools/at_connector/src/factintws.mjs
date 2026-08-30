@@ -221,8 +221,13 @@ export function serializeFactIntWsOperation(operation, input = {}) {
     case 'FaturasPorClassificar':
       children = `<app:Nif>${escapeXml(input.nif)}</app:Nif><app:Ano>${escapeXml(year)}</app:Ano>${channelXml(input.channel)}`; break;
     case 'FaturasPorSetor':
-      if (!/^[A-Z]\d{2}$/.test(String(input.sector ?? ''))) throw new TypeError('CodSetor must use an official-app sector code');
-      children = `<app:NifAdquirente>${escapeXml(input.nif)}</app:NifAdquirente><app:CodSetor>${escapeXml(input.sector)}</app:CodSetor><app:Ano>${escapeXml(year)}</app:Ano><app:Indice>${escapeXml(requireDigits(input.index ?? '0', 'Indice', 0, 1000000))}</app:Indice>${channelXml(input.channel)}`; break;
+      {
+        const sector = String(input.sector ?? '');
+        if (sector !== '' && !/^[A-Z]\d{2}$/.test(sector)) {
+          throw new TypeError('CodSetor must be empty for the official all-sector query or use an official-app sector code');
+        }
+        children = `<app:NifAdquirente>${escapeXml(input.nif)}</app:NifAdquirente><app:CodSetor>${escapeXml(sector)}</app:CodSetor><app:Ano>${escapeXml(year)}</app:Ano><app:Indice>${escapeXml(requireDigits(input.index ?? '0', 'Indice', 0, 1000000))}</app:Indice>${channelXml(input.channel)}`; break;
+      }
     default: throw new TypeError(`Unsupported read-only FactIntWS operation: ${operation}`);
   }
   return `<app:${operation}Request xmlns:app="${FACTINTWS_NAMESPACE}"> ${children} </app:${operation}Request>`;

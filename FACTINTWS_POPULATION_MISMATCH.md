@@ -109,3 +109,39 @@ detectable SOAP 1.1 Envelope.
 This explains the earlier `Envelope` parsing failure without implicating SOAP
 prefix handling. The response is classified `COMPRESSED_BYTES`; no raw entity
 was logged or persisted. The bootstrap sequence was not retried.
+
+## Controlled direct population probes — 2026-08-30
+
+After transport recovery, a bounded diagnostic made two read-only requests,
+with no retry and with endpoint, TLS identity, authentication, crypto, NTP and
+channel configuration frozen:
+
+1. `FaturasPorSetor` with the official homepage shape `CodSetor=""`,
+   `Indice=0`, `Ano=2026` returned HTTP 200, valid SOAP,
+   `EstadoOperacao=204`, and zero invoice items.
+2. `FaturasPorClassificar` was called through an explicit diagnostic override
+   despite the zero overview count. It also returned HTTP 200, valid SOAP,
+   `EstadoOperacao=204`, and zero invoice items.
+
+No real response body or identifying invoice field was retained. These results
+reject an overview-only summary defect and the formerly unsupported empty
+sector encoding as explanations. The divergence affects all three read paths.
+
+The Taxy runtime credential has primary-login shape rather than subuser shape.
+The complete credential active in the official-app visual observation is not
+available in local evidence, so complete-login equality remains `UNKNOWN` even
+though the base taxpayer identifier is already confirmed equal.
+
+The strongest remaining explanation is
+`CLIENT_APPLICATION_IDENTITY_CONTEXT_MISMATCH` /
+`UNKNOWN_SERVER_POPULATION_RULE`: the legitimate Taxy client identity is
+accepted for mTLS and SOAP operations but may not receive the same population
+as the officially provisioned mobile application. This is not proven server
+semantics. Testing it would require authoritative AT evidence or the official
+application's private identity, whose use is prohibited.
+
+The other unresolved input is the exact complete credential selected in the
+official app. Reproducing another identity requires that credential to be
+legitimately supplied; it cannot be derived from the base NIF or APK code. This
+is an external evidence/authorization boundary rather than a remaining
+serializer or transport experiment.

@@ -19,6 +19,14 @@ test('invoice operation evidence records exact official-app SOAPActions', () => 
 });
 test('pending request rejects invalid year before transport', () => assert.throws(() => serializeFactIntWsOperation('FaturasPorClassificar', { nif: '000000000', year: 'x', channel }), /Ano/));
 test('sector request rejects unknown shaped sector code', () => assert.throws(() => serializeFactIntWsOperation('FaturasPorSetor', { nif: '000000000', year: '2026', sector: '5', index: 0, channel }), /CodSetor/));
+test('sector request preserves the official explicit empty all-sector code', () => {
+  const xml = serializeFactIntWsOperation('FaturasPorSetor', {
+    nif: '000000000', year: '2026', sector: '', index: 0, channel,
+  });
+  assert.match(xml, /<app:CodSetor><\/app:CodSetor>/);
+  assert.ok(xml.indexOf('<app:NifAdquirente>') < xml.indexOf('<app:CodSetor>'));
+  assert.ok(xml.indexOf('<app:CodSetor>') < xml.indexOf('<app:Ano>'));
+});
 test('sector request rejects negative pagination index', () => assert.throws(() => serializeFactIntWsOperation('FaturasPorSetor', { nif: '000000000', year: '2026', sector: 'C05', index: -1, channel }), /Indice/));
 test('money parser supports comma decimals', () => assert.equal(parseFactIntMoneyCents('23,45'), 2345));
 test('money parser supports exact requested vectors', () => assert.deepEqual(['0.00', '0.01', '1.00', '23.45', '1000.99'].map(parseFactIntMoneyCents), [0, 1, 100, 2345, 100099]));

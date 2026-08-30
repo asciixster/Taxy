@@ -55,6 +55,13 @@ test('missing certificate fingerprints block live metadata generation', () => {
     tlsOptions: {}, contract: {}, xml: xml() }), /explicit SHA-256/);
 });
 
+test('sanitized request hashing removes the sector-query taxpayer identifier', () => {
+  const xml = '<app:NifAdquirente>000000000</app:NifAdquirente>';
+  const sanitized = sanitizeFactIntWsRequestForHash(xml);
+  assert.equal(sanitized, '<app:NifAdquirente>NIF</app:NifAdquirente>');
+  assert.doesNotMatch(sanitized, /000000000/);
+});
+
 test('bounded recovery sequence records metadata before each read-only request', () => {
   const harness = readFileSync(new URL('../../bin/factintws-recovery-sequence-live.mjs',
     import.meta.url), 'utf8');

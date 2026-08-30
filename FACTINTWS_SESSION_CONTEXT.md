@@ -84,3 +84,9 @@ every request. No activation operation, server-side selected-taxpayer token or
 response value reused as a later selector was found. Evidence for remote
 selected-taxpayer state is therefore `NO`; undocumented server state remains
 `UNKNOWN` in the abstract.
+
+`DadosContribuinte` supplies local profile/display data. The reconstructed call
+sites do not consume any of its response fields as a later request parameter,
+credential mutation, session token or taxpayer activation. A controlled
+bootstrap sequence did not change the final overview population, so no
+population side effect is demonstrated.

@@ -20,7 +20,9 @@ export function sanitizeFactIntWsRequestForHash(xml) {
       '$1DIGEST$2PASSWORD$3')
     .replace(/(<wss:Nonce>)[\s\S]*?(<\/wss:Nonce>)/, '$1NONCE$2')
     .replace(/(<wss:Created>)[\s\S]*?(<\/wss:Created>)/, '$1CREATED$2')
-    .replace(/(<app:Nif>)[\s\S]*?(<\/app:Nif>)/, '$1NIF$2');
+    .replace(/(<app:Nif>)[\s\S]*?(<\/app:Nif>)/, '$1NIF$2')
+    .replace(/(<app:NifAdquirente>)[\s\S]*?(<\/app:NifAdquirente>)/,
+      '$1NIF$2');
 }
 
 export function buildFactIntWsLiveMetadata({ cipherCertificate, clientCertificateFingerprint,
