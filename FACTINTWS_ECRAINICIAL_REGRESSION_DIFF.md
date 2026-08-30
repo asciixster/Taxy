@@ -161,3 +161,34 @@ without exposing either certificate. If they differ, the next authorized test
 is one `EcraInicial` using the previously successful public AT cipher
 certificate and changing nothing else. If equality cannot be established, the
 live gate remains blocked rather than guessing another certificate.
+
+## Public cipher-certificate identity audit — 2026-08-30
+
+The current public cipher certificate was resolved from `AT_CIPHER_CERT_PATH`
+in the unchanged local configuration file. It exists, is public-only, uses a
+4096-bit RSA key with exponent 65537 and is currently inside its certificate
+validity window. Its certificate, SPKI and modulus SHA-256 fingerprints were
+calculated locally but are not copied into this document.
+
+Both the configuration file and referenced public certificate predate the
+successful `a5d861d` test. This is useful provenance, but it is not proof of the
+effective process environment used by that invocation: the live harness does
+not load `.env.local` itself, and the successful result did not persist a
+configuration snapshot or public-key fingerprint. Git history and sanitized
+result documents contain no such fingerprint.
+
+Therefore:
+
+- current certificate found: **YES**;
+- runtime-confirmed certificate found with cryptographic provenance: **NO**;
+- `AT_CIPHER_CERT_MATCH`: **UNKNOWN**;
+- source comparison: **UNKNOWN**;
+- concrete certificate drift: **NO**;
+- network requests: **0**.
+
+The key-mismatch hypothesis is not confirmed and cannot authorize a live
+single-variable experiment. Tests now expose certificate/SPKI/modulus
+fingerprints, RSA type/size/exponent, validity and public-only/client-EKU
+separation, and support a fail-closed expected-fingerprint assertion. A future
+successful live run must record the selected public certificate fingerprint in
+sanitized evidence so this ambiguity cannot recur.
