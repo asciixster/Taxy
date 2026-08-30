@@ -54,6 +54,19 @@ test('gzip metadata is inspected before one in-memory decompression', () => {
   assert.equal(framing.soap11EnvelopeDetected, true);
 });
 
+test('plain XML, gzip non-XML and invalid gzip remain distinct', () => {
+  const plain = analyzeHttpResponseFraming({ bytes: Buffer.from(body('env')),
+    headers: { 'content-type': 'text/xml' }, httpStatus: 200 });
+  const nonXml = analyzeHttpResponseFraming({ bytes: gzipSync(Buffer.from('synthetic non-xml')),
+    headers: { 'content-encoding': 'gzip' }, httpStatus: 500 });
+  assert.equal(plain.soap11EnvelopeDetected, true);
+  assert.equal(plain.autoDecompressionStatus, 'UNKNOWN');
+  assert.equal(nonXml.gzipSignature, true);
+  assert.equal(nonXml.xmlDetected, false);
+  assert.throws(() => analyzeHttpResponseFraming({ bytes: Buffer.from([0x1f, 0x8b, 0x00]),
+    headers: { 'content-encoding': 'gzip' }, httpStatus: 500 }));
+});
+
 test('HTML, JSON and malformed XML framing are classified without content output', () => {
   const html = analyzeHttpResponseFraming({ bytes: Buffer.from('<!doctype html><html></html>') });
   const json = analyzeHttpResponseFraming({ bytes: Buffer.from('{"status":"synthetic"}') });
