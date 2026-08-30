@@ -281,15 +281,27 @@ private class SingleAliasKeyManager(
 
 internal object FactIntWsResponseParser {
     fun parse(xml: String, operation: FactIntOperation): Map<String, Any?> {
+        if (Regex("<!DOCTYPE|<!ENTITY", RegexOption.IGNORE_CASE).containsMatchIn(xml)) {
+            throw RuntimeBridgeException(
+                "PARSING_ERROR",
+                "A resposta do serviço não tem um formato suportado.",
+            )
+        }
         val document = try {
             val factory = DocumentBuilderFactory.newInstance().apply {
                 isNamespaceAware = true
-                setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
-                setFeature("http://xml.org/sax/features/external-general-entities", false)
-                setFeature("http://xml.org/sax/features/external-parameter-entities", false)
-                runCatching {
-                    setAttribute("http://javax.xml.XMLConstants/property/accessExternalDTD", "")
-                    setAttribute("http://javax.xml.XMLConstants/property/accessExternalSchema", "")
+                listOf(
+                    "http://apache.org/xml/features/disallow-doctype-decl" to true,
+                    "http://xml.org/sax/features/external-general-entities" to false,
+                    "http://xml.org/sax/features/external-parameter-entities" to false,
+                ).forEach { (feature, enabled) ->
+                    runCatching { setFeature(feature, enabled) }
+                }
+                listOf(
+                    "http://javax.xml.XMLConstants/property/accessExternalDTD",
+                    "http://javax.xml.XMLConstants/property/accessExternalSchema",
+                ).forEach { attribute ->
+                    runCatching { setAttribute(attribute, "") }
                 }
             }
             factory.newDocumentBuilder().parse(ByteArrayInputStream(xml.toByteArray(Charsets.UTF_8)))

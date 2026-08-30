@@ -71,6 +71,19 @@ class FactIntWsResponseParserTest {
         assertEquals("PARSING_ERROR", error.code)
     }
 
+    @Test
+    fun `doctype and entity declarations fail closed`() {
+        listOf(
+            "<!DOCTYPE Envelope><Envelope/>",
+            "<!ENTITY probe 'synthetic'><Envelope/>",
+        ).forEach { xml ->
+            val error = assertFailsWith<RuntimeBridgeException> {
+                FactIntWsResponseParser.parse(xml, FactIntOperation.OVERVIEW)
+            }
+            assertEquals("PARSING_ERROR", error.code)
+        }
+    }
+
     private companion object {
         val overviewXml = """
             <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
