@@ -20,7 +20,7 @@ Enable the backend path only in an experimental build:
 
 ```text
 --dart-define=TAXY_EFATURA_EXPERIMENTAL=true
---dart-define=TAXY_EFATURA_BACKEND_URL=https://<taxy-backend>/api/
+--dart-define=TAXY_EFATURA_BACKEND_URL=https://dev.contabilidades.pt/
 ```
 
 The URL must use HTTPS, must not contain user information and is never derived
@@ -40,7 +40,7 @@ flow, not FactIntWS. Its reader:
 - stores Portal credentials encrypted with libsodium;
 - normalizes acquired-document fields before persistence.
 
-This is the source the backend API must wrap. The mobile application must not
+This is the source now wrapped by the development backend API. The mobile application must not
 receive its cookies, raw AT responses, database identifiers or encrypted
 credential records.
 
@@ -82,9 +82,9 @@ reused, so connecting does not create an immediate duplicate request.
 - `GET v1/efatura/sectors/{sectorCode}/invoices`
 - `DELETE v1/efatura/session`
 
-Authenticated calls use `Authorization: Bearer <opaque token>`. Tokens must have
-a short idle and absolute TTL, be stored as hashes server-side, be bound to one
-taxpayer and be revoked on logout. No endpoint for classifying, registering,
+Authenticated calls use `Authorization: Bearer <opaque token>`. Tokens have a
+15-minute idle TTL and a one-hour absolute TTL, are stored as hashes server-side,
+are bound to one taxpayer and are revoked on logout. No endpoint for classifying, registering,
 deleting or associating invoices is part of this contract.
 
 Invoice responses contain only normalized UI fields:

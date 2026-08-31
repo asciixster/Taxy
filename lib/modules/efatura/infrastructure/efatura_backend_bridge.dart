@@ -214,7 +214,7 @@ final class BackendEfaturaRuntimeBridge
 final class IoEfaturaBackendTransport implements EfaturaBackendTransport {
   IoEfaturaBackendTransport({
     HttpClient? client,
-    this.timeout = const Duration(seconds: 30),
+    this.timeout = const Duration(minutes: 3),
     this.maximumResponseBytes = 1024 * 1024,
   }) : _client = client ?? HttpClient();
 
