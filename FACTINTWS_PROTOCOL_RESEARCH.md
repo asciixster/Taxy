@@ -4,7 +4,22 @@
 
 Taxy 0.7.4 reconstructed this contract offline from the locally available official e-Fatura APK (version 4.7.1/build 29), its Java call sites, serializers, response DTOs and transport code. These findings are `CONFIRMED_FROM_OFFICIAL_APP`, not official documentation and not runtime confirmation. No FactIntWS request was made.
 
+A second static audit on 2026-08-31 used the supplied official development APK
+`pt.gov.efatura.mobille.dev.app`, version `6.0.10`, build `20260519`, SHA-256
+`964c95c77f5a20dd1e70c6536ce86b163dcdcb0346d319ee50540955375c1173`.
+Only the Android manifest, archive inventory and Flutter AOT code snapshot were
+examined. This newer, independently built client confirms the same FactIntWS
+namespace, ports 443/8443, `EcraInicial` operation and typed XML response path.
+
 The APK contains client-certificate, private-key and trust-store assets. Only filenames and code-level roles were inventoried. Their contents were not exported, incorporated, executed, or committed. A future test may use only Taxy's separately legitimate identity.
+
+The 6.0.10 archive likewise contains application-client certificate/key assets.
+Their names and the code-level calls to `useCertificateChainBytes` and
+`usePrivateKeyBytes` were observed, but those assets were not opened, extracted,
+executed or used. The application code also contains a dedicated production AT
+encryption public-key asset. This confirms that the official app carries an
+application-specific TLS/security context; it does not prove the server's exact
+population-selection rule.
 
 ## Transport
 
@@ -59,6 +74,34 @@ portal password
 ```
 
 The wire operation found for the app concept previously called `ecraInicialF` is `EcraInicial`, with roots `EcraInicialRequest` and `EcraInicialResponse`.
+
+## New-client overview data flow
+
+The 6.0.10 Flutter AOT snapshot contains the concrete generated response parser
+`EcraInicialResponse.fromXmlElement` / `_EcraInicialResponseFromXmlElement`, the
+`HomeScreenViewModel`, `HomeState.dadosEcraInicial`, the homepage
+`_buildBeneficio` widget path and the locale currency formatter. The response
+model includes, at minimum:
+
+- `ValorTotalBeneficioProvisorio`;
+- `NumTotalFaturasPorValidar`;
+- `NumTotalFaturasPorAssociarReceita`;
+- `ValorBeneficioProvisorioPorSetor`;
+- `ListaSetores`;
+- `ValorTotalDespesas` and `ValorTotalIvaDespesas`.
+
+No client-side benefit aggregation, statutory-cap calculation or per-invoice
+summation path was found for the homepage total. The observable path is typed
+SOAP response -> `EcraInicialResponse` -> homepage state -> currency formatting.
+Therefore the official application's provisional benefit is a server-provided
+aggregate, not a total that Taxy should reproduce by naively summing document-row
+`valorTotalBeneficioProv` values.
+
+The newer app also retains a local active-user model (`SessionViewModel`,
+`setCurrentUser`, `UserDTO`) and taxpayer-management UI. That is evidence of a
+local selected credential/current-user context, but no additional hidden
+taxpayer selector was found in the `EcraInicialRequest` wire contract beyond
+`Nif`, `Ano` and `CanalOrigem`.
 
 ## Runtime boundary
 

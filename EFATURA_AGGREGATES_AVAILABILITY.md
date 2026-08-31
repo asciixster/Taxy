@@ -28,6 +28,31 @@ The authenticated personal source is
 benefit inputs, but not by itself the capped aggregate shown by the official
 mobile app.
 
+## Official-app 6.0.10 cross-check
+
+Static analysis of the supplied official e-Fatura APK 6.0.10/build 20260519
+confirms that the mobile overview consumes the server's typed
+`EcraInicialResponse.ValorTotalBeneficioProvisorio`. The parsed response is held
+as `dadosEcraInicial` in the homepage state and passed to the benefit-rendering
+path, which formats it as currency. The AOT snapshot contains no evidence of a
+homepage calculation that sums invoice rows or reapplies sector/statutory caps.
+
+This explains why the portal-row diagnostic and the official mobile value can
+legitimately differ: `valorTotalBeneficioProv` on individual IRS document rows
+is an intermediate/per-document value, while `ValorTotalBeneficioProvisorio` is
+the consolidated FactIntWS overview value produced by AT. Reconstructing the
+mobile total from the 357 rows would duplicate unknown AT business rules and is
+not a safe production strategy.
+
+The same APK contains and programmatically loads an official-app client
+certificate/private-key pair into Dart's `SecurityContext`. Its private material
+was neither read nor extracted. Together with Taxy's observed HTTP 200/zero
+overview under a different legitimate client identity, this raises
+`CLIENT_APPLICATION_IDENTITY_CONTEXT_MISMATCH` as the strongest remaining
+population hypothesis. It remains an inference: transport authorization alone
+does not demonstrate that AT grants the same logical consumer population to
+every accepted client identity.
+
 ## Backend contract
 
 Every aggregate now carries explicit availability:
