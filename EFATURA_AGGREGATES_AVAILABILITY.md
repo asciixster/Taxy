@@ -12,10 +12,21 @@ count or sector aggregates consumed by the overview. The initial backend reader
 represented those unknown values as `0`, `0` and `[]`. Those values were
 compatibility placeholders, not observations of the taxpayer account.
 
-Classification: **source D — not available in the current backend endpoint**.
-The Portal exposes a separate read-only deductible-expenses area at
-`homeBeneficio.action`; its response contract still needs controlled runtime
-observation before a parser can be implemented without inventing fields.
+Classification: **source D — not available in the original backend endpoint**.
+
+Controlled observation rejected `homeBeneficio.action` as a taxpayer source:
+that page contains nationwide e-Fatura statistics (hundreds of millions of
+documents), not the authenticated account's aggregates. Its values must never
+be projected into the Taxy overview.
+
+The authenticated personal source is
+`consultarDocumentosIRSAdquirente.action`. Its official page script reads
+`json/obterDocumentosIRSAdquirente.action`, whose document rows include
+`actividadeEmitente`, `actividadeEmitenteDesc`,
+`valorTotalBeneficioProv`, `valorTotalSetorBeneficio` and
+`valorTotalDespesasGerais`. This establishes a source for personal sector and
+benefit inputs, but not by itself the capped aggregate shown by the official
+mobile app.
 
 ## Backend contract
 
@@ -56,9 +67,13 @@ were received as `unavailable`; the UI rendered **Indisponível**, kept the real
 pending count and showed the partial-success explanation. It did not render a
 synthetic `0,00 €`.
 
-The source audit also confirmed that the authenticated Portal exposes the
-separate read-only `homeBeneficio.action` page and its benefit/sector UI
-structure. The exact machine-readable value contract was not demonstrated
-within the three-request budget, so no speculative parser was retained and no
-benefit or sector field was promoted to runtime-confirmed. Pending invoices
-remain runtime-confirmed and usable during this partial success.
+The later source audit confirmed that `homeBeneficio.action` is a public
+national-statistics view and is therefore unsuitable. A controlled personal
+IRS-document query returned 357 rows across six mapped sectors and integer-cent
+wire values. Summing `valorTotalBeneficioProv` naively produced `334853` cents,
+which does not match the approximately `50339` cents shown by the official app.
+That number is treated as an uncapped/intermediate diagnostic, not as the
+official provisional benefit. The backend was returned to fail-safe
+`unavailable` output while state filtering and statutory/AT aggregate limits
+are isolated. Pending invoices remain runtime-confirmed and usable during this
+partial success.
