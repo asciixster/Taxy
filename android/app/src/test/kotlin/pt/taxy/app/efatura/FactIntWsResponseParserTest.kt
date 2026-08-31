@@ -14,6 +14,8 @@ class FactIntWsResponseParserTest {
         val sector = sectors.single() as Map<*, *>
         assertEquals("C05", sector["code"])
         assertEquals(234L, sector["provisionalBenefitCents"])
+        assertEquals(12345L, sector["totalExpensesCents"])
+        assertEquals(2345L, sector["totalVatExpensesCents"])
     }
 
     @Test
@@ -89,6 +91,8 @@ class FactIntWsResponseParserTest {
             <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
               <env:Body><app:EcraInicialResponse xmlns:app="http://factemi.at.min_financas.pt/factintws">
                 <app:ListaSetores><app:Setor><app:ValorBeneficioProvisorioPorSetor>2.34</app:ValorBeneficioProvisorioPorSetor>
+                  <app:ValorTotalDespesas>123.45</app:ValorTotalDespesas>
+                  <app:ValorTotalIvaDespesas>23.45</app:ValorTotalIvaDespesas>
                   <app:CodSetor>05</app:CodSetor>
                 </app:Setor></app:ListaSetores>
                 <app:ValorTotalBeneficioProvisorio>503.39</app:ValorTotalBeneficioProvisorio>

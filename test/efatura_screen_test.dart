@@ -13,6 +13,8 @@ void main() {
     code: 'C05',
     label: 'Saúde',
     provisionalBenefitCents: AtValue.available(250),
+    totalExpensesCents: AtValue.available(2345),
+    totalVatExpensesCents: AtValue.available(439),
   );
   const overview = EfaturaOverview(
     provisionalBenefitCents: AtValue.available(1200),
@@ -40,8 +42,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Resumo e-Fatura'), findsOneWidget);
     expect(find.text('Benefício provisório'), findsOneWidget);
-    expect(find.textContaining('12,00'), findsOneWidget);
-    expect(find.text('Sem faturas por validar'), findsOneWidget);
+    expect(find.textContaining('12,00'), findsWidgets);
+    expect(find.text('Sem faturas pendentes'), findsOneWidget);
+    expect(find.byKey(const Key('efatura-irs-evidence')), findsOneWidget);
+    expect(find.text('Dados para previsão de IRS'), findsOneWidget);
   });
   testWidgets('distingue benefício indisponível de zero real', (tester) async {
     const partial = EfaturaOverview(
@@ -68,13 +72,15 @@ void main() {
     );
     await _pump(tester, _FakeGateway(overview: zero), _readyStore());
     await tester.pumpAndSettle();
-    expect(find.textContaining('0,00'), findsOneWidget);
+    expect(find.textContaining('0,00'), findsWidgets);
     expect(find.text('Indisponível'), findsNothing);
   });
   testWidgets('mostra setores sem inventar contagem', (tester) async {
     await _pump(tester, _FakeGateway(overview: overview), _readyStore());
     await tester.pumpAndSettle();
     expect(find.text('Saúde'), findsOneWidget);
+    expect(find.textContaining('Despesas listadas'), findsWidgets);
+    expect(find.textContaining('23,45'), findsWidgets);
     expect(find.textContaining('2,50'), findsOneWidget);
     expect(find.textContaining('faturas no setor'), findsNothing);
   });
@@ -93,7 +99,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Emitente sintético'), 250);
     expect(find.text('Emitente sintético'), findsOneWidget);
-    expect(find.textContaining('23,45'), findsOneWidget);
+    expect(find.textContaining('23,45'), findsWidgets);
     expect(find.textContaining('IdDocumento'), findsNothing);
     expect(find.textContaining('NIF'), findsNothing);
   });
@@ -257,9 +263,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('e-Fatura overview'), findsOneWidget);
     expect(find.text('Provisional tax benefit'), findsOneWidget);
-    expect(find.text('No invoices to validate'), findsOneWidget);
+    expect(find.text('No pending invoices'), findsOneWidget);
+    expect(find.text('Data for your IRS estimate'), findsOneWidget);
     expect(find.text('Health'), findsOneWidget);
   });
+
+  testWidgets(
+    'pending count is informational and offers no validation action',
+    (tester) async {
+      const pendingOverview = EfaturaOverview(
+        provisionalBenefitCents: AtValue.available(50339),
+        pendingValidation: AtValue.available(5),
+        pendingRevenueAssociation: AtValue.available(0),
+        sectors: AtValue.available([]),
+      );
+      await _pump(
+        tester,
+        _FakeGateway(overview: pendingOverview),
+        _readyStore(),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('5'), findsOneWidget);
+      expect(
+        find.text(
+          'A Taxy apresenta esta contagem apenas para consulta. A validação '
+          'continua a ser feita no e-Fatura oficial.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Ver faturas por validar'), findsNothing);
+      expect(find.byType(FilledButton), findsNothing);
+    },
+  );
 
   testWidgets('local validation blocks malformed credentials', (tester) async {
     final store = _FakeStore(

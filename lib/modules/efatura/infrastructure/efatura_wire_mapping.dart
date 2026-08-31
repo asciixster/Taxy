@@ -70,6 +70,16 @@ List<AtExpenseSector> _parseSectors(List<Object?> rawSectors) => rawSectors
           availabilityKey: 'provisionalBenefit',
           legacyKey: 'provisionalBenefitCents',
         ),
+        totalExpensesCents: _optionalAvailabilityInteger(
+          item,
+          availabilityKey: 'totalExpenses',
+          legacyKey: 'totalExpensesCents',
+        ),
+        totalVatExpensesCents: _optionalAvailabilityInteger(
+          item,
+          availabilityKey: 'totalVatExpenses',
+          legacyKey: 'totalVatExpensesCents',
+        ),
         invoiceCount: _optionalAvailabilityInteger(
           item,
           availabilityKey: 'invoiceCount',

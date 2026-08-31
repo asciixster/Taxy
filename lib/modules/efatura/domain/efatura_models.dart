@@ -60,14 +60,39 @@ final class AtExpenseSector {
     required this.code,
     this.label,
     this.provisionalBenefitCents = const AtValue.unavailable(),
+    this.totalExpensesCents = const AtValue.unavailable(),
+    this.totalVatExpensesCents = const AtValue.unavailable(),
     this.invoiceCount = const AtValue.unavailable(),
     this.activity = AtExpenseSectorActivity.unknown,
   });
   final String code;
   final String? label;
   final AtValue<int> provisionalBenefitCents;
+  final AtValue<int> totalExpensesCents;
+  final AtValue<int> totalVatExpensesCents;
   final AtValue<int> invoiceCount;
   final AtExpenseSectorActivity activity;
+}
+
+/// Read-only e-Fatura evidence that may later feed an IRS simulation.
+///
+/// These values are not an IRS assessment or a refund estimate. They preserve
+/// the values reported by AT and remain unavailable unless every required
+/// upstream value is present.
+final class EfaturaIrsEvidence {
+  const EfaturaIrsEvidence({
+    required this.officialProvisionalBenefitCents,
+    required this.listedExpensesCents,
+    required this.listedVatCents,
+  });
+
+  final AtValue<int> officialProvisionalBenefitCents;
+  final AtValue<int> listedExpensesCents;
+  final AtValue<int> listedVatCents;
+
+  bool get hasOfficialBenefit => officialProvisionalBenefitCents.isAvailable;
+  bool get hasCompleteExpenseTotals =>
+      listedExpensesCents.isAvailable && listedVatCents.isAvailable;
 }
 
 final class EfaturaInvoice {
@@ -103,6 +128,18 @@ final class EfaturaOverview {
   final AtValue<int> pendingRevenueAssociation;
   final AtValue<List<AtExpenseSector>> sectors;
 
+  EfaturaIrsEvidence get irsEvidence => EfaturaIrsEvidence(
+    officialProvisionalBenefitCents: provisionalBenefitCents,
+    listedExpensesCents: _sumAvailableSectorValues(
+      sectors,
+      (sector) => sector.totalExpensesCents,
+    ),
+    listedVatCents: _sumAvailableSectorValues(
+      sectors,
+      (sector) => sector.totalVatExpensesCents,
+    ),
+  );
+
   EfaturaOverviewOutcome get outcome {
     final values = <AtValue<Object?>>[
       provisionalBenefitCents,
@@ -114,6 +151,20 @@ final class EfaturaOverview {
         ? EfaturaOverviewOutcome.success
         : EfaturaOverviewOutcome.partialSuccess;
   }
+}
+
+AtValue<int> _sumAvailableSectorValues(
+  AtValue<List<AtExpenseSector>> sectors,
+  AtValue<int> Function(AtExpenseSector sector) select,
+) {
+  if (!sectors.isAvailable) return const AtValue.unavailable();
+  var total = 0;
+  for (final sector in sectors.value) {
+    final value = select(sector);
+    if (!value.isAvailable) return const AtValue.unavailable();
+    total += value.value;
+  }
+  return AtValue.available(total);
 }
 
 final class EfaturaSnapshot {

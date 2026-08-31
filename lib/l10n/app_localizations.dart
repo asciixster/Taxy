@@ -270,7 +270,7 @@ abstract class AppLocalizations {
   /// No description provided for @invoicesToValidate.
   ///
   /// In pt, this message translates to:
-  /// **'Faturas por validar'**
+  /// **'Faturas com informação pendente'**
   String get invoicesToValidate;
 
   /// No description provided for @invoicesToAssociate.
@@ -294,7 +294,7 @@ abstract class AppLocalizations {
   /// No description provided for @pendingInvoicesTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Faturas por validar'**
+  /// **'Faturas pendentes'**
   String get pendingInvoicesTitle;
 
   /// No description provided for @sectorInvoicesTitle.
@@ -312,7 +312,7 @@ abstract class AppLocalizations {
   /// No description provided for @noInvoicesToValidate.
   ///
   /// In pt, this message translates to:
-  /// **'Sem faturas por validar'**
+  /// **'Sem faturas pendentes'**
   String get noInvoicesToValidate;
 
   /// No description provided for @noInvoicesInCategory.
@@ -350,6 +350,42 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Benefício não disponível'**
   String get benefitUnavailable;
+
+  /// No description provided for @readOnlyNoValidation.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Taxy apresenta esta contagem apenas para consulta. A validação continua a ser feita no e-Fatura oficial.'**
+  String get readOnlyNoValidation;
+
+  /// No description provided for @irsPredictionDataTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados para previsão de IRS'**
+  String get irsPredictionDataTitle;
+
+  /// No description provided for @officialProvisionalBenefit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Benefício provisório indicado pela AT'**
+  String get officialProvisionalBenefit;
+
+  /// No description provided for @listedExpenses.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesas listadas'**
+  String get listedExpenses;
+
+  /// No description provided for @listedVat.
+  ///
+  /// In pt, this message translates to:
+  /// **'IVA das despesas listadas'**
+  String get listedVat;
+
+  /// No description provided for @irsPredictionDisclaimer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estes dados ajudam a preparar a previsão. Não representam, por si só, o reembolso ou imposto final de IRS.'**
+  String get irsPredictionDisclaimer;
 
   /// No description provided for @issuerUnavailable.
   ///

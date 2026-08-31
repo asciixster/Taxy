@@ -78,9 +78,10 @@ Every aggregate now carries explicit availability:
 ```
 
 An available sector list uses `items`. Each sector carries the same explicit
-wrapper for its benefit and invoice count, plus an `active`, `inactive` or
-`unknown` activity state. A malformed `available` value fails closed; an absent
-optional value becomes unavailable and never zero.
+wrapper for its benefit, total expenses, total VAT expenses and invoice count,
+plus an `active`, `inactive` or `unknown` activity state. A malformed
+`available` value fails closed; an absent optional value becomes unavailable
+and never zero.
 
 ## Application semantics
 
@@ -93,6 +94,12 @@ renders an unavailable value as **Indisponível** / **Unavailable**.
 The experimental feature remains disabled by default. No write operation, raw
 Portal response, credential, taxpayer identifier or document identifier is
 part of this contract.
+
+The UI no longer exposes an action for pending validation. Pending counts are
+read-only information and direct the user to the official application when an
+invoice needs intervention. The new `EfaturaIrsEvidence` projection keeps the
+official provisional benefit separate from summed document expense/VAT totals;
+it does not treat either value as a final IRS refund estimate.
 
 ## Controlled runtime validation (2026-08-31)
 

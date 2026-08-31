@@ -114,6 +114,17 @@ Aggregate fields use the explicit availability contract documented in
 reported as `unavailable`; they must never be represented by a synthetic zero
 or empty list.
 
+Available sector entries may additionally expose `totalExpenses` and
+`totalVatExpenses` availability wrappers. The Flutter domain sums those values
+only when the sector population is complete. They remain separate from AT's
+official provisional-benefit aggregate and are evidence for a future IRS
+estimate, not a final refund calculation.
+
+Pending-validation data remains readable through the backend contract for
+diagnostics and normalized data access, but the Taxy application does not
+present any validation action. All account changes stay in the official
+e-Fatura application.
+
 ## Required backend controls before public deployment
 
 - explicit consent and privacy notice for transmitting Portal credentials;

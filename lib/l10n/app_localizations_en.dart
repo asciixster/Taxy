@@ -97,7 +97,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get provisionalTaxBenefit => 'Provisional tax benefit';
 
   @override
-  String get invoicesToValidate => 'Invoices to validate';
+  String get invoicesToValidate => 'Invoices awaiting information';
 
   @override
   String get invoicesToAssociate => 'Invoices to associate with income';
@@ -109,7 +109,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sectors => 'Categories';
 
   @override
-  String get pendingInvoicesTitle => 'Invoices to validate';
+  String get pendingInvoicesTitle => 'Pending invoices';
 
   @override
   String get sectorInvoicesTitle => 'Invoices in this category';
@@ -118,7 +118,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewPendingInvoices => 'View invoices to validate';
 
   @override
-  String get noInvoicesToValidate => 'No invoices to validate';
+  String get noInvoicesToValidate => 'No pending invoices';
 
   @override
   String get noInvoicesInCategory => 'No invoices in this category';
@@ -138,6 +138,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get benefitUnavailable => 'Benefit unavailable';
+
+  @override
+  String get readOnlyNoValidation =>
+      'Taxy shows this count for information only. Invoice validation remains available in the official e-Fatura app.';
+
+  @override
+  String get irsPredictionDataTitle => 'Data for your IRS estimate';
+
+  @override
+  String get officialProvisionalBenefit => 'Provisional benefit reported by AT';
+
+  @override
+  String get listedExpenses => 'Listed expenses';
+
+  @override
+  String get listedVat => 'VAT on listed expenses';
+
+  @override
+  String get irsPredictionDisclaimer =>
+      'This data helps prepare the estimate. On its own, it is not your final IRS refund or tax due.';
 
   @override
   String get issuerUnavailable => 'Issuer unavailable';

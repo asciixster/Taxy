@@ -97,7 +97,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get provisionalTaxBenefit => 'Benefício provisório';
 
   @override
-  String get invoicesToValidate => 'Faturas por validar';
+  String get invoicesToValidate => 'Faturas com informação pendente';
 
   @override
   String get invoicesToAssociate => 'Faturas por associar receita';
@@ -109,7 +109,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sectors => 'Setores';
 
   @override
-  String get pendingInvoicesTitle => 'Faturas por validar';
+  String get pendingInvoicesTitle => 'Faturas pendentes';
 
   @override
   String get sectorInvoicesTitle => 'Faturas do setor';
@@ -118,7 +118,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get viewPendingInvoices => 'Ver faturas por validar';
 
   @override
-  String get noInvoicesToValidate => 'Sem faturas por validar';
+  String get noInvoicesToValidate => 'Sem faturas pendentes';
 
   @override
   String get noInvoicesInCategory => 'Sem faturas neste setor';
@@ -138,6 +138,27 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get benefitUnavailable => 'Benefício não disponível';
+
+  @override
+  String get readOnlyNoValidation =>
+      'A Taxy apresenta esta contagem apenas para consulta. A validação continua a ser feita no e-Fatura oficial.';
+
+  @override
+  String get irsPredictionDataTitle => 'Dados para previsão de IRS';
+
+  @override
+  String get officialProvisionalBenefit =>
+      'Benefício provisório indicado pela AT';
+
+  @override
+  String get listedExpenses => 'Despesas listadas';
+
+  @override
+  String get listedVat => 'IVA das despesas listadas';
+
+  @override
+  String get irsPredictionDisclaimer =>
+      'Estes dados ajudam a preparar a previsão. Não representam, por si só, o reembolso ou imposto final de IRS.';
 
   @override
   String get issuerUnavailable => 'Emitente não disponível';
@@ -427,7 +448,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   String get provisionalTaxBenefit => 'Benefício provisório';
 
   @override
-  String get invoicesToValidate => 'Faturas por validar';
+  String get invoicesToValidate => 'Faturas com informação pendente';
 
   @override
   String get invoicesToAssociate => 'Faturas por associar receita';
@@ -439,7 +460,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   String get sectors => 'Setores';
 
   @override
-  String get pendingInvoicesTitle => 'Faturas por validar';
+  String get pendingInvoicesTitle => 'Faturas pendentes';
 
   @override
   String get sectorInvoicesTitle => 'Faturas do setor';
@@ -448,7 +469,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   String get viewPendingInvoices => 'Ver faturas por validar';
 
   @override
-  String get noInvoicesToValidate => 'Sem faturas por validar';
+  String get noInvoicesToValidate => 'Sem faturas pendentes';
 
   @override
   String get noInvoicesInCategory => 'Sem faturas neste setor';
@@ -468,6 +489,27 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get benefitUnavailable => 'Benefício não disponível';
+
+  @override
+  String get readOnlyNoValidation =>
+      'A Taxy apresenta esta contagem apenas para consulta. A validação continua a ser feita no e-Fatura oficial.';
+
+  @override
+  String get irsPredictionDataTitle => 'Dados para previsão de IRS';
+
+  @override
+  String get officialProvisionalBenefit =>
+      'Benefício provisório indicado pela AT';
+
+  @override
+  String get listedExpenses => 'Despesas listadas';
+
+  @override
+  String get listedVat => 'IVA das despesas listadas';
+
+  @override
+  String get irsPredictionDisclaimer =>
+      'Estes dados ajudam a preparar a previsão. Não representam, por si só, o reembolso ou imposto final de IRS.';
 
   @override
   String get issuerUnavailable => 'Emitente não disponível';
