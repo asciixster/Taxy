@@ -129,3 +129,22 @@ Missing aggregates, malformed JSON, oversized responses, redirects, HTTP/TLS
 errors and unknown session states are mapped to the existing safe application
 error taxonomy. They are never silently converted to zero. The feature flag
 remains disabled by default.
+
+## Android runtime validation (2026-08-31)
+
+The experimental Android build completed the real read-only path through
+Flutter, the HTTPS backend and the existing Portal reader. The normalized
+overview reached Flutter and rendered five invoices pending validation, matching
+the independently observed account summary. Opening the pending list rendered
+real invoice tiles without exposing taxpayer NIFs, document identifiers or raw
+upstream responses in the UI diagnostics.
+
+This validates the backend bridge, session lifecycle and pending-invoice mapping.
+It does not yet validate the full overview contract: the current Portal reader
+does not provide the provisional-benefit aggregate or sector summary. The
+compatibility response currently renders these unavailable aggregates as zero;
+those zeros are not runtime-confirmed account values. The fields must be sourced
+explicitly, and their unavailable state represented separately, before the
+corresponding UI values can be treated as real data. No write
+operation was implemented or invoked, and the experimental feature flag remains
+disabled by default.
