@@ -212,4 +212,3 @@ For a production backend, the supported paths are therefore:
 
 The existing backend behavior is correct to expose unavailable aggregates as
 `unavailable`, not as zero and not as a naive sum of Portal document rows.
-
