@@ -4,12 +4,15 @@
 
 Taxy 0.7.4 reconstructed this contract offline from the locally available official e-Fatura APK (version 4.7.1/build 29), its Java call sites, serializers, response DTOs and transport code. These findings are `CONFIRMED_FROM_OFFICIAL_APP`, not official documentation and not runtime confirmation. No FactIntWS request was made.
 
-A second static audit on 2026-08-31 used the supplied official development APK
+A second static audit on 2026-08-31 used the supplied official public APK
 `pt.gov.efatura.mobille.dev.app`, version `6.0.10`, build `20260519`, SHA-256
 `964c95c77f5a20dd1e70c6536ce86b163dcdcb0346d319ee50540955375c1173`.
 Only the Android manifest, archive inventory and Flutter AOT code snapshot were
 examined. This newer, independently built client confirms the same FactIntWS
 namespace, ports 443/8443, `EcraInicial` operation and typed XML response path.
+The `.dev.app` suffix is the legacy identifier of the package publicly
+distributed through Google Play; it is not evidence that this build selects a
+quality/development endpoint or identity at runtime.
 
 The APK contains client-certificate, private-key and trust-store assets. Only filenames and code-level roles were inventoried. Their contents were not exported, incorporated, executed, or committed. A future test may use only Taxy's separately legitimate identity.
 
@@ -102,6 +105,15 @@ The newer app also retains a local active-user model (`SessionViewModel`,
 local selected credential/current-user context, but no additional hidden
 taxpayer selector was found in the `EcraInicialRequest` wire contract beyond
 `Nif`, `Ano` and `CanalOrigem`.
+
+The public AT request-encryption key in the APK has SPKI SHA-256
+`b19983ae125123d3b82afb0845018c2fe4fc8f9556686142b1e371a031a54968`,
+an exact match for the key already used by Taxy's controlled connector. The
+official production and quality TLS client certificate fingerprints, however,
+match neither Taxy's local nor backend client identity. This rejects an AT
+cipher-key mismatch and records the application TLS identity as the strongest
+concrete remaining population-context difference. Full evidence and safety
+boundaries are in `OFFICIAL_EFATURA_APK_6_0_10_AUDIT.md`.
 
 ## Runtime boundary
 

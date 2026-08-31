@@ -140,6 +140,22 @@ as the officially provisioned mobile application. This is not proven server
 semantics. Testing it would require authoritative AT evidence or the official
 application's private identity, whose use is prohibited.
 
+### Official APK 6.0.10 public-material comparison — 2026-08-31
+
+The official public APK exposes separate production and quality TLS client
+certificates and environment-driven `SecurityContext` loading. Public
+fingerprints prove that neither certificate is the legitimate Taxy identity.
+The quality certificate expired before this audit, whereas the production
+certificate remains valid and the same public package is the production app
+distributed through Google Play. Selection of production configuration is a
+high-confidence inference, not a captured runtime trace.
+
+The APK's public AT request-encryption key exactly matches Taxy's configured
+key by SPKI SHA-256. Consequently `AT_CIPHER_PUBLIC_KEY_MISMATCH` is rejected,
+while `CLIENT_APPLICATION_IDENTITY_CONTEXT_MISMATCH` is promoted to **HIGH** as
+the strongest concrete difference. This still does not prove the undocumented
+AT population rule and does not authorize use of official-app private material.
+
 The other unresolved input is the exact complete credential selected in the
 official app. Reproducing another identity requires that credential to be
 legitimately supplied; it cannot be derived from the base NIF or APK code. This

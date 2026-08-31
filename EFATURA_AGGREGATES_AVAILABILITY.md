@@ -53,6 +53,17 @@ population hypothesis. It remains an inference: transport authorization alone
 does not demonstrate that AT grants the same logical consumer population to
 every accepted client identity.
 
+Public-material comparison strengthens and narrows that conclusion. The APK's
+AT request-encryption key has the same SPKI SHA-256 as Taxy's configured public
+AT cipher key, so request-key drift is rejected. Conversely, neither Taxy's
+local nor backend TLS client certificate fingerprint matches the official
+application's production or quality client certificate. The official public
+app's production-labelled certificate is valid during the observed 2026
+operation, while its bundled quality certificate had already expired. Static
+analysis cannot prove the exact server policy, but application-client identity
+is the only demonstrated cryptographic context difference that still aligns
+with HTTP 200/SOAP success and a divergent logical population.
+
 ## Backend contract
 
 Every aggregate now carries explicit availability:
