@@ -153,7 +153,11 @@ export function inspectPfxReadiness({ pfxPath, pfxPassword, opensslPath = resolv
     let chainClassification = intermediatePresent ? 'CHAIN_UNKNOWN' : 'CHAIN_INTERMEDIATE_MISSING';
     let caValidation = 'NOT_PERFORMED';
     if (intermediatePresent) {
-      const verify = runOpenSsl(opensslPath, ['verify', '-purpose', 'sslclient', '-CAfile', caPath, clientPath]);
+      // Client PKCS#12 bundles normally contain the leaf and issuing
+      // intermediate, but omit the root certificate. Treat the included CA
+      // as the end of the local chain for readiness validation; the remote
+      // server remains responsible for trusting that issuer during mTLS.
+      const verify = runOpenSsl(opensslPath, ['verify', '-partial_chain', '-purpose', 'sslclient', '-CAfile', caPath, clientPath]);
       chainClassification = verify.ok ? 'CHAIN_VALID' : 'CHAIN_INVALID';
       caValidation = verify.ok ? 'VALID' : 'INVALID';
     }
