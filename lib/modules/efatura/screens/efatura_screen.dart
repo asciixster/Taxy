@@ -182,7 +182,8 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
 
   Future<void> _loadPending() async {
     final overview = _overview;
-    if (overview == null || overview.pendingValidation <= 0) return;
+    final pending = overview?.pendingValidation.valueOrNull;
+    if (pending == null || pending <= 0) return;
     await _loadInvoices(null);
   }
 
@@ -314,6 +315,13 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                           overview: _overview!,
                           onPending: busy ? null : _loadPending,
                         ),
+                        if (_overview!.outcome ==
+                            EfaturaOverviewOutcome.partialSuccess) ...[
+                          const SizedBox(height: 10),
+                          _PartialSuccessBanner(
+                            message: l10n.partialEfaturaData,
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         Semantics(
                           header: true,
@@ -323,14 +331,19 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        if (_overview!.sectors.isEmpty)
+                        if (!_overview!.sectors.isAvailable)
+                          _EmptyCard(
+                            icon: Icons.category_outlined,
+                            text: l10n.unavailable,
+                          )
+                        else if (_overview!.sectors.value.isEmpty)
                           _EmptyCard(
                             icon: Icons.category_outlined,
                             text: l10n.noDataAvailable,
                           )
                         else
                           _SectorGrid(
-                            sectors: _overview!.sectors,
+                            sectors: _overview!.sectors.value,
                             enabled: !busy,
                             onTap: _loadSector,
                           ),
@@ -492,6 +505,9 @@ final class _OverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final benefit = overview.provisionalBenefitCents.valueOrNull;
+    final pending = overview.pendingValidation.valueOrNull;
+    final revenue = overview.pendingRevenueAssociation.valueOrNull;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -516,7 +532,9 @@ final class _OverviewCard extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                TaxyFormatters.euros(context, overview.provisionalBenefitCents),
+                benefit == null
+                    ? l10n.unavailable
+                    : TaxyFormatters.euros(context, benefit),
                 style: Theme.of(context).textTheme.headlineMedium
                     ?.copyWith(color: scheme.primary),
               ),
@@ -528,18 +546,18 @@ final class _OverviewCard extends StatelessWidget {
               children: [
                 _Metric(
                   label: l10n.invoicesToValidate,
-                  value: '${overview.pendingValidation}',
+                  value: pending?.toString() ?? l10n.unavailable,
                   icon: Icons.task_alt_outlined,
                 ),
                 _Metric(
                   label: l10n.invoicesToAssociate,
-                  value: '${overview.pendingRevenueAssociation}',
+                  value: revenue?.toString() ?? l10n.unavailable,
                   icon: Icons.link_outlined,
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            if (overview.pendingValidation == 0)
+            if (pending == 0)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -548,7 +566,7 @@ final class _OverviewCard extends StatelessWidget {
                   Expanded(child: Text(l10n.noInvoicesToValidate)),
                 ],
               )
-            else
+            else if (pending != null && pending > 0)
               TextButton.icon(
                 onPressed: onPending,
                 icon: const Icon(Icons.receipt_long_outlined),
@@ -559,6 +577,32 @@ final class _OverviewCard extends StatelessWidget {
       ),
     );
   }
+}
+
+final class _PartialSuccessBanner extends StatelessWidget {
+  const _PartialSuccessBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(message)),
+        ],
+      ),
+    ),
+  );
 }
 
 final class _Metric extends StatelessWidget {
@@ -647,10 +691,13 @@ final class _SectorTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final label = _sectorLabel(l10n, sector);
+    final benefit = sector.provisionalBenefitCents.valueOrNull;
+    final count = sector.invoiceCount.valueOrNull;
     final details = <String>[
-      if (sector.provisionalBenefitCents != null)
-        TaxyFormatters.euros(context, sector.provisionalBenefitCents!),
-      if (sector.invoiceCount != null) l10n.invoiceCount(sector.invoiceCount!),
+      benefit == null
+          ? l10n.unavailable
+          : TaxyFormatters.euros(context, benefit),
+      if (count != null) l10n.invoiceCount(count),
     ];
     return Semantics(
       button: true,

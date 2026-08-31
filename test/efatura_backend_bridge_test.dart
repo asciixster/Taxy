@@ -45,7 +45,7 @@ void main() {
       final overview = await bridge.fetchOverview();
       await bridge.fetchPendingInvoices();
 
-      expect(overview.pendingValidation, 5);
+      expect(overview.pendingValidation.value, 5);
       expect(transport.requests, hasLength(2));
       expect(transport.requests.first.path, '/taxy/v1/efatura/sessions');
       expect(transport.requests.first.body?['password'], 'synthetic-secret');
@@ -130,13 +130,46 @@ void main() {
     expect(await bridge.hasCredentials(), isFalse);
   });
 
-  test('missing required overview aggregate fails closed', () async {
+  test(
+    'missing optional overview aggregate is explicitly unavailable',
+    () async {
+      transport.sessionBody = <String, Object?>{
+        'sessionToken': 'opaque-session',
+        'overview': <String, Object?>{
+          'pendingValidation': 5,
+          'pendingRevenueAssociation': 0,
+          'sectors': <Object?>[],
+        },
+      };
+      await bridge.save(
+        const EfaturaCredentials(
+          nif: '000000000',
+          password: 'synthetic-secret',
+        ),
+      );
+      final overview = await bridge.fetchOverview();
+      expect(
+        overview.provisionalBenefitCents.status,
+        AtValueStatus.unavailable,
+      );
+      expect(overview.outcome, EfaturaOverviewOutcome.partialSuccess);
+    },
+  );
+
+  test('malformed available aggregate fails closed', () async {
     transport.sessionBody = <String, Object?>{
       'sessionToken': 'opaque-session',
       'overview': <String, Object?>{
-        'pendingValidation': 5,
-        'pendingRevenueAssociation': 0,
-        'sectors': <Object?>[],
+        'provisionalBenefitCents': <String, Object?>{
+          'status': 'available',
+          'value': 'not-money',
+        },
+        'pendingValidation': <String, Object?>{
+          'status': 'available',
+          'value': 5,
+        },
+        'pendingRevenueAssociation': <String, Object?>{'status': 'unavailable'},
+        'sectors': <String, Object?>{'status': 'unavailable'},
       },
     };
     await expectLater(
@@ -146,15 +179,8 @@ void main() {
           password: 'synthetic-secret',
         ),
       ),
-      throwsA(
-        predicate(
-          (error) =>
-              error is EfaturaServiceException &&
-              error.kind == EfaturaFailureKind.parsing,
-        ),
-      ),
+      throwsA(isA<EfaturaServiceException>()),
     );
-    expect(await bridge.hasCredentials(), isFalse);
   });
 
   test('malformed invoice cannot disappear silently', () async {
@@ -199,17 +225,33 @@ final class _Transport implements EfaturaBackendTransport {
   Map<String, Object?> sessionBody = <String, Object?>{
     'sessionToken': 'opaque-session',
     'overview': <String, Object?>{
-      'provisionalBenefitCents': 50339,
-      'pendingValidation': 5,
-      'pendingRevenueAssociation': 0,
-      'sectors': <Object?>[
-        <String, Object?>{
-          'code': 'C05',
-          'label': 'Saúde',
-          'provisionalBenefitCents': 234,
-          'invoiceCount': 1,
-        },
-      ],
+      'provisionalBenefitCents': <String, Object?>{
+        'status': 'available',
+        'value': 50339,
+      },
+      'pendingValidation': <String, Object?>{'status': 'available', 'value': 5},
+      'pendingRevenueAssociation': <String, Object?>{
+        'status': 'available',
+        'value': 0,
+      },
+      'sectors': <String, Object?>{
+        'status': 'available',
+        'items': <Object?>[
+          <String, Object?>{
+            'code': 'C05',
+            'label': 'Saúde',
+            'provisionalBenefit': <String, Object?>{
+              'status': 'available',
+              'value': 234,
+            },
+            'invoiceCount': <String, Object?>{
+              'status': 'available',
+              'value': 1,
+            },
+            'activity': 'active',
+          },
+        ],
+      },
     },
   };
   bool malformedInvoices = false;

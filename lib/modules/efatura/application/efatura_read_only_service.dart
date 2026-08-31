@@ -67,7 +67,8 @@ final class EfaturaReadOnlyService {
   Future<List<EfaturaInvoice>> loadPendingInvoicesIfNeeded(
     EfaturaOverview overview,
   ) async {
-    if (overview.pendingValidation <= 0) return const [];
+    final pending = overview.pendingValidation.valueOrNull;
+    if (pending == null || pending <= 0) return const [];
     return loadPendingInvoices();
   }
 

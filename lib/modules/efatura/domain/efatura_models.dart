@@ -24,17 +24,50 @@ enum EfaturaFailureKind {
   unknown,
 }
 
+enum AtValueStatus { available, unavailable, loading, error }
+
+/// Explicit availability for values obtained from an external tax service.
+///
+/// In particular, `available(0)` is a real observed zero while `unavailable`
+/// means the upstream source did not provide the value.
+final class AtValue<T> {
+  const AtValue.available(T value)
+    : status = AtValueStatus.available,
+      _value = value;
+  const AtValue.unavailable()
+    : status = AtValueStatus.unavailable,
+      _value = null;
+  const AtValue.loading() : status = AtValueStatus.loading, _value = null;
+  const AtValue.error() : status = AtValueStatus.error, _value = null;
+
+  final AtValueStatus status;
+  final T? _value;
+
+  bool get isAvailable => status == AtValueStatus.available;
+  T? get valueOrNull => isAvailable ? _value : null;
+  T get value {
+    if (!isAvailable) throw StateError('Value is not available');
+    return _value as T;
+  }
+}
+
+enum AtExpenseSectorActivity { active, inactive, unknown }
+
+enum EfaturaOverviewOutcome { success, partialSuccess }
+
 final class AtExpenseSector {
   const AtExpenseSector({
     required this.code,
     this.label,
-    this.provisionalBenefitCents,
-    this.invoiceCount,
+    this.provisionalBenefitCents = const AtValue.unavailable(),
+    this.invoiceCount = const AtValue.unavailable(),
+    this.activity = AtExpenseSectorActivity.unknown,
   });
   final String code;
   final String? label;
-  final int? provisionalBenefitCents;
-  final int? invoiceCount;
+  final AtValue<int> provisionalBenefitCents;
+  final AtValue<int> invoiceCount;
+  final AtExpenseSectorActivity activity;
 }
 
 final class EfaturaInvoice {
@@ -65,10 +98,22 @@ final class EfaturaOverview {
     required this.pendingRevenueAssociation,
     required this.sectors,
   });
-  final int provisionalBenefitCents;
-  final int pendingValidation;
-  final int pendingRevenueAssociation;
-  final List<AtExpenseSector> sectors;
+  final AtValue<int> provisionalBenefitCents;
+  final AtValue<int> pendingValidation;
+  final AtValue<int> pendingRevenueAssociation;
+  final AtValue<List<AtExpenseSector>> sectors;
+
+  EfaturaOverviewOutcome get outcome {
+    final values = <AtValue<Object?>>[
+      provisionalBenefitCents,
+      pendingValidation,
+      pendingRevenueAssociation,
+      sectors,
+    ];
+    return values.every((value) => value.isAvailable)
+        ? EfaturaOverviewOutcome.success
+        : EfaturaOverviewOutcome.partialSuccess;
+  }
 }
 
 final class EfaturaSnapshot {

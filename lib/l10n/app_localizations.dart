@@ -333,6 +333,18 @@ abstract class AppLocalizations {
   /// **'Sem dados disponíveis'**
   String get noDataAvailable;
 
+  /// No description provided for @unavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Indisponível'**
+  String get unavailable;
+
+  /// No description provided for @partialEfaturaData.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alguns valores do e-Fatura não estão disponíveis. As faturas carregadas continuam acessíveis.'**
+  String get partialEfaturaData;
+
   /// No description provided for @benefitUnavailable.
   ///
   /// In pt, this message translates to:

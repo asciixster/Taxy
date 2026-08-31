@@ -12,13 +12,13 @@ void main() {
   const sector = AtExpenseSector(
     code: 'C05',
     label: 'Saúde',
-    provisionalBenefitCents: 250,
+    provisionalBenefitCents: AtValue.available(250),
   );
   const overview = EfaturaOverview(
-    provisionalBenefitCents: 1200,
-    pendingValidation: 0,
-    pendingRevenueAssociation: 0,
-    sectors: [sector],
+    provisionalBenefitCents: AtValue.available(1200),
+    pendingValidation: AtValue.available(0),
+    pendingRevenueAssociation: AtValue.available(0),
+    sectors: AtValue.available([sector]),
   );
   const invoice = EfaturaInvoice(
     date: '2026-08-29',
@@ -42,6 +42,34 @@ void main() {
     expect(find.text('Benefício provisório'), findsOneWidget);
     expect(find.textContaining('12,00'), findsOneWidget);
     expect(find.text('Sem faturas por validar'), findsOneWidget);
+  });
+  testWidgets('distingue benefício indisponível de zero real', (tester) async {
+    const partial = EfaturaOverview(
+      provisionalBenefitCents: AtValue.unavailable(),
+      pendingValidation: AtValue.available(5),
+      pendingRevenueAssociation: AtValue.unavailable(),
+      sectors: AtValue.unavailable(),
+    );
+    await _pump(tester, _FakeGateway(overview: partial), _readyStore());
+    await tester.pumpAndSettle();
+    expect(find.text('Indisponível'), findsWidgets);
+    expect(find.textContaining('Alguns valores'), findsOneWidget);
+    expect(find.textContaining('0,00'), findsNothing);
+    expect(find.text('5'), findsOneWidget);
+  });
+  testWidgets('mostra zero real quando o benefício está disponível', (
+    tester,
+  ) async {
+    const zero = EfaturaOverview(
+      provisionalBenefitCents: AtValue.available(0),
+      pendingValidation: AtValue.available(0),
+      pendingRevenueAssociation: AtValue.available(0),
+      sectors: AtValue.available([]),
+    );
+    await _pump(tester, _FakeGateway(overview: zero), _readyStore());
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0,00'), findsOneWidget);
+    expect(find.text('Indisponível'), findsNothing);
   });
   testWidgets('mostra setores sem inventar contagem', (tester) async {
     await _pump(tester, _FakeGateway(overview: overview), _readyStore());

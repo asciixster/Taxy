@@ -109,6 +109,11 @@ Invoice responses contain only normalized UI fields:
 The backend must never return taxpayer NIFs, issuer NIFs, document IDs, Portal
 cookies, raw HTML/JSON, credential ciphertext or internal database keys.
 
+Aggregate fields use the explicit availability contract documented in
+`EFATURA_AGGREGATES_AVAILABILITY.md`. Missing upstream aggregates must be
+reported as `unavailable`; they must never be represented by a synthetic zero
+or empty list.
+
 ## Required backend controls before public deployment
 
 - explicit consent and privacy notice for transmitting Portal credentials;

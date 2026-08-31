@@ -4,16 +4,16 @@ import 'package:taxy_pt/modules/efatura/domain/efatura_models.dart';
 
 void main() {
   const overview = EfaturaOverview(
-    provisionalBenefitCents: 1234,
-    pendingValidation: 1,
-    pendingRevenueAssociation: 0,
-    sectors: [
+    provisionalBenefitCents: AtValue.available(1234),
+    pendingValidation: AtValue.available(1),
+    pendingRevenueAssociation: AtValue.available(0),
+    sectors: AtValue.available([
       AtExpenseSector(
         code: 'C05',
         label: 'Saúde',
-        provisionalBenefitCents: 234,
+        provisionalBenefitCents: AtValue.available(234),
       ),
-    ],
+    ]),
   );
   const invoice = EfaturaInvoice(
     date: '2026-08-29',
@@ -26,7 +26,7 @@ void main() {
   test('loadOverview devolve apenas modelo normalizado', () async {
     final gateway = _Gateway(overview: overview);
     final result = await EfaturaReadOnlyService(gateway).loadOverview();
-    expect(result.provisionalBenefitCents, 1234);
+    expect(result.provisionalBenefitCents.value, 1234);
     expect(gateway.overviewCalls, 1);
   });
   test('loadPendingInvoices preserva empty state', () async {
@@ -47,10 +47,10 @@ void main() {
       final result = await EfaturaReadOnlyService(gateway)
           .loadPendingInvoicesIfNeeded(
             const EfaturaOverview(
-              provisionalBenefitCents: 0,
-              pendingValidation: 0,
-              pendingRevenueAssociation: 0,
-              sectors: [],
+              provisionalBenefitCents: AtValue.available(0),
+              pendingValidation: AtValue.available(0),
+              pendingRevenueAssociation: AtValue.available(0),
+              sectors: AtValue.available([]),
             ),
           );
       expect(result, isEmpty);
@@ -99,7 +99,7 @@ void main() {
   test('loadSectorInvoices usa código validado', () async {
     final gateway = _Gateway(overview: overview, sector: const [invoice]);
     final result = await EfaturaReadOnlyService(gateway)
-        .loadSectorInvoices(overview.sectors.single);
+        .loadSectorInvoices(overview.sectors.value.single);
     expect(result.single.sectorCode, 'C05');
     expect(gateway.lastSector, 'C05');
   });

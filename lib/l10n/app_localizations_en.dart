@@ -130,6 +130,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noDataAvailable => 'No data available';
 
   @override
+  String get unavailable => 'Unavailable';
+
+  @override
+  String get partialEfaturaData =>
+      'Some e-Fatura values are unavailable. Loaded invoices remain accessible.';
+
+  @override
   String get benefitUnavailable => 'Benefit unavailable';
 
   @override

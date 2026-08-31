@@ -39,6 +39,8 @@
   "noInvoicesInCategory": "No invoices in this category",
   "noActivityInCategory": "No activity in this category",
   "noDataAvailable": "No data available",
+  "unavailable": "Unavailable",
+  "partialEfaturaData": "Some e-Fatura values are unavailable. Loaded invoices remain accessible.",
   "benefitUnavailable": "Benefit unavailable",
   "issuerUnavailable": "Issuer unavailable",
   "invoiceCount": "{count, plural, =0{No invoices} =1{1 invoice} other{{count} invoices}}",

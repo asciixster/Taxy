@@ -130,6 +130,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noDataAvailable => 'Sem dados disponíveis';
 
   @override
+  String get unavailable => 'Indisponível';
+
+  @override
+  String get partialEfaturaData =>
+      'Alguns valores do e-Fatura não estão disponíveis. As faturas carregadas continuam acessíveis.';
+
+  @override
   String get benefitUnavailable => 'Benefício não disponível';
 
   @override
@@ -451,6 +458,13 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get noDataAvailable => 'Sem dados disponíveis';
+
+  @override
+  String get unavailable => 'Indisponível';
+
+  @override
+  String get partialEfaturaData =>
+      'Alguns valores do e-Fatura não estão disponíveis. As faturas carregadas continuam acessíveis.';
 
   @override
   String get benefitUnavailable => 'Benefício não disponível';

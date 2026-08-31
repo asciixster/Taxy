@@ -39,6 +39,8 @@
   "noInvoicesInCategory": "Sem faturas neste setor",
   "noActivityInCategory": "Sem atividade neste setor",
   "noDataAvailable": "Sem dados disponíveis",
+  "unavailable": "Indisponível",
+  "partialEfaturaData": "Alguns valores do e-Fatura não estão disponíveis. As faturas carregadas continuam acessíveis.",
   "benefitUnavailable": "Benefício não disponível",
   "issuerUnavailable": "Emitente não disponível",
   "invoiceCount": "{count, plural, =0{Sem faturas} =1{1 fatura} other{{count} faturas}}",
