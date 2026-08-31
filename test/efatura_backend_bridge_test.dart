@@ -46,6 +46,9 @@ void main() {
       await bridge.fetchPendingInvoices();
 
       expect(overview.pendingValidation.value, 5);
+      expect(overview.sectors.value.single.totalExpensesCents.value, 2345);
+      expect(overview.sectors.value.single.totalVatExpensesCents.value, 439);
+      expect(overview.irsEvidence.listedExpensesCents.value, 2345);
       expect(transport.requests, hasLength(2));
       expect(transport.requests.first.path, '/taxy/v1/efatura/sessions');
       expect(transport.requests.first.body?['password'], 'synthetic-secret');
@@ -243,6 +246,14 @@ final class _Transport implements EfaturaBackendTransport {
             'provisionalBenefit': <String, Object?>{
               'status': 'available',
               'value': 234,
+            },
+            'totalExpenses': <String, Object?>{
+              'status': 'available',
+              'value': 2345,
+            },
+            'totalVatExpenses': <String, Object?>{
+              'status': 'available',
+              'value': 439,
             },
             'invoiceCount': <String, Object?>{
               'status': 'available',
