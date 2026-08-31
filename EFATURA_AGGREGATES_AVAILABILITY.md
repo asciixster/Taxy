@@ -46,3 +46,19 @@ renders an unavailable value as **Indisponível** / **Unavailable**.
 The experimental feature remains disabled by default. No write operation, raw
 Portal response, credential, taxpayer identifier or document identifier is
 part of this contract.
+
+## Controlled runtime validation (2026-08-31)
+
+Three read-only backend requests were used, without automatic retries. The
+updated Android build received and rendered the pending count as
+`available(5)`. The provisional benefit, revenue-association count and sectors
+were received as `unavailable`; the UI rendered **Indisponível**, kept the real
+pending count and showed the partial-success explanation. It did not render a
+synthetic `0,00 €`.
+
+The source audit also confirmed that the authenticated Portal exposes the
+separate read-only `homeBeneficio.action` page and its benefit/sector UI
+structure. The exact machine-readable value contract was not demonstrated
+within the three-request budget, so no speculative parser was retained and no
+benefit or sector field was promoted to runtime-confirmed. Pending invoices
+remain runtime-confirmed and usable during this partial success.
