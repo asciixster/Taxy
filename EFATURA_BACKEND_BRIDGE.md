@@ -20,11 +20,16 @@ Enable the backend path only in an experimental build:
 
 ```text
 --dart-define=TAXY_EFATURA_EXPERIMENTAL=true
---dart-define=TAXY_EFATURA_BACKEND_URL=https://dev.contabilidades.pt/
+--dart-define=TAXY_EFATURA_BACKEND_URL=https://api.taxy.pt/
 ```
 
 The URL must use HTTPS, must not contain user information and is never derived
 from user input.
+
+`api.taxy.pt` is the dedicated Taxy API. It runs independently from
+`dev.contabilidades.pt`; the latter is no longer part of the intended mobile
+request path. TLS terminates at the existing reverse proxy, while `taxy-api`
+and its read-only browser worker communicate over an isolated Docker network.
 
 ## Confirmed server-side source
 
