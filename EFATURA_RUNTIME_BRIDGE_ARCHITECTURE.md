@@ -1,6 +1,6 @@
 # e-Fatura runtime bridge architecture (0.7.7)
 
-## Decision
+## 0.7.7 implementation decision
 
 The experimental Android implementation uses a narrow **Android platform
 channel/native module**. Flutter owns presentation and normalized application
@@ -65,10 +65,12 @@ asset. Its private key is not the production distribution strategy.
 | `LOCAL_DIRECT_AT` | Fiscal data and Portal credentials remain on device; no Taxy data processor in the request path | Client-certificate provisioning, protocol updates and device compatibility are difficult; a shared PFX must never be distributed |
 | `TAXY_BACKEND_PROXY` | Keeps service identity server-side, centralizes protocol/security updates and simplifies the app | Fiscal data and credentials cross Taxy infrastructure, creating significant RGPD, security, audit and incident-response obligations |
 
-**Production recommendation: `BACKEND_PROXY`, but only after a dedicated threat
-model, DPIA/RGPD review, secret-management design and explicit user consent.**
-The implemented local-direct bridge remains an experimental validation path;
-this release does not implement a backend.
+**Production recommendation: `BACKEND_PROXY`.** The mobile-side backend client
+is implemented behind `TAXY_EFATURA_BACKEND_URL`; it creates a short-lived
+server session and keeps only its opaque token in memory. The local-direct
+bridge remains an experimental diagnostic fallback when no backend URL is
+configured. Server deployment still requires the controls and API contract in
+`EFATURA_BACKEND_BRIDGE.md`, including a DPIA/RGPD review and explicit consent.
 
 ## Parity
 

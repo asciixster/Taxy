@@ -11,6 +11,7 @@ import 'l10n/app_localizations.dart';
 import 'l10n/language_controller.dart';
 import 'navigation/app_navigation.dart';
 import 'modules/efatura/application/efatura_read_only_service.dart';
+import 'modules/efatura/infrastructure/efatura_backend_bridge.dart';
 import 'modules/efatura/infrastructure/efatura_runtime_bridge.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
@@ -771,16 +772,25 @@ Future<void> _openWizard(
 }
 
 Future<void> _openEfatura(BuildContext context) {
-  final bridge = AndroidEfaturaRuntimeBridge();
-  return Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => EfaturaScreen(
-        service: EfaturaReadOnlyService(bridge, bridge),
-        provisioning: bridge,
-      ),
-    ),
-  );
+  const backendUrl = String.fromEnvironment('TAXY_EFATURA_BACKEND_URL');
+  final directBridge = AndroidEfaturaRuntimeBridge();
+  late final EfaturaScreen screen;
+  if (backendUrl.trim().isEmpty) {
+    screen = EfaturaScreen(
+      service: EfaturaReadOnlyService(directBridge, directBridge),
+      provisioning: directBridge,
+    );
+  } else {
+    final backendBridge = BackendEfaturaRuntimeBridge(
+      baseUri: Uri.parse(backendUrl),
+      screenProtection: directBridge,
+    );
+    screen = EfaturaScreen(
+      service: EfaturaReadOnlyService(backendBridge, backendBridge),
+      provisioning: backendBridge,
+    );
+  }
+  return Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 }
 
 void _openResult(

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../application/efatura_read_only_service.dart';
 import '../domain/efatura_models.dart';
+import 'efatura_wire_mapping.dart';
 
 abstract interface class EfaturaRuntimeProvisioning {
   Future<bool> selectClientIdentity();
@@ -123,13 +124,13 @@ final class AndroidEfaturaRuntimeBridge
   @override
   Future<EfaturaOverview> fetchOverview() async {
     final result = await _invokeReadOnly('loadOverview');
-    return _overviewFromMap(result);
+    return efaturaOverviewFromMap(result);
   }
 
   @override
   Future<List<EfaturaInvoice>> fetchPendingInvoices() async {
     final result = await _invokeReadOnly('loadPendingInvoices');
-    return _invoiceList(result['invoices']);
+    return efaturaInvoiceList(result['invoices']);
   }
 
   @override
@@ -137,7 +138,7 @@ final class AndroidEfaturaRuntimeBridge
     final result = await _invokeReadOnly('loadSectorInvoices', <String, Object>{
       'sectorCode': sectorCode,
     });
-    return _invoiceList(result['invoices']);
+    return efaturaInvoiceList(result['invoices']);
   }
 
   Future<Map<String, Object?>> _invokeReadOnly(
@@ -155,63 +156,6 @@ final class AndroidEfaturaRuntimeBridge
       throw _mapPlatformError(error);
     }
   }
-}
-
-EfaturaOverview _overviewFromMap(Map<String, Object?> map) {
-  final rawSectors = (map['sectors'] as List<Object?>? ?? const []);
-  return EfaturaOverview(
-    provisionalBenefitCents: _requiredInteger(map, 'provisionalBenefitCents'),
-    pendingValidation: _requiredInteger(map, 'pendingValidation'),
-    pendingRevenueAssociation: _requiredInteger(
-      map,
-      'pendingRevenueAssociation',
-    ),
-    sectors: rawSectors
-        .whereType<Map<Object?, Object?>>()
-        .map(
-          (value) => AtExpenseSector(
-            code: value['code']?.toString() ?? '',
-            label: value['label']?.toString(),
-            provisionalBenefitCents: _integer(value['provisionalBenefitCents']),
-            invoiceCount: _integer(value['invoiceCount']),
-          ),
-        )
-        .toList(growable: false),
-  );
-}
-
-List<EfaturaInvoice> _invoiceList(Object? raw) =>
-    (raw as List<Object?>? ?? const [])
-        .whereType<Map<Object?, Object?>>()
-        .map(
-          (value) => EfaturaInvoice(
-            date: value['date']?.toString() ?? '',
-            totalCents: _integer(value['totalCents']) ?? 0,
-            issuerDisplayName: value['issuerDisplayName']?.toString(),
-            vatCents: _integer(value['vatCents']),
-            sectorCode: value['sectorCode']?.toString(),
-            sectorLabel: value['sectorLabel']?.toString(),
-            classificationStatus: value['classificationStatus']?.toString(),
-            pendingClassification: value['pendingClassification'] == true,
-          ),
-        )
-        .toList(growable: false);
-
-int? _integer(Object? value) => switch (value) {
-  int value => value,
-  num value => value.toInt(),
-  _ => null,
-};
-
-int _requiredInteger(Map<String, Object?> map, String key) {
-  final value = _integer(map[key]);
-  if (value == null) {
-    throw const EfaturaServiceException(
-      EfaturaFailureKind.parsing,
-      'Recebemos uma resposta inesperada do e-Fatura.',
-    );
-  }
-  return value;
 }
 
 EfaturaServiceException _mapPlatformError(PlatformException error) {
