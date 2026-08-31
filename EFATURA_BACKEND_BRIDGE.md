@@ -44,6 +44,15 @@ This is the source now wrapped by the development backend API. The mobile applic
 receive its cookies, raw AT responses, database identifiers or encrypted
 credential records.
 
+For end-to-end testing, the mobile API must route to the complete acquired-
+documents reader in `fiscal-web-worker`. The older internal PHP compatibility
+reader fetches only unclassified documents and cannot populate sector expense
+or VAT totals. The complete reader must return explicit availability wrappers
+for pending count, sector list, expense totals, VAT totals and invoice counts.
+The official consolidated benefit remains unavailable unless an authoritative
+AT aggregate source supplies it; a sum of per-document intermediate benefit
+values is not an acceptable substitute.
+
 ## Mobile API contract
 
 ### Create session
