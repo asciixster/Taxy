@@ -32,11 +32,50 @@ export function readAtPublicKey(certificatePath) {
 }
 
 export function inspectAtCipherPublicKey(certificatePath) {
-  const key = readAtPublicKey(certificatePath);
+  let certificate;
+  try { certificate = new X509Certificate(readFileSync(certificatePath)); }
+  catch { throw new AtCryptoError('AT cipher certificate is invalid or unreadable'); }
+  const key = certificate.publicKey;
+  if (key.asymmetricKeyType !== 'rsa') throw new AtCryptoError('AT cipher certificate is invalid or unreadable');
   const spki = key.export({ type: 'spki', format: 'der' });
+  const jwk = key.export({ format: 'jwk' });
+  const modulus = Buffer.from(jwk.n, 'base64url');
+  const details = key.asymmetricKeyDetails ?? {};
+  const legacy = certificate.toLegacyObject();
+  const keyUsage = certificate.keyUsage ?? legacy.ext_key_usage ?? [];
+  const validFrom = new Date(certificate.validFrom);
+  const validTo = new Date(certificate.validTo);
+  const now = new Date();
   return Object.freeze({ readable: true, keyType: key.asymmetricKeyType,
     privateKeyPresent: false, fingerprintAlgorithm: 'SHA-256',
-    publicKeyFingerprint: createHash('sha256').update(spki).digest('hex') });
+    certificateFingerprint: certificate.fingerprint256.replaceAll(':', '').toLowerCase(),
+    publicKeyFingerprint: createHash('sha256').update(spki).digest('hex'),
+    modulusFingerprint: createHash('sha256').update(modulus).digest('hex'),
+    rsaKeySizeBits: details.modulusLength ?? legacy.bits ?? null,
+    exponent: details.publicExponent?.toString() ?? null,
+    issuerSummary: /(?:^|\n)CN=([^\n]+)/.exec(certificate.issuer)?.[1] ?? 'NOT_AVAILABLE',
+    validFrom: validFrom.toISOString(), validTo: validTo.toISOString(),
+    currentlyValid: now >= validFrom && now <= validTo,
+    subjectKeyIdentifier: legacy.subjectKeyIdentifier ?? null,
+    keyUsage: Object.freeze([...keyUsage]),
+    clientAuthEkuPresent: keyUsage.includes('1.3.6.1.5.5.7.3.2'),
+  });
+}
+
+function normalizeSha256(value) {
+  const normalized = String(value ?? '').replaceAll(':', '').toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(normalized)) {
+    throw new AtCryptoError('Expected AT cipher certificate fingerprint is invalid');
+  }
+  return normalized;
+}
+
+export function assertAtCipherCertificateFingerprint(certificatePath, expectedFingerprint) {
+  const metadata = inspectAtCipherPublicKey(certificatePath);
+  if (metadata.certificateFingerprint !== normalizeSha256(expectedFingerprint)) {
+    throw new AtCryptoError('AT cipher certificate fingerprint mismatch');
+  }
+  return metadata;
 }
 
 export function aes128EcbPkcs5Encrypt(plaintext, sessionKey) {

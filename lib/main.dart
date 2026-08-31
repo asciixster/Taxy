@@ -7,11 +7,16 @@ export 'state/providers.dart';
 import 'app/home/module_section.dart';
 import 'domain/models.dart';
 import 'domain/money.dart';
+import 'l10n/app_localizations.dart';
+import 'l10n/language_controller.dart';
 import 'navigation/app_navigation.dart';
 import 'modules/efatura/application/efatura_read_only_service.dart';
+import 'modules/efatura/infrastructure/efatura_backend_bridge.dart';
+import 'modules/efatura/infrastructure/efatura_runtime_bridge.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'screens/how_we_calculate_screen.dart';
+import 'screens/settings_screen.dart';
 import 'state/providers.dart';
 import 'tax_engine/tax_engine.dart';
 import 'tax_engine/household_tax_engine.dart';
@@ -51,22 +56,55 @@ TaxResult _calculateSimulation(TaxSimulation simulation, TaxRuleSet rules) {
       : comparison.separate!;
 }
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const ProviderScope(child: TaxyApp()));
+  final language = LanguageController(LocalLanguagePreferenceStore());
+  await language.load();
+  runApp(ProviderScope(child: TaxyApp(languageController: language)));
 }
 
-final class TaxyApp extends StatelessWidget {
-  const TaxyApp({super.key});
+final class TaxyApp extends StatefulWidget {
+  const TaxyApp({super.key, this.languageController});
+
+  final LanguageController? languageController;
 
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    debugShowCheckedModeBanner: false,
-    title: 'taxy.pt',
-    themeMode: ThemeMode.system,
-    theme: _theme(Brightness.light),
-    darkTheme: _theme(Brightness.dark),
-    home: const HomeScreen(),
+  State<TaxyApp> createState() => _TaxyAppState();
+}
+
+final class _TaxyAppState extends State<TaxyApp> {
+  late final LanguageController _language =
+      widget.languageController ??
+      LanguageController(
+        MemoryLanguagePreferenceStore(LanguagePreference.portuguese),
+        initial: LanguagePreference.portuguese,
+      );
+  late final bool _ownsLanguage = widget.languageController == null;
+
+  @override
+  void dispose() {
+    if (_ownsLanguage) _language.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => LanguageScope(
+    controller: _language,
+    child: ListenableBuilder(
+      listenable: _language,
+      builder: (context, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+        locale: _language.locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localeResolutionCallback: resolveTaxyLocale,
+        themeMode: ThemeMode.system,
+        theme: _theme(Brightness.light),
+        darkTheme: _theme(Brightness.dark),
+        home: const HomeScreen(),
+      ),
+    ),
   );
 
   ThemeData _theme(Brightness brightness) {
@@ -149,11 +187,20 @@ final class TaxyApp extends StatelessWidget {
   }
 }
 
+void _openSettings(BuildContext context) => Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) =>
+        SettingsScreen(languageController: LanguageScope.of(context)),
+  ),
+);
+
 final class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final rules = ref.watch(rulesProvider);
     final simulations = ref.watch(simulationsProvider);
     final savedDraft = ref.watch(simulationDraftProvider);
@@ -161,25 +208,19 @@ final class HomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: rules.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => const _FatalError(
-            message: 'Não foi possível carregar as regras fiscais com segurança. Fecha e volta a abrir a aplicação.',
-          ),
+          error: (_, _) => _FatalError(message: l10n.rulesLoadError),
           data: (ruleSet) => savedDraft.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, _) => simulations.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => const _FatalError(
-                message: 'Não foi possível abrir os dados guardados neste dispositivo.',
-              ),
+              error: (_, _) => _FatalError(message: l10n.savedDataLoadError),
               data: (items) => items.isEmpty
                   ? _Welcome(rules: ruleSet, hasDraft: false)
                   : _DashboardRuleLoader(simulations: items, hasDraft: false),
             ),
             data: (draft) => simulations.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => const _FatalError(
-                message: 'Não foi possível abrir as simulações guardadas neste dispositivo.',
-              ),
+              error: (_, _) => _FatalError(message: l10n.simulationsLoadError),
               data: (items) => items.isEmpty
                   ? _Welcome(rules: ruleSet, hasDraft: draft != null)
                   : _DashboardRuleLoader(
@@ -205,15 +246,14 @@ final class _DashboardRuleLoader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final profile = simulations.first.profile;
     final rules = ref.watch(
       rulesForProvider((year: profile.taxYear, region: profile.region)),
     );
     return rules.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => const _FatalError(
-        message: 'Não foi possível carregar as regras desta simulação com segurança.',
-      ),
+      error: (_, _) => _FatalError(message: l10n.simulationRulesLoadError),
       data: (value) => _Dashboard(
         rules: value,
         simulations: simulations,
@@ -229,104 +269,122 @@ final class _Welcome extends StatelessWidget {
   final bool hasDraft;
 
   @override
-  Widget build(BuildContext context) => Stack(
-    children: [
-      const Positioned(
-        top: -90,
-        right: -90,
-        child: _Glow(size: 250, color: _taxyMint),
-      ),
-      Positioned(
-        top: 160,
-        left: -120,
-        child: _Glow(size: 260, color: _taxyViolet.withValues(alpha: .3)),
-      ),
-      LayoutBuilder(
-        builder: (context, constraints) => SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight - 46),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _Brand(),
-                const SizedBox(height: 58),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Stack(
+      children: [
+        const Positioned(
+          top: -90,
+          right: -90,
+          child: _Glow(size: 250, color: _taxyMint),
+        ),
+        Positioned(
+          top: 160,
+          left: -120,
+          child: _Glow(size: 260, color: _taxyViolet.withValues(alpha: .3)),
+        ),
+        LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 46,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(child: _Brand()),
+                      IconButton(
+                        key: const Key('open-settings'),
+                        tooltip: l10n.settings,
+                        onPressed: () => _openSettings(context),
+                        icon: const Icon(Icons.settings_outlined),
+                      ),
+                    ],
                   ),
-                  decoration: BoxDecoration(
-                    color: _taxyMint.withValues(alpha: .18),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: const Text(
-                    'IRS, explicado para pessoas',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Percebe o teu IRS.\nDecide com confiança.',
-                  style: Theme.of(context).textTheme.displaySmall,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Uma conversa simples transforma os teus dados numa estimativa clara — sem formulários, sem fiscalês.',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    height: 1.5,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                const _PreviewCard(),
-                const SizedBox(height: 26),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 10,
-                  children: [
-                    _TrustRow(
-                      icon: Icons.verified_user_outlined,
-                      text: 'Regras ${rules.taxYear} verificadas',
+                  const SizedBox(height: 58),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                    const _TrustRow(
-                      icon: Icons.lock_outline_rounded,
-                      text: 'Dados no dispositivo',
+                    decoration: BoxDecoration(
+                      color: _taxyMint.withValues(alpha: .18),
+                      borderRadius: BorderRadius.circular(99),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 26),
-                ModuleSection(
-                  onOpenIrs: () => _openWizard(context, rules),
-                  showExperimentalEfatura: EfaturaFeatureFlags.experimental,
-                  onOpenEfatura: () => _openEfatura(context),
-                ),
-                const SizedBox(height: 26),
-                FilledButton.icon(
-                  onPressed: () => _openWizard(context, rules),
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                  label: Text(
-                    hasDraft ? 'Retomar simulação' : 'Começar simulação',
-                  ),
-                ),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => HowWeCalculateScreen(rules: rules),
+                    child: Text(
+                      l10n.welcomeTagline,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
                       ),
                     ),
-                    child: const Text('Ver como fazemos as contas'),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Text(
+                    l10n.welcomeTitle,
+                    style: Theme.of(context).textTheme.displaySmall,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.welcomeBody,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      height: 1.5,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  const _PreviewCard(),
+                  const SizedBox(height: 26),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 10,
+                    children: [
+                      _TrustRow(
+                        icon: Icons.verified_user_outlined,
+                        text: l10n.rulesVerified(rules.taxYear),
+                      ),
+                      _TrustRow(
+                        icon: Icons.lock_outline_rounded,
+                        text: l10n.dataOnDevice,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 26),
+                  ModuleSection(
+                    onOpenIrs: () => _openWizard(context, rules),
+                    showExperimentalEfatura: EfaturaFeatureFlags.experimental,
+                    onOpenEfatura: () => _openEfatura(context),
+                  ),
+                  const SizedBox(height: 26),
+                  FilledButton.icon(
+                    onPressed: () => _openWizard(context, rules),
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                    label: Text(
+                      hasDraft ? l10n.resumeSimulation : l10n.startSimulation,
+                    ),
+                  ),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => HowWeCalculateScreen(rules: rules),
+                        ),
+                      ),
+                      child: Text(l10n.howWeCalculate),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 final class _Dashboard extends ConsumerWidget {
@@ -341,6 +399,7 @@ final class _Dashboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final latest = simulations.first;
     final result = _calculateSimulation(latest, rules);
     return CustomScrollView(
@@ -360,13 +419,13 @@ final class _Dashboard extends ConsumerWidget {
                     color: _taxyMint.withValues(alpha: .16),
                     borderRadius: BorderRadius.circular(99),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.shield_outlined, size: 16),
-                      SizedBox(width: 6),
+                      const Icon(Icons.shield_outlined, size: 16),
+                      const SizedBox(width: 6),
                       Text(
-                        'Privado',
-                        style: TextStyle(
+                        l10n.privateLabel,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                         ),
@@ -375,7 +434,7 @@ final class _Dashboard extends ConsumerWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Como calculamos',
+                  tooltip: l10n.howWeCalculate,
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -383,6 +442,12 @@ final class _Dashboard extends ConsumerWidget {
                     ),
                   ),
                   icon: const Icon(Icons.info_outline_rounded),
+                ),
+                IconButton(
+                  key: const Key('open-settings'),
+                  tooltip: l10n.settings,
+                  onPressed: () => _openSettings(context),
+                  icon: const Icon(Icons.settings_outlined),
                 ),
               ],
             ),
@@ -706,14 +771,27 @@ Future<void> _openWizard(
   );
 }
 
-Future<void> _openEfatura(BuildContext context) => Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => const EfaturaScreen(
-      service: EfaturaReadOnlyService(UnconfiguredEfaturaGateway()),
-    ),
-  ),
-);
+Future<void> _openEfatura(BuildContext context) {
+  const backendUrl = String.fromEnvironment('TAXY_EFATURA_BACKEND_URL');
+  final directBridge = AndroidEfaturaRuntimeBridge();
+  late final EfaturaScreen screen;
+  if (backendUrl.trim().isEmpty) {
+    screen = EfaturaScreen(
+      service: EfaturaReadOnlyService(directBridge, directBridge),
+      provisioning: directBridge,
+    );
+  } else {
+    final backendBridge = BackendEfaturaRuntimeBridge(
+      baseUri: Uri.parse(backendUrl),
+      screenProtection: directBridge,
+    );
+    screen = EfaturaScreen(
+      service: EfaturaReadOnlyService(backendBridge, backendBridge),
+      provisioning: backendBridge,
+    );
+  }
+  return Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+}
 
 void _openResult(
   BuildContext context,

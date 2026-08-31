@@ -21,12 +21,13 @@ observed, so invoice field contracts remain official-app/offline evidence only.
 | Taxy certificate pinning | Taxy harness | `UNKNOWN` | `NOT_IMPLEMENTED`; native CA validation remains enabled | not a SOAP blocker |
 | `EcraInicial` | builder + response DTO | `CONFIRMED_FROM_OFFICIAL_APP` | serializer/parser | yes |
 | `DadosContribuinte` | builder + response DTO | `CONFIRMED_FROM_OFFICIAL_APP` | serializer/parser | yes, but sensitive |
-| `FaturasPorClassificar` | builder + response DTO + HTTP 200/EstadoOperacao 204 on endpoint 8443 | `RUNTIME_CONFIRMED` | serializer, typed parser, client/repository | yes |
-| `FaturasPorSetor` | builder + response DTO + HTTP 200/EstadoOperacao 204 for `C05`, index 0, endpoint 8443 | `RUNTIME_CONFIRMED` | serializer, typed parser, client/repository | yes |
+| `FaturasPorClassificar` | builder/UI flow + HTTP 200/EstadoOperacao 204 on endpoint 8443 | `RUNTIME_CONFIRMED` dispatch/empty contract; `CONFIRMED_FROM_OFFICIAL_APP` pending-only population | serializer, typed parser, client/repository | yes |
+| `FaturasPorSetor` | builder/UI flow + HTTP 200/EstadoOperacao 204 for `C05`, offset 0, endpoint 8443 | `RUNTIME_CONFIRMED` concrete-sector dispatch/empty contract; official empty-sector aggregate remains offline evidence | serializer, typed parser, client/repository; empty `CodSetor` currently rejected | partial for population discovery |
 | Four mutating operations | builders + response DTOs | `CONFIRMED_FROM_OFFICIAL_APP` | documented, blocked | no |
 | Taxy PFX local readiness | local PKCS#12/X.509 preflight | `OFFLINE_VERIFIED` | opens; key present; 3 certs; chain valid; clientAuth EKU valid | yes locally |
 | Taxy client identity acceptance | controlled calls on endpoint 8443 | `RUNTIME_CONFIRMED` | authorized mTLS, TLS 1.3, HTTP 200 | yes |
-| Business-code semantics | names only | `UNKNOWN` | preserved as opaque values | not blocking transport test |
+| Business code 204 | official-app constant `CODIGO_ESTADO_SUCESSO_VAZIO` | `CONFIRMED_FROM_OFFICIAL_APP` | accepted as successful empty operation result | yes |
+| Business code 419 | runtime observation only; no APK mapping found | `UNKNOWN` | preserved as opaque non-success value | not blocking transport test |
 | Controlled FactIntWS attempt | `secureConnect`, then OpenSSL `bad record mac` before HTTP | `RUNTIME_CONFIRMED` (transport failure only) | classified `TLS_ERROR`; no SOAP/channel promotion | blocked at transport |
 | TLS 1.2-only experiment | TLS alert 40 before `secureConnect` | `RUNTIME_CONFIRMED` (failure only) | TLS 1.2 did not resolve transport; no protocol promotion | no |
 | 8443 endpoint experiment | authorized TLS 1.3, HTTP 200, successful `EcraInicialResponse` | `RUNTIME_CONFIRMED` | endpoint, mTLS profile and operation accepted | yes |

@@ -1,0 +1,101 @@
+{
+  "@@locale": "en",
+  "appTitle": "taxy.pt",
+  "settings": "Settings",
+  "language": "Language",
+  "languageDescription": "Choose the app language.",
+  "languageAutomatic": "Automatic",
+  "languagePortuguese": "Português",
+  "languageEnglish": "English",
+  "languageSystemHint": "Follows your phone language. Other languages use Portuguese.",
+  "back": "Back",
+  "experimental": "Experimental",
+  "efaturaTitle": "e-Fatura",
+  "efaturaHeroTitle": "Your expenses, available to view",
+  "efaturaCredentialNotice": "Your credentials are used only to consult e-Fatura.",
+  "connectPortalTitle": "Connect to e-Fatura",
+  "nif": "NIF",
+  "password": "Password",
+  "connectEfatura": "Connect to e-Fatura",
+  "disconnectEfatura": "Disconnect e-Fatura",
+  "disconnectTitle": "Disconnect e-Fatura?",
+  "disconnectExplanation": "This removes the credentials saved on this device.",
+  "cancel": "Cancel",
+  "disconnect": "Disconnect",
+  "selectDeviceCertificate": "Select device certificate",
+  "selectAtPublicKey": "Select the AT public key",
+  "refresh": "Refresh",
+  "retry": "Try again",
+  "overviewTitle": "e-Fatura overview",
+  "provisionalTaxBenefit": "Provisional tax benefit",
+  "invoicesToValidate": "Invoices to validate",
+  "invoicesToAssociate": "Invoices to associate with income",
+  "expensesByCategory": "Expenses by category",
+  "sectors": "Categories",
+  "pendingInvoicesTitle": "Invoices to validate",
+  "sectorInvoicesTitle": "Invoices in this category",
+  "viewPendingInvoices": "View invoices to validate",
+  "noInvoicesToValidate": "No invoices to validate",
+  "noInvoicesInCategory": "No invoices in this category",
+  "noActivityInCategory": "No activity in this category",
+  "noDataAvailable": "No data available",
+  "benefitUnavailable": "Benefit unavailable",
+  "issuerUnavailable": "Issuer unavailable",
+  "invoiceCount": "{count, plural, =0{No invoices} =1{1 invoice} other{{count} invoices}}",
+  "@invoiceCount": {"placeholders": {"count": {"type": "int"}}},
+  "authErrorTitle": "We couldn't authenticate",
+  "authErrorMessage": "We couldn't authenticate with Portal das Finanças.",
+  "authorizationErrorTitle": "Access not authorized",
+  "authorizationErrorMessage": "Portal das Finanças did not authorize this request.",
+  "networkErrorTitle": "Connection error",
+  "networkErrorMessage": "We couldn't establish a connection.",
+  "serviceErrorTitle": "Service unavailable",
+  "serviceErrorMessage": "e-Fatura is currently unavailable.",
+  "parsingErrorTitle": "Unexpected response",
+  "parsingErrorMessage": "We received an unexpected response from e-Fatura.",
+  "sessionExpiredTitle": "Session expired",
+  "sessionExpiredMessage": "Reconnect to e-Fatura to continue.",
+  "notConfiguredTitle": "Connection not set up yet",
+  "genericErrorTitle": "We couldn't refresh",
+  "genericErrorMessage": "We couldn't connect to e-Fatura.",
+  "connecting": "Connecting to e-Fatura…",
+  "updating": "Refreshing…",
+  "connected": "Connected",
+  "welcomeTagline": "IRS, explained for people",
+  "welcomeTitle": "Understand your IRS.\nDecide with confidence.",
+  "welcomeBody": "A simple conversation turns your details into a clear estimate — without forms or tax jargon.",
+  "startSimulation": "Start simulation",
+  "resumeSimulation": "Resume simulation",
+  "howWeCalculate": "See how we calculate",
+  "dataOnDevice": "Data stays on this device",
+  "rulesVerified": "{year} rules verified",
+  "@rulesVerified": {"placeholders": {"year": {"type": "int"}}},
+  "simulators": "Calculators",
+  "available": "Available",
+  "efaturaModuleDescription": "Read-only access · internal feature",
+  "futureSimulators": "More calculators · Coming soon",
+  "futureSimulatorsSemantics": "{count, plural, =1{1 future calculator in preparation} other{{count} future calculators in preparation}}",
+  "@futureSimulatorsSemantics": {"placeholders": {"count": {"type": "int"}}},
+  "privateLabel": "Private",
+  "efaturaSemantics": "Experimental e-Fatura, view only"
+  ,"sectorCarRepairs": "Car repairs"
+  ,"sectorMotorcycleRepairs": "Motorcycle repairs"
+  ,"sectorHospitality": "Hospitality and restaurants"
+  ,"sectorHairdressing": "Hairdressing"
+  ,"sectorHealth": "Health"
+  ,"sectorEducation": "Education"
+  ,"sectorHousing": "Housing"
+  ,"sectorNursingHomes": "Nursing homes"
+  ,"sectorVeterinary": "Veterinary care"
+  ,"sectorPublicTransport": "Public transport"
+  ,"sectorGyms": "Gyms"
+  ,"sectorNewspapers": "Newspapers and magazines"
+  ,"sectorDomesticServices": "Domestic services"
+  ,"sectorOther": "Other expenses"
+  ,"invalidNif": "Enter a 9-digit NIF."
+  ,"passwordRequired": "Enter your password."
+  ,"rulesLoadError": "We couldn't load the tax rules securely. Close and reopen the app."
+  ,"savedDataLoadError": "We couldn't open the data saved on this device."
+  ,"simulationsLoadError": "We couldn't open the simulations saved on this device."
+  ,"simulationRulesLoadError": "We couldn't load the rules for this simulation securely."
+}

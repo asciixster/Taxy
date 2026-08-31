@@ -1,16 +1,21 @@
 enum EfaturaConnectionStatus {
   notConfigured,
-  loading,
-  authenticated,
-  error,
-  ready,
+  connecting,
+  connected,
+  authenticationError,
+  networkError,
+  serviceError,
+  expired,
+  disconnected,
 }
 
 enum EfaturaFailureKind {
   notConfigured,
   authentication,
+  authorization,
   network,
   serviceUnavailable,
+  expired,
   ntp,
   tls,
   soap,
@@ -75,6 +80,29 @@ final class EfaturaSnapshot {
   final EfaturaOverview overview;
   final List<EfaturaInvoice> pendingInvoices;
   final Map<String, List<EfaturaInvoice>> sectorInvoices;
+}
+
+final class EfaturaCredentials {
+  const EfaturaCredentials({required this.nif, required this.password});
+
+  final String nif;
+  final String password;
+}
+
+/// Non-secret configuration state. It is safe to expose this object to the UI.
+final class EfaturaRuntimeReadiness {
+  const EfaturaRuntimeReadiness({
+    required this.hasCredentials,
+    required this.hasClientIdentity,
+    required this.hasCipherCertificate,
+  });
+
+  final bool hasCredentials;
+  final bool hasClientIdentity;
+  final bool hasCipherCertificate;
+
+  bool get isReady =>
+      hasCredentials && hasClientIdentity && hasCipherCertificate;
 }
 
 final class EfaturaServiceException implements Exception {

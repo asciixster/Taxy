@@ -1,0 +1,101 @@
+{
+  "@@locale": "pt",
+  "appTitle": "taxy.pt",
+  "settings": "Definições",
+  "language": "Idioma",
+  "languageDescription": "Escolhe o idioma da aplicação.",
+  "languageAutomatic": "Automático",
+  "languagePortuguese": "Português",
+  "languageEnglish": "English",
+  "languageSystemHint": "Segue o idioma do telemóvel. Outros idiomas usam português.",
+  "back": "Voltar",
+  "experimental": "Experimental",
+  "efaturaTitle": "e-Fatura",
+  "efaturaHeroTitle": "As tuas despesas, só para consulta",
+  "efaturaCredentialNotice": "As credenciais são utilizadas apenas para consultar o e-Fatura.",
+  "connectPortalTitle": "Ligar ao e-Fatura",
+  "nif": "NIF",
+  "password": "Senha",
+  "connectEfatura": "Ligar ao e-Fatura",
+  "disconnectEfatura": "Desligar e-Fatura",
+  "disconnectTitle": "Desligar e-Fatura?",
+  "disconnectExplanation": "Isto remove as credenciais guardadas neste dispositivo.",
+  "cancel": "Cancelar",
+  "disconnect": "Desligar",
+  "selectDeviceCertificate": "Selecionar certificado do dispositivo",
+  "selectAtPublicKey": "Selecionar chave pública da AT",
+  "refresh": "Atualizar",
+  "retry": "Tentar novamente",
+  "overviewTitle": "Resumo e-Fatura",
+  "provisionalTaxBenefit": "Benefício provisório",
+  "invoicesToValidate": "Faturas por validar",
+  "invoicesToAssociate": "Faturas por associar receita",
+  "expensesByCategory": "Despesas por categoria",
+  "sectors": "Setores",
+  "pendingInvoicesTitle": "Faturas por validar",
+  "sectorInvoicesTitle": "Faturas do setor",
+  "viewPendingInvoices": "Ver faturas por validar",
+  "noInvoicesToValidate": "Sem faturas por validar",
+  "noInvoicesInCategory": "Sem faturas neste setor",
+  "noActivityInCategory": "Sem atividade neste setor",
+  "noDataAvailable": "Sem dados disponíveis",
+  "benefitUnavailable": "Benefício não disponível",
+  "issuerUnavailable": "Emitente não disponível",
+  "invoiceCount": "{count, plural, =0{Sem faturas} =1{1 fatura} other{{count} faturas}}",
+  "@invoiceCount": {"placeholders": {"count": {"type": "int"}}},
+  "authErrorTitle": "Não foi possível autenticar",
+  "authErrorMessage": "Não foi possível autenticar no Portal das Finanças.",
+  "authorizationErrorTitle": "Acesso não autorizado",
+  "authorizationErrorMessage": "O Portal das Finanças não autorizou esta consulta.",
+  "networkErrorTitle": "Erro de ligação",
+  "networkErrorMessage": "Não foi possível estabelecer ligação.",
+  "serviceErrorTitle": "Serviço indisponível",
+  "serviceErrorMessage": "O serviço e-Fatura não está disponível de momento.",
+  "parsingErrorTitle": "Resposta inesperada",
+  "parsingErrorMessage": "Recebemos uma resposta inesperada do e-Fatura.",
+  "sessionExpiredTitle": "Sessão expirada",
+  "sessionExpiredMessage": "Volta a ligar ao e-Fatura para continuar.",
+  "notConfiguredTitle": "Ligação ainda não configurada",
+  "genericErrorTitle": "Não foi possível atualizar",
+  "genericErrorMessage": "Não foi possível ligar ao e-Fatura.",
+  "connecting": "A ligar ao e-Fatura…",
+  "updating": "A atualizar…",
+  "connected": "Ligado",
+  "welcomeTagline": "IRS, explicado para pessoas",
+  "welcomeTitle": "Percebe o teu IRS.\nDecide com confiança.",
+  "welcomeBody": "Uma conversa simples transforma os teus dados numa estimativa clara — sem formulários, sem fiscalês.",
+  "startSimulation": "Começar simulação",
+  "resumeSimulation": "Retomar simulação",
+  "howWeCalculate": "Ver como fazemos as contas",
+  "dataOnDevice": "Dados no dispositivo",
+  "rulesVerified": "Regras {year} verificadas",
+  "@rulesVerified": {"placeholders": {"year": {"type": "int"}}},
+  "simulators": "Simuladores",
+  "available": "Disponível",
+  "efaturaModuleDescription": "Consulta read-only · funcionalidade interna",
+  "futureSimulators": "Outros simuladores · Em breve",
+  "futureSimulatorsSemantics": "{count, plural, =1{1 simulador futuro em preparação} other{{count} simuladores futuros em preparação}}",
+  "@futureSimulatorsSemantics": {"placeholders": {"count": {"type": "int"}}},
+  "privateLabel": "Privado",
+  "efaturaSemantics": "e-Fatura experimental, consulta apenas"
+  ,"sectorCarRepairs": "Reparação de automóveis"
+  ,"sectorMotorcycleRepairs": "Reparação de motociclos"
+  ,"sectorHospitality": "Alojamento e restauração"
+  ,"sectorHairdressing": "Cabeleireiros"
+  ,"sectorHealth": "Saúde"
+  ,"sectorEducation": "Educação"
+  ,"sectorHousing": "Habitação"
+  ,"sectorNursingHomes": "Lares"
+  ,"sectorVeterinary": "Veterinários"
+  ,"sectorPublicTransport": "Transportes públicos"
+  ,"sectorGyms": "Ginásios"
+  ,"sectorNewspapers": "Jornais e revistas"
+  ,"sectorDomesticServices": "Serviços domésticos"
+  ,"sectorOther": "Outras despesas"
+  ,"invalidNif": "Introduz um NIF com 9 algarismos."
+  ,"passwordRequired": "Introduz a senha."
+  ,"rulesLoadError": "Não foi possível carregar as regras fiscais com segurança. Fecha e volta a abrir a aplicação."
+  ,"savedDataLoadError": "Não foi possível abrir os dados guardados neste dispositivo."
+  ,"simulationsLoadError": "Não foi possível abrir as simulações guardadas neste dispositivo."
+  ,"simulationRulesLoadError": "Não foi possível carregar as regras desta simulação com segurança."
+}

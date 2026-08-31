@@ -14,6 +14,8 @@ import {
   resolveFactIntWsChannelFromEnvironment, runFactIntWsFeasibility,
   sanitizedFactIntWsResearchEnvelope, serializeFactIntWsOperation,
 } from '../../src/factintws.mjs';
+import { FactIntWsClient, FactIntWsRepository,
+  runFactIntWsBootstrapSequence } from '../../src/factintws_client.mjs';
 import { FactIntWsCreatedSource, resolveFactIntWsCreated, validateFactIntWsCreated } from '../../src/factintws_time.mjs';
 import { parseFactIntInvoice, parseFactIntMoneyCents, parseFactIntWsResponse, toAtInvoiceDomain } from '../../src/factintws_parser.mjs';
 import { redact } from '../../src/redaction.mjs';
@@ -195,7 +197,7 @@ test('response parser fails closed on malformed invoice and parses SOAP fault', 
 
 test('EcraInicial and DadosContribuinte synthetic response shapes parse without exposing data', () => {
   const initial = parseFactIntWsResponse(fixture('ecra_inicial_response.xml'), 'EcraInicial');
-  assert.deepEqual(initial.totals, { pendingValidation: 2, pendingRevenueAssociation: 1, provisionalBenefitCents: 1234 });
+  assert.deepEqual(initial.totals, { pendingValidation: 5, pendingRevenueAssociation: 1, provisionalBenefitCents: 50339 });
   assert.deepEqual(initial.buyerCanManipulateInvoices, { kind: 'known', code: 'S', value: true });
   assert.deepEqual(initial.canShowPreviousYear, { kind: 'known', code: 'S', value: true });
   assert.deepEqual(initial.sectors, [{ sectorCode: '01', provisionalBenefitCents: 1234,
@@ -203,6 +205,64 @@ test('EcraInicial and DadosContribuinte synthetic response shapes parse without 
   const taxpayer = parseFactIntWsResponse(fixture('dados_contribuinte_response.xml'), 'DadosContribuinte');
   assert.equal(taxpayer.taxpayerDataPresent, true);
   assert.equal(taxpayer.taxpayer.sensitive, true);
+});
+
+test('EcraInicial required aggregates fail closed instead of becoming zero', () => {
+  const missingPending = fixture('ecra_inicial_response.xml')
+    .replace(/<app:NumTotalFaturasPorValidar>.*?<\/app:NumTotalFaturasPorValidar>/, '');
+  assert.throws(
+    () => parseFactIntWsResponse(missingPending, 'EcraInicial'),
+    (error) => error.code === 'PARSING_ERROR' && error.field === 'NumTotalFaturasPorValidar',
+  );
+});
+
+test('bootstrap sequence executes only EcraInicial, DadosContribuinte, EcraInicial in order', async () => {
+  const operations = [];
+  const transport = async ({ contract }) => {
+    const operation = contract.headers.SOAPAction.split('/').at(-1);
+    operations.push(operation);
+    return { httpStatus: 200, tls: { authorized: true },
+      body: fixture(operation === 'DadosContribuinte'
+        ? 'dados_contribuinte_response.xml' : 'ecra_inicial_response.xml') };
+  };
+  const repository = new FactIntWsRepository(new FactIntWsClient({ transport }));
+  const contexts = [];
+  const result = await runFactIntWsBootstrapSequence({ repository,
+    contextFor: async (operation, phase) => {
+      contexts.push({ operation, phase });
+      return { username: syntheticNif,
+        credentials: { encryptedDigest: 'digest', encryptedPassword: 'password',
+          encryptedNonce: 'nonce', created: '2026-08-30T12:00:00.000Z' },
+        input: { nif: syntheticNif,
+          ...(operation === 'EcraInicial' ? { year: '2026' } : {}), channel } };
+    } });
+  assert.deepEqual(operations, ['EcraInicial', 'DadosContribuinte', 'EcraInicial']);
+  assert.equal(contexts.length, 3);
+  assert.equal(contexts[0].phase.authentication, true);
+  assert.equal(contexts[2].phase.final, true);
+  assert.equal(result.complete, true);
+  assert.equal(result.finalOverview.parsed.totals.pendingValidation, 5);
+});
+
+test('bootstrap sequence stops without retry when an intermediate call fails', async () => {
+  let requests = 0;
+  const transport = async ({ contract }) => {
+    requests += 1;
+    const operation = contract.headers.SOAPAction.split('/').at(-1);
+    return { httpStatus: operation === 'DadosContribuinte' ? 500 : 200,
+      tls: { authorized: true }, body: fixture(operation === 'DadosContribuinte'
+        ? 'dados_contribuinte_response.xml' : 'ecra_inicial_response.xml') };
+  };
+  const repository = new FactIntWsRepository(new FactIntWsClient({ transport }));
+  const result = await runFactIntWsBootstrapSequence({ repository,
+    contextFor: async (operation) => ({ username: syntheticNif,
+      credentials: { encryptedDigest: 'digest', encryptedPassword: 'password',
+        encryptedNonce: 'nonce', created: '2026-08-30T12:00:00.000Z' },
+      input: { nif: syntheticNif,
+        ...(operation === 'EcraInicial' ? { year: '2026' } : {}), channel } }) });
+  assert.equal(requests, 2);
+  assert.equal(result.complete, false);
+  assert.equal(result.finalOverview, null);
 });
 
 test('research artefacts contain no official-app identity material or live path', () => {

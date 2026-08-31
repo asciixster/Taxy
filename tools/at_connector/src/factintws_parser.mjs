@@ -27,6 +27,23 @@ function optionalInteger(xml, localName) {
   if (!Number.isSafeInteger(parsed)) throw new FactIntWsParsingError(localName, 'safe integer', 'out of range');
   return parsed;
 }
+function requiredMoney(xml, localName) {
+  const value = requiredText(xml, localName);
+  try { return parseFactIntMoneyCents(value); }
+  catch (error) {
+    if (error instanceof FactIntWsParsingError) {
+      throw new FactIntWsParsingError(localName, 'decimal with at most two fraction digits', error.observedShape);
+    }
+    throw error;
+  }
+}
+function requiredInteger(xml, localName) {
+  const value = requiredText(xml, localName);
+  if (!/^\d+$/.test(value)) throw new FactIntWsParsingError(localName, 'non-negative integer', 'invalid text');
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed)) throw new FactIntWsParsingError(localName, 'safe integer', 'out of range');
+  return parsed;
+}
 
 export class FactIntWsParsingError extends Error {
   constructor(field, expectedType, observedShape, { failedIndex = null } = {}) {
@@ -113,7 +130,10 @@ function parseInvoices(responseBlock, operation) {
 }
 
 export function parseFactIntWsResponse(xml, operation) {
-  if (typeof xml !== 'string' || !/<(?:[\w.-]+:)?Envelope\b/i.test(xml)) throw new FactIntWsParsingError('Envelope', 'SOAP Envelope', 'missing');
+  const root = typeof xml === 'string' ? inspectXmlRoot(xml) : inspectXmlRoot('');
+  if (root.localName !== 'Envelope' || root.namespaceUri !== SOAP11_NAMESPACE) {
+    throw new FactIntWsParsingError('Envelope', 'SOAP 1.1 Envelope', root.detected ? 'wrong root or namespace' : 'missing');
+  }
   if (text(xml, 'faultcode') || text(xml, 'faultstring')) return Object.freeze({ operation, fault: Object.freeze({ code: text(xml, 'faultcode'), reason: text(xml, 'faultstring') }) });
   if (text(xml, 'AuthenticationFailed') || text(xml, 'AuthenticationException')) return Object.freeze({ operation, fault: Object.freeze({ code: 'AuthenticationFailed', reason: text(xml, 'message') }) });
   const responseBlock = blocks(xml, `${operation}Response`)[0];
@@ -123,8 +143,8 @@ export function parseFactIntWsResponse(xml, operation) {
   if (operation === 'EcraInicial') return Object.freeze({ operation, fault: null, result, invoices: Object.freeze(invoices),
     buyerCanManipulateInvoices: opaqueCode(text(responseBlock, 'AdquirentePodeManipularFaturas'), { S: true, N: false }),
     canShowPreviousYear: opaqueCode(text(responseBlock, 'PodeMostrarAnoAnterior'), { S: true, N: false }),
-    totals: Object.freeze({ pendingValidation: optionalInteger(responseBlock, 'NumTotalFaturasPorValidar'),
-      pendingRevenueAssociation: optionalInteger(responseBlock, 'NumTotalFaturasPorAssociarReceita'), provisionalBenefitCents: optionalMoney(responseBlock, 'ValorTotalBeneficioProvisorio') }),
+    totals: Object.freeze({ pendingValidation: requiredInteger(responseBlock, 'NumTotalFaturasPorValidar'),
+      pendingRevenueAssociation: requiredInteger(responseBlock, 'NumTotalFaturasPorAssociarReceita'), provisionalBenefitCents: requiredMoney(responseBlock, 'ValorTotalBeneficioProvisorio') }),
     sectors: Object.freeze(blocks(responseBlock, 'Setor').map((sector) => Object.freeze({ sectorCode: text(sector, 'CodSetor'),
       provisionalBenefitCents: optionalMoney(sector, 'ValorBeneficioProvisorioPorSetor'), totalExpensesCents: optionalMoney(sector, 'ValorTotalDespesas'),
       totalVatExpensesCents: optionalMoney(sector, 'ValorTotalIvaDespesas') }))) });
@@ -137,3 +157,4 @@ export function parseFactIntWsResponse(xml, operation) {
   const fields = { operation, result, invoices, index, totalPages, summary };
   return operation === 'FaturasPorSetor' ? new FactIntSectorResponse(fields) : new FactIntInvoicePageResponse(fields);
 }
+import { inspectXmlRoot, SOAP11_NAMESPACE } from './response_framing.mjs';

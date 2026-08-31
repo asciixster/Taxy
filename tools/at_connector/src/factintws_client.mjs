@@ -47,4 +47,35 @@ export class FactIntWsRepository {
     return Object.freeze({ ...result, domainInvoices: Object.freeze((result.parsed.invoices ?? []).map((invoice) => toAtInvoiceDomain(invoice, { sectorLabel: context.sectorLabel ?? null }))) });
   }
   async initialScreen(context) { return this.client.execute({ ...context, operation: FactIntWsOperation.ECRAINICIAL }); }
+  async taxpayer(context) { return this.client.execute({ ...context, operation: FactIntWsOperation.TAXPAYER }); }
+}
+
+function functionalReadOnlyResult(result) {
+  return result?.httpStatus === 200 && result.parsed?.fault == null && result.parsed?.result != null;
+}
+
+export async function runFactIntWsBootstrapSequence({ repository, contextFor }) {
+  if (!(repository instanceof FactIntWsRepository)) {
+    throw new TypeError('Bootstrap sequence requires FactIntWsRepository');
+  }
+  if (typeof contextFor !== 'function') {
+    throw new TypeError('Bootstrap sequence requires a per-operation context factory');
+  }
+  const authenticationOverview = await repository.initialScreen(
+    await contextFor(FactIntWsOperation.ECRAINICIAL, { authentication: true }),
+  );
+  if (!functionalReadOnlyResult(authenticationOverview)) {
+    return Object.freeze({ authenticationOverview, taxpayer: null, finalOverview: null, complete: false });
+  }
+  const taxpayer = await repository.taxpayer(
+    await contextFor(FactIntWsOperation.TAXPAYER, { authentication: false }),
+  );
+  if (!functionalReadOnlyResult(taxpayer)) {
+    return Object.freeze({ authenticationOverview, taxpayer, finalOverview: null, complete: false });
+  }
+  const finalOverview = await repository.initialScreen(
+    await contextFor(FactIntWsOperation.ECRAINICIAL, { authentication: false, final: true }),
+  );
+  return Object.freeze({ authenticationOverview, taxpayer, finalOverview,
+    complete: functionalReadOnlyResult(finalOverview) });
 }

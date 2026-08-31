@@ -15,7 +15,7 @@ function run(args, cwd) {
   execFileSync(openssl, args, { cwd, stdio: 'ignore', windowsHide: true });
 }
 
-function syntheticPfx({ includeChain = true, clientAuth = true } = {}) {
+function syntheticPfx({ includeChain = true, includeRoot = true, clientAuth = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'taxy-pfx-test-'));
   run(['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', 'root.key', '-out', 'root.crt', '-days', '2', '-subj', '/CN=Synthetic Root',
     '-addext', 'basicConstraints=critical,CA:TRUE', '-addext', 'keyUsage=critical,keyCertSign,cRLSign'], dir);
@@ -27,7 +27,8 @@ function syntheticPfx({ includeChain = true, clientAuth = true } = {}) {
   run(['x509', '-req', '-in', 'client.csr', '-CA', 'intermediate.crt', '-CAkey', 'intermediate.key', '-CAcreateserial', '-out', 'client.crt', '-days', '2', '-extfile', 'client.ext'], dir);
   const args = ['pkcs12', '-export', '-out', 'client.pfx', '-inkey', 'client.key', '-in', 'client.crt', '-passout', 'pass:synthetic-password'];
   if (includeChain) {
-    writeFileSync(join(dir, 'chain.pem'), `${readFileSync(join(dir, 'intermediate.crt'), 'utf8')}\n${readFileSync(join(dir, 'root.crt'), 'utf8')}`);
+    const root = includeRoot ? `\n${readFileSync(join(dir, 'root.crt'), 'utf8')}` : '';
+    writeFileSync(join(dir, 'chain.pem'), `${readFileSync(join(dir, 'intermediate.crt'), 'utf8')}${root}`);
     args.push('-certfile', 'chain.pem');
   }
   run(args, dir);
@@ -46,6 +47,17 @@ test('full synthetic client chain is locally ready for TLS client auth', { skip:
     assert.equal(result.chainClassification, 'CHAIN_VALID');
     assert.equal(result.ekuClientAuth, true);
     assert.equal(result.caValidation, 'VALID');
+  } finally { rmSync(fixture.dir, { recursive: true, force: true }); }
+});
+
+test('client chain with leaf and intermediate is ready without bundling the root', { skip: !openssl }, () => {
+  const fixture = syntheticPfx({ includeRoot: false });
+  try {
+    const result = inspectPfxReadiness({ ...fixture, pfxPassword: fixture.password, opensslPath: openssl });
+    assert.equal(result.classification, PfxPreflightClassification.READY);
+    assert.equal(result.certificateCount, 2);
+    assert.equal(result.chainClassification, 'CHAIN_VALID');
+    assert.equal(result.ekuClientAuth, true);
   } finally { rmSync(fixture.dir, { recursive: true, force: true }); }
 });
 

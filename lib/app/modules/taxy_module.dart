@@ -36,7 +36,7 @@ abstract final class TaxyModuleRegistry {
       description: 'Consulta o resumo, setores e faturas sem alterar dados.',
       iconName: 'receipt_long',
       availability: TaxyModuleAvailability.experimental,
-      version: '0.7.6',
+      version: '0.7.7',
     ),
     TaxyModule(
       id: 'salary',

@@ -7,6 +7,7 @@ import 'package:taxy_pt/data/simulation_repository.dart';
 import 'package:taxy_pt/domain/models.dart';
 import 'package:taxy_pt/domain/money.dart';
 import 'package:taxy_pt/main.dart';
+import 'package:taxy_pt/l10n/app_localizations.dart';
 import 'package:taxy_pt/question_engine/question_engine.dart';
 import 'package:taxy_pt/tax_engine/tax_rules.dart';
 
@@ -203,6 +204,9 @@ void main() {
           simulationDraftProvider.overrideWith((ref) async => null),
         ],
         child: MaterialApp(
+          locale: const Locale('pt', 'PT'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           theme: ThemeData.dark(useMaterial3: true),
           home: const HomeScreen(),
         ),
