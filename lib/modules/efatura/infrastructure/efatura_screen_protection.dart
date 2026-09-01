@@ -20,8 +20,6 @@ final class AndroidEfaturaScreenProtection
   Future<bool> selectCipherCertificate() async => true;
 
   @override
-  Future<void> setScreenSecure(bool enabled) => _channel.invokeMethod<void>(
-    'setScreenSecure',
-    <String, Object?>{'enabled': enabled},
-  );
+  Future<void> setScreenSecure(bool enabled) =>
+      _channel.invokeMethod<void>('setScreenSecure', enabled);
 }
