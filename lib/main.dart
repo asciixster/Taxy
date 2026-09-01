@@ -9,6 +9,7 @@ import 'domain/models.dart';
 import 'domain/money.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/language_controller.dart';
+import 'l10n/theme_controller.dart';
 import 'navigation/app_navigation.dart';
 import 'modules/efatura/application/efatura_read_only_service.dart';
 import 'modules/efatura/infrastructure/efatura_backend_bridge.dart';
@@ -25,6 +26,9 @@ import 'tax_engine/household_tax_engine.dart';
 import 'tax_engine/irs_jovem_tax_engine.dart';
 import 'tax_engine/tax_rules.dart';
 import 'widgets/notice_card.dart';
+import 'product/profile_screen.dart';
+import 'product/ledger_screens.dart';
+import 'product/product_models.dart';
 
 const _taxyViolet = Color(0xFF6557E8);
 const _taxyInk = Color(0xFF17172B);
@@ -61,14 +65,21 @@ TaxResult _calculateSimulation(TaxSimulation simulation, TaxRuleSet rules) {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final language = LanguageController(LocalLanguagePreferenceStore());
+  final theme = ThemeController(LocalThemePreferenceStore());
   await language.load();
-  runApp(ProviderScope(child: TaxyApp(languageController: language)));
+  await theme.load();
+  runApp(
+    ProviderScope(
+      child: TaxyApp(languageController: language, themeController: theme),
+    ),
+  );
 }
 
 final class TaxyApp extends StatefulWidget {
-  const TaxyApp({super.key, this.languageController});
+  const TaxyApp({super.key, this.languageController, this.themeController});
 
   final LanguageController? languageController;
+  final ThemeController? themeController;
 
   @override
   State<TaxyApp> createState() => _TaxyAppState();
@@ -82,29 +93,36 @@ final class _TaxyAppState extends State<TaxyApp> {
         initial: LanguagePreference.portuguese,
       );
   late final bool _ownsLanguage = widget.languageController == null;
+  late final ThemeController _themeController =
+      widget.themeController ?? ThemeController(MemoryThemePreferenceStore());
+  late final bool _ownsTheme = widget.themeController == null;
 
   @override
   void dispose() {
     if (_ownsLanguage) _language.dispose();
+    if (_ownsTheme) _themeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => LanguageScope(
     controller: _language,
-    child: ListenableBuilder(
-      listenable: _language,
-      builder: (context, _) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
-        locale: _language.locale,
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        localeResolutionCallback: resolveTaxyLocale,
-        themeMode: ThemeMode.system,
-        theme: _theme(Brightness.light),
-        darkTheme: _theme(Brightness.dark),
-        home: const HomeScreen(),
+    child: ThemeScope(
+      controller: _themeController,
+      child: ListenableBuilder(
+        listenable: Listenable.merge([_language, _themeController]),
+        builder: (context, _) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+          locale: _language.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localeResolutionCallback: resolveTaxyLocale,
+          themeMode: _themeController.mode,
+          theme: _theme(Brightness.light),
+          darkTheme: _theme(Brightness.dark),
+          home: const HomeScreen(),
+        ),
       ),
     ),
   );
@@ -192,9 +210,26 @@ final class _TaxyAppState extends State<TaxyApp> {
 void _openSettings(BuildContext context) => Navigator.push(
   context,
   MaterialPageRoute(
-    builder: (_) =>
-        SettingsScreen(languageController: LanguageScope.of(context)),
+    builder: (_) => SettingsScreen(
+      languageController: LanguageScope.of(context),
+      themeController: ThemeScope.of(context),
+    ),
   ),
+);
+
+Future<void> _openFiscalProfile(BuildContext context) => Navigator.push(
+  context,
+  MaterialPageRoute(builder: (_) => const FiscalProfileScreen()),
+);
+
+Future<void> _openIncome(BuildContext context) => Navigator.push(
+  context,
+  MaterialPageRoute(builder: (_) => const IncomeScreen()),
+);
+
+Future<void> _openExpenses(BuildContext context) => Navigator.push(
+  context,
+  MaterialPageRoute(builder: (_) => const ExpensesScreen()),
 );
 
 final class HomeScreen extends ConsumerWidget {
@@ -357,6 +392,9 @@ final class _Welcome extends StatelessWidget {
                   const SizedBox(height: 26),
                   ModuleSection(
                     onOpenIrs: () => _openWizard(context, rules),
+                    onOpenProfile: () => _openFiscalProfile(context),
+                    onOpenIncome: () => _openIncome(context),
+                    onOpenExpenses: () => _openExpenses(context),
                     showExperimentalEfatura: EfaturaFeatureFlags.experimental,
                     onOpenEfatura: () => _openEfatura(context),
                   ),
@@ -556,6 +594,36 @@ final class _Dashboard extends ConsumerWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 22),
+                Card(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.person_outline),
+                        title: Text(l10n.fiscalProfile),
+                        subtitle: Text(l10n.profileModuleDescription),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openFiscalProfile(context),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.payments_outlined),
+                        title: Text(l10n.income),
+                        subtitle: Text(l10n.incomeModuleDescription),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openIncome(context),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.shopping_bag_outlined),
+                        title: Text(l10n.expenses),
+                        subtitle: Text(l10n.expensesModuleDescription),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openExpenses(context),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 32),
                 Row(
                   children: [
@@ -1593,6 +1661,26 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
         ),
       );
       await ref.read(repositoryProvider).save(simulation);
+      final product = await ref.read(productStateProvider.future);
+      await ref
+          .read(productRepositoryProvider)
+          .save(
+            product.copyWith(
+              profile: FiscalProfile(
+                activeTaxYear: simulation.profile.taxYear,
+                region: simulation.profile.region,
+                civilStatus: simulation.profile.civilStatus,
+                dependentCount: simulation.profile.dependents,
+                hasEmployment: simulation.incomeTypes.contains(
+                  IncomeType.employment,
+                ),
+                hasSelfEmployment: simulation.incomeTypes.contains(
+                  IncomeType.selfEmployment,
+                ),
+              ),
+            ),
+          );
+      ref.invalidate(productStateProvider);
       if (widget.source == null) {
         await ref.read(repositoryProvider).clearDraft();
         ref.invalidate(simulationDraftProvider);
@@ -1641,6 +1729,7 @@ final class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final result = _calculateSimulation(simulation, rules);
     final jovemRequested =
         simulation.primaryIrsJovem.requested ||
@@ -1839,6 +1928,46 @@ final class ResultScreen extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.estimateBasis,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  _EstimateInputRow(
+                    label: l10n.incomeConsidered,
+                    value: simulation.income.gross.format(),
+                    source: l10n.userEnteredSource,
+                  ),
+                  _EstimateInputRow(
+                    label: l10n.deductionsConsidered,
+                    value: result.available
+                        ? result.taxCredits.format()
+                        : l10n.unavailable,
+                    source: l10n.userEnteredSource,
+                  ),
+                  _EstimateInputRow(
+                    label: l10n.withholdingConsidered,
+                    value: simulation.income.withholding.format(),
+                    source: l10n.userEnteredSource,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    result.available
+                        ? l10n.estimateNotOfficial
+                        : l10n.missingInformationImprove,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           if (result.available) ...[
@@ -2368,6 +2497,38 @@ final class _OpportunityCard extends StatelessWidget {
       ),
     );
   }
+}
+
+final class _EstimateInputRow extends StatelessWidget {
+  const _EstimateInputRow({
+    required this.label,
+    required this.value,
+    required this.source,
+  });
+  final String label;
+  final String value;
+  final String source;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(source, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(child: Text(value, textAlign: TextAlign.end)),
+      ],
+    ),
+  );
 }
 
 final class _ResultHero extends StatelessWidget {

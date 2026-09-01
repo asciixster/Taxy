@@ -7,11 +7,17 @@ final class ModuleSection extends StatelessWidget {
   const ModuleSection({
     super.key,
     required this.onOpenIrs,
+    required this.onOpenProfile,
+    required this.onOpenIncome,
+    required this.onOpenExpenses,
     this.onOpenEfatura,
     this.showExperimentalEfatura = false,
   });
 
   final VoidCallback onOpenIrs;
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenIncome;
+  final VoidCallback onOpenExpenses;
   final VoidCallback? onOpenEfatura;
   final bool showExperimentalEfatura;
 
@@ -40,6 +46,43 @@ final class ModuleSection extends StatelessWidget {
             subtitle: Text(active.description),
             trailing: Chip(label: Text(l10n.available)),
             onTap: onOpenIrs,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                key: const Key('fiscal-profile-entry'),
+                leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+                title: Text(l10n.fiscalProfile),
+                subtitle: Text(l10n.profileModuleDescription),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: onOpenProfile,
+              ),
+              const Divider(height: 1),
+              ListTile(
+                key: const Key('income-entry'),
+                leading: const CircleAvatar(
+                  child: Icon(Icons.payments_outlined),
+                ),
+                title: Text(l10n.income),
+                subtitle: Text(l10n.incomeModuleDescription),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: onOpenIncome,
+              ),
+              const Divider(height: 1),
+              ListTile(
+                key: const Key('expenses-entry'),
+                leading: const CircleAvatar(
+                  child: Icon(Icons.shopping_bag_outlined),
+                ),
+                title: Text(l10n.expenses),
+                subtitle: Text(l10n.expensesModuleDescription),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: onOpenExpenses,
+              ),
+            ],
           ),
         ),
         if (showExperimentalEfatura) ...[

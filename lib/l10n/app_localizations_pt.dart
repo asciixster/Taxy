@@ -383,6 +383,236 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get apiHost => 'Servidor API';
+
+  @override
+  String get fiscalProfile => 'Perfil fiscal';
+
+  @override
+  String get profileComplete => 'Perfil completo';
+
+  @override
+  String get profileIncomplete => 'Perfil incompleto';
+
+  @override
+  String get profilePurpose =>
+      'Estes dados mantêm o ano fiscal e as simulações coerentes. Valores desconhecidos continuam indisponíveis.';
+
+  @override
+  String get activeTaxYear => 'Ano fiscal ativo';
+
+  @override
+  String get taxResidence => 'Residência fiscal';
+
+  @override
+  String get unknownValue => 'Não indicado';
+
+  @override
+  String get mainlandPortugal => 'Portugal continental';
+
+  @override
+  String get madeira => 'Madeira';
+
+  @override
+  String get azores => 'Açores';
+
+  @override
+  String get civilStatusLabel => 'Estado civil';
+
+  @override
+  String get single => 'Solteiro/a';
+
+  @override
+  String get married => 'Casado/a';
+
+  @override
+  String get deFactoUnion => 'União de facto';
+
+  @override
+  String get dependants => 'Dependentes';
+
+  @override
+  String get employmentIncome => 'Rendimentos de trabalho dependente';
+
+  @override
+  String get selfEmploymentIncome => 'Rendimentos de trabalho independente';
+
+  @override
+  String get yes => 'Sim';
+
+  @override
+  String get no => 'Não';
+
+  @override
+  String get save => 'Guardar';
+
+  @override
+  String get localDataUnavailable =>
+      'Não foi possível abrir os dados guardados neste dispositivo.';
+
+  @override
+  String get income => 'Rendimentos';
+
+  @override
+  String get expenses => 'Despesas';
+
+  @override
+  String get addIncome => 'Adicionar rendimento';
+
+  @override
+  String get addExpense => 'Adicionar despesa';
+
+  @override
+  String totalForYear(int year) {
+    return 'Total de $year';
+  }
+
+  @override
+  String get localIncomeNotice =>
+      'Registos apenas locais. Não são importados nem apresentados como dados oficiais.';
+
+  @override
+  String get localExpenseNotice =>
+      'Os registos locais são informação de apoio e não são tratados automaticamente como deduções de IRS.';
+
+  @override
+  String get noIncomeRegistered => 'Sem rendimentos registados neste ano';
+
+  @override
+  String get noExpensesRegistered => 'Sem despesas registadas neste ano';
+
+  @override
+  String get amountEuros => 'Valor em euros';
+
+  @override
+  String get remove => 'Remover';
+
+  @override
+  String get sourceManual => 'Introduzido manualmente';
+
+  @override
+  String get sourceImported => 'Importado';
+
+  @override
+  String get sourceExternal => 'Fonte externa';
+
+  @override
+  String get sourceCalculated => 'Calculado';
+
+  @override
+  String get statusConfirmed => 'Confirmado';
+
+  @override
+  String get statusEstimated => 'Estimado';
+
+  @override
+  String get statusPossibleDuplicate => 'Possível duplicado';
+
+  @override
+  String get privacyAndSecurity => 'Privacidade e segurança';
+
+  @override
+  String get privacyIntro =>
+      'A Taxy guarda as simulações e os registos locais neste dispositivo. As credenciais e-Fatura são enviadas por HTTPS apenas para api.taxy.pt durante a ligação e não regressam à interface.';
+
+  @override
+  String get privacyEfatura =>
+      'O acesso ao e-Fatura é apenas de leitura. Desligar remove deste dispositivo a capacidade de sessão guardada.';
+
+  @override
+  String get diagnostics => 'Diagnóstico';
+
+  @override
+  String get copyDiagnostics => 'Copiar informações de diagnóstico';
+
+  @override
+  String get diagnosticsCopied => 'Informações de diagnóstico copiadas';
+
+  @override
+  String get diagnosticsNotice =>
+      'O diagnóstico contém apenas versão e ambiente — nunca NIF, credenciais, tokens ou dados de faturas.';
+
+  @override
+  String get sendFeedback => 'Enviar feedback';
+
+  @override
+  String get feedbackCopied => 'Foi copiado um modelo seguro de feedback.';
+
+  @override
+  String get appearance => 'Aparência';
+
+  @override
+  String get themeSystem => 'Usar definição do dispositivo';
+
+  @override
+  String get themeLight => 'Claro';
+
+  @override
+  String get themeDark => 'Escuro';
+
+  @override
+  String get profileModuleDescription => 'Ano ativo e dados fiscais';
+
+  @override
+  String get incomeModuleDescription => 'Rendimentos locais com origem';
+
+  @override
+  String get expensesModuleDescription => 'Despesas locais de apoio';
+
+  @override
+  String get estimateBasis => 'O que esta estimativa considera';
+
+  @override
+  String get incomeConsidered => 'Rendimentos considerados';
+
+  @override
+  String get deductionsConsidered => 'Deduções consideradas';
+
+  @override
+  String get withholdingConsidered => 'Retenções consideradas';
+
+  @override
+  String get userEnteredSource => 'Introduzido por ti';
+
+  @override
+  String get estimateNotOfficial =>
+      'Estimativa baseada na informação introduzida e nas regras suportadas pela Taxy. Não é uma liquidação oficial da AT.';
+
+  @override
+  String get missingInformationImprove =>
+      'Falta informação para melhorar esta estimativa.';
+
+  @override
+  String get category => 'Categoria';
+
+  @override
+  String get categoryEmployment => 'Trabalho dependente';
+
+  @override
+  String get categorySelfEmployment => 'Trabalho independente';
+
+  @override
+  String get categoryPension => 'Pensão';
+
+  @override
+  String get categoryOther => 'Outra';
+
+  @override
+  String get categoryGeneral => 'Geral';
+
+  @override
+  String get categoryHealth => 'Saúde';
+
+  @override
+  String get categoryEducation => 'Educação';
+
+  @override
+  String get categoryHousing => 'Habitação';
+
+  @override
+  String get categoryProfessional => 'Atividade profissional';
+
+  @override
+  String get edit => 'Editar';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -763,4 +993,234 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get apiHost => 'Servidor API';
+
+  @override
+  String get fiscalProfile => 'Perfil fiscal';
+
+  @override
+  String get profileComplete => 'Perfil completo';
+
+  @override
+  String get profileIncomplete => 'Perfil incompleto';
+
+  @override
+  String get profilePurpose =>
+      'Estes dados mantêm o ano fiscal e as simulações coerentes. Valores desconhecidos continuam indisponíveis.';
+
+  @override
+  String get activeTaxYear => 'Ano fiscal ativo';
+
+  @override
+  String get taxResidence => 'Residência fiscal';
+
+  @override
+  String get unknownValue => 'Não indicado';
+
+  @override
+  String get mainlandPortugal => 'Portugal continental';
+
+  @override
+  String get madeira => 'Madeira';
+
+  @override
+  String get azores => 'Açores';
+
+  @override
+  String get civilStatusLabel => 'Estado civil';
+
+  @override
+  String get single => 'Solteiro/a';
+
+  @override
+  String get married => 'Casado/a';
+
+  @override
+  String get deFactoUnion => 'União de facto';
+
+  @override
+  String get dependants => 'Dependentes';
+
+  @override
+  String get employmentIncome => 'Rendimentos de trabalho dependente';
+
+  @override
+  String get selfEmploymentIncome => 'Rendimentos de trabalho independente';
+
+  @override
+  String get yes => 'Sim';
+
+  @override
+  String get no => 'Não';
+
+  @override
+  String get save => 'Guardar';
+
+  @override
+  String get localDataUnavailable =>
+      'Não foi possível abrir os dados guardados neste dispositivo.';
+
+  @override
+  String get income => 'Rendimentos';
+
+  @override
+  String get expenses => 'Despesas';
+
+  @override
+  String get addIncome => 'Adicionar rendimento';
+
+  @override
+  String get addExpense => 'Adicionar despesa';
+
+  @override
+  String totalForYear(int year) {
+    return 'Total de $year';
+  }
+
+  @override
+  String get localIncomeNotice =>
+      'Registos apenas locais. Não são importados nem apresentados como dados oficiais.';
+
+  @override
+  String get localExpenseNotice =>
+      'Os registos locais são informação de apoio e não são tratados automaticamente como deduções de IRS.';
+
+  @override
+  String get noIncomeRegistered => 'Sem rendimentos registados neste ano';
+
+  @override
+  String get noExpensesRegistered => 'Sem despesas registadas neste ano';
+
+  @override
+  String get amountEuros => 'Valor em euros';
+
+  @override
+  String get remove => 'Remover';
+
+  @override
+  String get sourceManual => 'Introduzido manualmente';
+
+  @override
+  String get sourceImported => 'Importado';
+
+  @override
+  String get sourceExternal => 'Fonte externa';
+
+  @override
+  String get sourceCalculated => 'Calculado';
+
+  @override
+  String get statusConfirmed => 'Confirmado';
+
+  @override
+  String get statusEstimated => 'Estimado';
+
+  @override
+  String get statusPossibleDuplicate => 'Possível duplicado';
+
+  @override
+  String get privacyAndSecurity => 'Privacidade e segurança';
+
+  @override
+  String get privacyIntro =>
+      'A Taxy guarda as simulações e os registos locais neste dispositivo. As credenciais e-Fatura são enviadas por HTTPS apenas para api.taxy.pt durante a ligação e não regressam à interface.';
+
+  @override
+  String get privacyEfatura =>
+      'O acesso ao e-Fatura é apenas de leitura. Desligar remove deste dispositivo a capacidade de sessão guardada.';
+
+  @override
+  String get diagnostics => 'Diagnóstico';
+
+  @override
+  String get copyDiagnostics => 'Copiar informações de diagnóstico';
+
+  @override
+  String get diagnosticsCopied => 'Informações de diagnóstico copiadas';
+
+  @override
+  String get diagnosticsNotice =>
+      'O diagnóstico contém apenas versão e ambiente — nunca NIF, credenciais, tokens ou dados de faturas.';
+
+  @override
+  String get sendFeedback => 'Enviar feedback';
+
+  @override
+  String get feedbackCopied => 'Foi copiado um modelo seguro de feedback.';
+
+  @override
+  String get appearance => 'Aparência';
+
+  @override
+  String get themeSystem => 'Usar definição do dispositivo';
+
+  @override
+  String get themeLight => 'Claro';
+
+  @override
+  String get themeDark => 'Escuro';
+
+  @override
+  String get profileModuleDescription => 'Ano ativo e dados fiscais';
+
+  @override
+  String get incomeModuleDescription => 'Rendimentos locais com origem';
+
+  @override
+  String get expensesModuleDescription => 'Despesas locais de apoio';
+
+  @override
+  String get estimateBasis => 'O que esta estimativa considera';
+
+  @override
+  String get incomeConsidered => 'Rendimentos considerados';
+
+  @override
+  String get deductionsConsidered => 'Deduções consideradas';
+
+  @override
+  String get withholdingConsidered => 'Retenções consideradas';
+
+  @override
+  String get userEnteredSource => 'Introduzido por ti';
+
+  @override
+  String get estimateNotOfficial =>
+      'Estimativa baseada na informação introduzida e nas regras suportadas pela Taxy. Não é uma liquidação oficial da AT.';
+
+  @override
+  String get missingInformationImprove =>
+      'Falta informação para melhorar esta estimativa.';
+
+  @override
+  String get category => 'Categoria';
+
+  @override
+  String get categoryEmployment => 'Trabalho dependente';
+
+  @override
+  String get categorySelfEmployment => 'Trabalho independente';
+
+  @override
+  String get categoryPension => 'Pensão';
+
+  @override
+  String get categoryOther => 'Outra';
+
+  @override
+  String get categoryGeneral => 'Geral';
+
+  @override
+  String get categoryHealth => 'Saúde';
+
+  @override
+  String get categoryEducation => 'Educação';
+
+  @override
+  String get categoryHousing => 'Habitação';
+
+  @override
+  String get categoryProfessional => 'Atividade profissional';
+
+  @override
+  String get edit => 'Editar';
 }
