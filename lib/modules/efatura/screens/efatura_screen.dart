@@ -872,7 +872,23 @@ final class _SectorTile extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(Icons.category_outlined),
+                ExcludeSemantics(
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer
+                          .withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      _sectorEmoji(sector.code),
+                      key: Key('sector-emoji-${sector.code}'),
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -1070,6 +1086,26 @@ String _sectorLabel(AppLocalizations l10n, AtExpenseSector sector) =>
       'C99' => l10n.sectorOther,
       _ => sector.label ?? l10n.noDataAvailable,
     };
+
+String _sectorEmoji(String code) => switch (code) {
+  'C01' => '🚗',
+  'C02' => '🏍️',
+  'C03' => '🍽️',
+  'C04' => '✂️',
+  'C05' => '🩺',
+  'C06' => '🎓',
+  'C07' => '🏠',
+  'C08' => '🏡',
+  'C09' => '🐾',
+  'C10' => '🚌',
+  'C11' => '🏋️',
+  'C12' => '📰',
+  'C13' => '🧹',
+  'C14' => '🛍️',
+  'C15' => '🎟️',
+  'C99' => '🧾',
+  _ => '📁',
+};
 
 String _errorTitle(AppLocalizations l10n, EfaturaFailureKind kind) =>
     switch (kind) {
