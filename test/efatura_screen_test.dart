@@ -82,6 +82,8 @@ void main() {
     expect(find.textContaining('Despesas listadas'), findsWidgets);
     expect(find.textContaining('23,45'), findsWidgets);
     expect(find.textContaining('2,50'), findsOneWidget);
+    expect(find.text('🩺'), findsOneWidget);
+    expect(find.byKey(const Key('sector-emoji-C05')), findsOneWidget);
     expect(find.textContaining('faturas no setor'), findsNothing);
   });
   testWidgets('mostra invoice sintética sem identificadores técnicos', (
