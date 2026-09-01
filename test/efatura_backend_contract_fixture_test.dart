@@ -24,6 +24,22 @@ void main() {
     expect(overview.sectors.status, AtValueStatus.unavailable);
   });
 
+  test('available aggregate fixture reaches the normalized overview', () {
+    final response = fixture('overview_available');
+    final overview = efaturaOverviewFromMap(
+      response['overview']! as Map<String, Object?>,
+    );
+    expect(overview.pendingValidation.value, 2);
+    expect(overview.provisionalBenefitCents.value, 12345);
+    expect(
+      overview.pendingRevenueAssociation.status,
+      AtValueStatus.unavailable,
+    );
+    expect(overview.sectors.value, hasLength(1));
+    expect(overview.sectors.value.single.code, 'C05');
+    expect(overview.sectors.value.single.provisionalBenefitCents.value, 2345);
+  });
+
   test(
     'real-shape synthetic invoice fixture maps only display-safe fields',
     () {
