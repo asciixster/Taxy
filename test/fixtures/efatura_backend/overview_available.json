@@ -1,0 +1,21 @@
+{
+  "overview": {
+    "pendingValidation": {"status": "available", "value": 2},
+    "pendingRevenueAssociation": {"status": "unavailable"},
+    "provisionalBenefitCents": {"status": "available", "value": 12345},
+    "sectors": {
+      "status": "available",
+      "items": [
+        {
+          "code": "C05",
+          "label": "Saúde sintética",
+          "provisionalBenefit": {"status": "available", "value": 2345},
+          "totalExpenses": {"status": "available", "value": 15630},
+          "totalVatExpenses": {"status": "available", "value": 2930},
+          "invoiceCount": {"status": "available", "value": 2},
+          "activity": "active"
+        }
+      ]
+    }
+  }
+}

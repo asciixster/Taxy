@@ -25,8 +25,10 @@ The authenticated personal source is
 `actividadeEmitente`, `actividadeEmitenteDesc`,
 `valorTotalBeneficioProv`, `valorTotalSetorBeneficio` and
 `valorTotalDespesasGerais`. This establishes a source for personal sector and
-benefit inputs, but not by itself the capped aggregate shown by the official
-mobile app.
+benefit inputs. The backend now aggregates the integer-cent document benefits
+and applies only statutory caps explicitly documented by AT. Unknown non-zero
+categories, malformed amounts, incomplete retrieval and inexact shared-cap
+allocation all fail closed.
 
 ## Official-app 6.0.10 cross-check
 
@@ -37,12 +39,11 @@ as `dadosEcraInicial` in the homepage state and passed to the benefit-rendering
 path, which formats it as currency. The AOT snapshot contains no evidence of a
 homepage calculation that sums invoice rows or reapplies sector/statutory caps.
 
-This explains why the portal-row diagnostic and the official mobile value can
-legitimately differ: `valorTotalBeneficioProv` on individual IRS document rows
-is an intermediate/per-document value, while `ValorTotalBeneficioProvisorio` is
-the consolidated FactIntWS overview value produced by AT. Reconstructing the
-mobile total from the 357 rows would duplicate unknown AT business rules and is
-not a safe production strategy.
+`valorTotalBeneficioProv` remains a per-document value, while
+`ValorTotalBeneficioProvisorio` is the consolidated FactIntWS value produced by
+AT. The Taxy aggregation therefore stays deliberately narrow: it uses the
+Portal-provided benefits, integer cents and documented caps; it does not
+recalculate deductible VAT or infer unknown tax rules.
 
 The same APK contains and programmatically loads an official-app client
 certificate/private-key pair into Dart's `SecurityContext`. Its private material
@@ -70,10 +71,10 @@ Every aggregate now carries explicit availability:
 
 ```json
 {
-  "provisionalBenefitCents": { "status": "unavailable" },
+  "provisionalBenefitCents": { "status": "available", "value": 12345 },
   "pendingValidation": { "status": "available", "value": 5 },
   "pendingRevenueAssociation": { "status": "unavailable" },
-  "sectors": { "status": "unavailable" }
+  "sectors": { "status": "available", "items": [] }
 }
 ```
 
@@ -101,22 +102,17 @@ invoice needs intervention. The new `EfaturaIrsEvidence` projection keeps the
 official provisional benefit separate from summed document expense/VAT totals;
 it does not treat either value as a final IRS refund estimate.
 
-## Controlled runtime validation (2026-08-31)
+## Controlled runtime validation (2026-09-01)
 
-Three read-only backend requests were used, without automatic retries. The
-updated Android build received and rendered the pending count as
-`available(5)`. The provisional benefit, revenue-association count and sectors
-were received as `unavailable`; the UI rendered **Indisponível**, kept the real
-pending count and showed the partial-success explanation. It did not render a
-synthetic `0,00 €`.
+A controlled read-only run with the intended credential returned a complete
+non-zero overview across six mapped categories. Five category benefits matched
+the previously captured official-app overview exactly; the remaining category
+and total were 40 cents higher. The same live source also reported two more
+pending documents than that earlier app screenshot. These two changes support
+snapshot/update drift rather than a missing Taxy cap or category rule.
 
-The later source audit confirmed that `homeBeneficio.action` is a public
-national-statistics view and is therefore unsuitable. A controlled personal
-IRS-document query returned 357 rows across six mapped sectors and integer-cent
-wire values. Summing `valorTotalBeneficioProv` naively produced `334853` cents,
-which does not match the approximately `50339` cents shown by the official app.
-That number is treated as an uncapped/intermediate diagnostic, not as the
-official provisional benefit. The backend was returned to fail-safe
-`unavailable` output while state filtering and statutory/AT aggregate limits
-are isolated. Pending invoices remain runtime-confirmed and usable during this
-partial success.
+The current Portal data is now the runtime source used by the backend. The
+historical official-app screenshot remains comparison evidence, not a frozen
+expected value. No real response, credential, document identifier, taxpayer
+identifier or issuer identity is persisted. Revenue-association count remains
+unavailable because no equivalent safe source has been demonstrated.
