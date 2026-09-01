@@ -40,3 +40,15 @@ flutter build apk --release --build-name=0.7.10 --build-number=10 --dart-define=
 ```
 
 This release-like internal APK is debug-signed by the current project configuration. It is not an externally distributable production-signed artifact.
+
+## Motorola Edge 50 Pro validation (Android 15 / API 35)
+
+- Clean install, real login, overview, pending invoices, logout, relogin, background/foreground, process kill, cold start, offline failure, and manual recovery were exercised on a physical device.
+- The real overview reached Flutter and reported seven pending invoices. Aggregate benefit and sector values unavailable from the backend were rendered as **Indisponível**, not fabricated zeroes.
+- A real pending-invoice list reached the application and rendered its non-identifying shape. No response payload or personal invoice data was retained.
+- The first live login received a controlled service-unavailable response; a manual retry succeeded without an automatic retry or duplicate request.
+- Offline refresh produced a recoverable connection state without an endless spinner. Connectivity was restored and a single manual retry recovered the overview.
+- Logout returned to `notConfigured` and cleared overview and invoice state. Relogin created a fresh successful session.
+- Background/foreground preserved a coherent session. Process death did not restore the transient invoice list, and cold start validated the stored session before presenting connected state.
+- The native window contains Android's `FLAG_SECURE`. On this Motorola debug/ADB environment, `adb screencap` can still capture the window despite the flag; this is recorded as a manufacturer/debug tooling limitation and must not be interpreted as removal of the platform protection.
+- Portuguese dark mode and English light mode with 1.3 text scale were reviewed without observed overflow. The device was restored to Portuguese, dark mode, normal text scale, and logged-out state.
