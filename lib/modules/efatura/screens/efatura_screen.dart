@@ -27,8 +27,8 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
   EfaturaOverview? _overview;
   EfaturaServiceException? _failure;
   List<EfaturaInvoice> _invoices = const [];
-  String? _selectedSector;
   bool _invoiceListLoaded = false;
+  bool _showingPendingInvoices = false;
 
   @override
   void initState() {
@@ -66,7 +66,23 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
             ? EfaturaConnectionStatus.connecting
             : EfaturaConnectionStatus.notConfigured;
       });
-      if (readiness.isReady) await _refresh();
+      if (readiness.isReady) {
+        await _refresh();
+      } else {
+        final reachability = await widget.service.reachability();
+        if (reachability == EfaturaApiReachability.networkOffline) {
+          throw const EfaturaServiceException(
+            EfaturaFailureKind.network,
+            'Não foi possível estabelecer ligação.',
+          );
+        }
+        if (reachability == EfaturaApiReachability.serviceUnavailable) {
+          throw const EfaturaServiceException(
+            EfaturaFailureKind.serviceUnavailable,
+            'O serviço e-Fatura não está disponível de momento.',
+          );
+        }
+      }
     } on EfaturaServiceException catch (error) {
       _applyFailure(error);
     }
@@ -88,6 +104,9 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       _nifController.clear();
       setState(() {
         _overview = overview;
+        _invoices = const [];
+        _invoiceListLoaded = false;
+        _showingPendingInvoices = false;
         _status = EfaturaConnectionStatus.connected;
         _readiness = const EfaturaRuntimeReadiness(
           hasCredentials: true,
@@ -157,8 +176,8 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
     setState(() {
       _overview = null;
       _invoices = const [];
-      _selectedSector = null;
       _invoiceListLoaded = false;
+      _showingPendingInvoices = false;
       _failure = null;
       _readiness = EfaturaRuntimeReadiness(
         hasCredentials: false,
@@ -180,29 +199,40 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
     if (selected) await _initialize();
   }
 
-  Future<void> _loadPending() async {
-    final overview = _overview;
-    if (overview == null || overview.pendingValidation <= 0) return;
-    await _loadInvoices(null);
-  }
-
   Future<void> _loadSector(AtExpenseSector sector) async =>
       _loadInvoices(sector);
 
-  Future<void> _loadInvoices(AtExpenseSector? sector) async {
+  Future<void> _loadPendingInvoices() async {
     setState(() {
       _status = EfaturaConnectionStatus.connecting;
       _failure = null;
     });
     try {
-      final invoices = sector == null
-          ? await widget.service.loadPendingInvoices()
-          : await widget.service.loadSectorInvoices(sector);
+      final invoices = await widget.service.loadPendingInvoices();
       if (!mounted) return;
       setState(() {
         _invoices = invoices;
-        _selectedSector = sector?.code;
         _invoiceListLoaded = true;
+        _showingPendingInvoices = true;
+        _status = EfaturaConnectionStatus.connected;
+      });
+    } on EfaturaServiceException catch (error) {
+      _applyFailure(error);
+    }
+  }
+
+  Future<void> _loadInvoices(AtExpenseSector sector) async {
+    setState(() {
+      _status = EfaturaConnectionStatus.connecting;
+      _failure = null;
+    });
+    try {
+      final invoices = await widget.service.loadSectorInvoices(sector);
+      if (!mounted) return;
+      setState(() {
+        _invoices = invoices;
+        _invoiceListLoaded = true;
+        _showingPendingInvoices = false;
         _status = EfaturaConnectionStatus.connected;
       });
     } on EfaturaServiceException catch (error) {
@@ -212,8 +242,22 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
 
   void _applyFailure(EfaturaServiceException error) {
     if (!mounted) return;
+    final sessionEnded =
+        error.kind == EfaturaFailureKind.expired ||
+        error.kind == EfaturaFailureKind.authentication;
     setState(() {
       _failure = error;
+      if (sessionEnded) {
+        _overview = null;
+        _invoices = const [];
+        _invoiceListLoaded = false;
+        _showingPendingInvoices = false;
+        _readiness = const EfaturaRuntimeReadiness(
+          hasCredentials: false,
+          hasClientIdentity: true,
+          hasCipherCertificate: true,
+        );
+      }
       _status = switch (error.kind) {
         EfaturaFailureKind.notConfigured =>
           EfaturaConnectionStatus.notConfigured,
@@ -310,10 +354,26 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                         ),
                       if (_overview != null) ...[
                         if (busy) const LinearProgressIndicator(minHeight: 3),
-                        _OverviewCard(
-                          overview: _overview!,
-                          onPending: busy ? null : _loadPending,
-                        ),
+                        _OverviewCard(overview: _overview!),
+                        if ((_overview!.pendingValidation.valueOrNull ?? 0) >
+                            0) ...[
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            key: const Key('efatura-view-pending'),
+                            onPressed: busy ? null : _loadPendingInvoices,
+                            icon: const Icon(Icons.receipt_long_outlined),
+                            label: Text(l10n.viewPendingInvoices),
+                          ),
+                        ],
+                        const SizedBox(height: 10),
+                        _IrsEvidenceCard(evidence: _overview!.irsEvidence),
+                        if (_overview!.outcome ==
+                            EfaturaOverviewOutcome.partialSuccess) ...[
+                          const SizedBox(height: 10),
+                          _PartialSuccessBanner(
+                            message: l10n.partialEfaturaData,
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         Semantics(
                           header: true,
@@ -323,14 +383,19 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        if (_overview!.sectors.isEmpty)
+                        if (!_overview!.sectors.isAvailable)
+                          _EmptyCard(
+                            icon: Icons.category_outlined,
+                            text: l10n.unavailable,
+                          )
+                        else if (_overview!.sectors.value.isEmpty)
                           _EmptyCard(
                             icon: Icons.category_outlined,
                             text: l10n.noDataAvailable,
                           )
                         else
                           _SectorGrid(
-                            sectors: _overview!.sectors,
+                            sectors: _overview!.sectors.value,
                             enabled: !busy,
                             onTap: _loadSector,
                           ),
@@ -339,7 +404,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                           Semantics(
                             header: true,
                             child: Text(
-                              _selectedSector == null
+                              _showingPendingInvoices
                                   ? l10n.pendingInvoicesTitle
                                   : l10n.sectorInvoicesTitle,
                               style: Theme.of(context).textTheme.titleLarge,
@@ -349,15 +414,18 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                           if (_invoices.isEmpty)
                             _EmptyCard(
                               icon: Icons.receipt_long_outlined,
-                              text: _selectedSector == null
+                              text: _showingPendingInvoices
                                   ? l10n.noInvoicesToValidate
                                   : l10n.noInvoicesInCategory,
                             )
                           else
-                            ..._invoices.map(
-                              (invoice) => Padding(
+                            ..._invoices.indexed.map(
+                              (entry) => Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
-                                child: _InvoiceTile(invoice: invoice),
+                                child: _InvoiceTile(
+                                  key: Key('efatura-invoice-${entry.$1}'),
+                                  invoice: entry.$2,
+                                ),
                               ),
                             ),
                         ],
@@ -483,15 +551,17 @@ final class _ConnectCard extends StatelessWidget {
 }
 
 final class _OverviewCard extends StatelessWidget {
-  const _OverviewCard({required this.overview, required this.onPending});
+  const _OverviewCard({required this.overview});
 
   final EfaturaOverview overview;
-  final VoidCallback? onPending;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final benefit = overview.provisionalBenefitCents.valueOrNull;
+    final pending = overview.pendingValidation.valueOrNull;
+    final revenue = overview.pendingRevenueAssociation.valueOrNull;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -516,7 +586,9 @@ final class _OverviewCard extends StatelessWidget {
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                TaxyFormatters.euros(context, overview.provisionalBenefitCents),
+                benefit == null
+                    ? l10n.unavailable
+                    : TaxyFormatters.euros(context, benefit),
                 style: Theme.of(context).textTheme.headlineMedium
                     ?.copyWith(color: scheme.primary),
               ),
@@ -528,18 +600,18 @@ final class _OverviewCard extends StatelessWidget {
               children: [
                 _Metric(
                   label: l10n.invoicesToValidate,
-                  value: '${overview.pendingValidation}',
+                  value: pending?.toString() ?? l10n.unavailable,
                   icon: Icons.task_alt_outlined,
                 ),
                 _Metric(
                   label: l10n.invoicesToAssociate,
-                  value: '${overview.pendingRevenueAssociation}',
+                  value: revenue?.toString() ?? l10n.unavailable,
                   icon: Icons.link_outlined,
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            if (overview.pendingValidation == 0)
+            if (pending == 0)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -548,17 +620,123 @@ final class _OverviewCard extends StatelessWidget {
                   Expanded(child: Text(l10n.noInvoicesToValidate)),
                 ],
               )
-            else
-              TextButton.icon(
-                onPressed: onPending,
-                icon: const Icon(Icons.receipt_long_outlined),
-                label: Text(l10n.viewPendingInvoices),
+            else if (pending != null && pending > 0)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: scheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(l10n.readOnlyNoValidation)),
+                ],
               ),
           ],
         ),
       ),
     );
   }
+}
+
+final class _IrsEvidenceCard extends StatelessWidget {
+  const _IrsEvidenceCard({required this.evidence});
+
+  final EfaturaIrsEvidence evidence;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    String money(AtValue<int> value) => value.isAvailable
+        ? TaxyFormatters.euros(context, value.value)
+        : l10n.unavailable;
+    return Card(
+      key: const Key('efatura-irs-evidence'),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.calculate_outlined),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.irsPredictionDataTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _EvidenceRow(
+              label: l10n.officialProvisionalBenefit,
+              value: money(evidence.officialProvisionalBenefitCents),
+            ),
+            _EvidenceRow(
+              label: l10n.listedExpenses,
+              value: money(evidence.listedExpensesCents),
+            ),
+            _EvidenceRow(
+              label: l10n.listedVat,
+              value: money(evidence.listedVatCents),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              l10n.irsPredictionDisclaimer,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+final class _EvidenceRow extends StatelessWidget {
+  const _EvidenceRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: Text(label)),
+        const SizedBox(width: 16),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+      ],
+    ),
+  );
+}
+
+final class _PartialSuccessBanner extends StatelessWidget {
+  const _PartialSuccessBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    liveRegion: true,
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(message)),
+        ],
+      ),
+    ),
+  );
 }
 
 final class _Metric extends StatelessWidget {
@@ -647,11 +825,17 @@ final class _SectorTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final label = _sectorLabel(l10n, sector);
+    final benefit = sector.provisionalBenefitCents.valueOrNull;
+    final expenses = sector.totalExpensesCents.valueOrNull;
+    final count = sector.invoiceCount.valueOrNull;
     final details = <String>[
-      if (sector.provisionalBenefitCents != null)
-        TaxyFormatters.euros(context, sector.provisionalBenefitCents!),
-      if (sector.invoiceCount != null) l10n.invoiceCount(sector.invoiceCount!),
+      if (expenses != null)
+        '${l10n.listedExpenses}: ${TaxyFormatters.euros(context, expenses)}',
+      if (benefit != null)
+        '${l10n.provisionalTaxBenefit}: ${TaxyFormatters.euros(context, benefit)}',
+      if (count != null) l10n.invoiceCount(count),
     ];
+    if (details.isEmpty) details.add(l10n.unavailable);
     return Semantics(
       button: true,
       label: '$label${details.isEmpty ? '' : ', ${details.join(', ')}'}',
@@ -697,7 +881,7 @@ final class _SectorTile extends StatelessWidget {
 }
 
 final class _InvoiceTile extends StatelessWidget {
-  const _InvoiceTile({required this.invoice});
+  const _InvoiceTile({super.key, required this.invoice});
 
   final EfaturaInvoice invoice;
 
@@ -870,6 +1054,8 @@ String _errorTitle(AppLocalizations l10n, EfaturaFailureKind kind) =>
       EfaturaFailureKind.notConfigured => l10n.notConfiguredTitle,
       EfaturaFailureKind.authentication => l10n.authErrorTitle,
       EfaturaFailureKind.authorization => l10n.authorizationErrorTitle,
+      EfaturaFailureKind.operationUnavailable => l10n.operationUnavailableTitle,
+      EfaturaFailureKind.rateLimited => l10n.rateLimitedTitle,
       EfaturaFailureKind.network ||
       EfaturaFailureKind.tls => l10n.networkErrorTitle,
       EfaturaFailureKind.serviceUnavailable ||
@@ -885,6 +1071,9 @@ String _errorMessage(AppLocalizations l10n, EfaturaFailureKind kind) =>
     switch (kind) {
       EfaturaFailureKind.authentication => l10n.authErrorMessage,
       EfaturaFailureKind.authorization => l10n.authorizationErrorMessage,
+      EfaturaFailureKind.operationUnavailable =>
+        l10n.operationUnavailableMessage,
+      EfaturaFailureKind.rateLimited => l10n.rateLimitedMessage,
       EfaturaFailureKind.network ||
       EfaturaFailureKind.tls => l10n.networkErrorMessage,
       EfaturaFailureKind.serviceUnavailable ||

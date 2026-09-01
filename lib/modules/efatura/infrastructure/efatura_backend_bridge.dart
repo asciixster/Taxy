@@ -5,6 +5,7 @@ import 'dart:io';
 import '../application/efatura_read_only_service.dart';
 import '../domain/efatura_models.dart';
 import 'efatura_runtime_bridge.dart';
+import 'efatura_session_token_store.dart';
 import 'efatura_wire_mapping.dart';
 
 abstract interface class EfaturaBackendTransport {
@@ -32,9 +33,11 @@ final class BackendEfaturaRuntimeBridge
     implements
         EfaturaReadOnlyGateway,
         EfaturaCredentialStore,
+        EfaturaReachabilityProbe,
         EfaturaRuntimeProvisioning {
   BackendEfaturaRuntimeBridge({
     required Uri baseUri,
+    required this.sessionTokenStore,
     EfaturaBackendTransport? transport,
     this.screenProtection,
   }) : _baseUri = _validatedBaseUri(baseUri),
@@ -42,6 +45,7 @@ final class BackendEfaturaRuntimeBridge
 
   final Uri _baseUri;
   final EfaturaBackendTransport _transport;
+  final EfaturaSessionTokenStore sessionTokenStore;
   final EfaturaRuntimeProvisioning? screenProtection;
   String? _sessionToken;
   EfaturaOverview? _connectOverview;
@@ -75,25 +79,46 @@ final class BackendEfaturaRuntimeBridge
       );
     }
     final parsedOverview = efaturaOverviewFromMap(overview);
+    try {
+      await sessionTokenStore.write(token);
+    } catch (_) {
+      try {
+        await _transport.send(
+          method: 'DELETE',
+          uri: _resolve('v1/efatura/session'),
+          bearerToken: token,
+        );
+      } catch (_) {
+        // The server session has a short TTL. No token is retained locally.
+      }
+      throw const EfaturaServiceException(
+        EfaturaFailureKind.notConfigured,
+        'Não foi possível guardar a sessão e-Fatura em segurança.',
+      );
+    }
     _sessionToken = token;
     _connectOverview = parsedOverview;
   }
 
   @override
-  Future<EfaturaRuntimeReadiness> load() async => EfaturaRuntimeReadiness(
-    hasCredentials: _sessionToken != null,
-    hasClientIdentity: true,
-    hasCipherCertificate: true,
-  );
+  Future<EfaturaRuntimeReadiness> load() async {
+    final token = await _readSessionToken();
+    return EfaturaRuntimeReadiness(
+      hasCredentials: token != null,
+      hasClientIdentity: true,
+      hasCipherCertificate: true,
+    );
+  }
 
   @override
-  Future<bool> hasCredentials() async => _sessionToken != null;
+  Future<bool> hasCredentials() async => await _readSessionToken() != null;
 
   @override
   Future<void> clear() async {
-    final token = _sessionToken;
+    final token = await _readSessionToken();
     _sessionToken = null;
     _connectOverview = null;
+    await sessionTokenStore.delete();
     if (token == null) return;
     try {
       await _transport.send(
@@ -104,6 +129,31 @@ final class BackendEfaturaRuntimeBridge
     } catch (_) {
       // The local capability is already gone. Remote sessions have a short
       // mandatory TTL, so logout remains fail-closed without retaining token.
+    }
+  }
+
+  @override
+  Future<EfaturaApiReachability> checkReachability() async {
+    try {
+      final response = await _transport.send(
+        method: 'GET',
+        uri: _resolve('health'),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return EfaturaApiReachability.reachable;
+      }
+      if (response.statusCode == HttpStatus.unauthorized) {
+        return EfaturaApiReachability.authenticationRequired;
+      }
+      return EfaturaApiReachability.serviceUnavailable;
+    } on TimeoutException catch (_) {
+      return EfaturaApiReachability.networkOffline;
+    } on SocketException catch (_) {
+      return EfaturaApiReachability.networkOffline;
+    } on HandshakeException catch (_) {
+      return EfaturaApiReachability.networkOffline;
+    } on FormatException catch (_) {
+      return EfaturaApiReachability.serviceUnavailable;
     }
   }
 
@@ -155,7 +205,7 @@ final class BackendEfaturaRuntimeBridge
     Map<String, Object?>? body,
     bool authenticated = true,
   }) async {
-    final token = authenticated ? _sessionToken : null;
+    final token = authenticated ? await _readSessionToken() : null;
     if (authenticated && token == null) {
       throw const EfaturaServiceException(
         EfaturaFailureKind.notConfigured,
@@ -172,7 +222,13 @@ final class BackendEfaturaRuntimeBridge
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response.body;
       }
-      throw _backendFailure(response.statusCode, response.body);
+      final failure = _backendFailure(response.statusCode, response.body);
+      if (authenticated &&
+          (failure.kind == EfaturaFailureKind.authentication ||
+              failure.kind == EfaturaFailureKind.expired)) {
+        await _clearLocalSession();
+      }
+      throw failure;
     } on EfaturaServiceException {
       rethrow;
     } on TimeoutException {
@@ -207,6 +263,20 @@ final class BackendEfaturaRuntimeBridge
   @override
   Future<void> setScreenSecure(bool enabled) async =>
       screenProtection?.setScreenSecure(enabled);
+
+  Future<String?> _readSessionToken() async {
+    final cached = _sessionToken;
+    if (cached != null) return cached;
+    final stored = await sessionTokenStore.read();
+    _sessionToken = stored;
+    return stored;
+  }
+
+  Future<void> _clearLocalSession() async {
+    _sessionToken = null;
+    _connectOverview = null;
+    await sessionTokenStore.delete();
+  }
 
   Uri _resolve(String path) => _baseUri.resolve(path);
 }
@@ -292,6 +362,10 @@ EfaturaServiceException _backendFailure(
       EfaturaFailureKind.authentication,
     _ when statusCode == HttpStatus.forbidden =>
       EfaturaFailureKind.authorization,
+    _ when statusCode == HttpStatus.notFound =>
+      EfaturaFailureKind.operationUnavailable,
+    _ when statusCode == HttpStatus.tooManyRequests =>
+      EfaturaFailureKind.rateLimited,
     _ when statusCode >= 500 => EfaturaFailureKind.serviceUnavailable,
     _ => EfaturaFailureKind.unknown,
   };
@@ -300,6 +374,10 @@ EfaturaServiceException _backendFailure(
       'Não foi possível autenticar no Portal das Finanças.',
     EfaturaFailureKind.authorization =>
       'Não foi possível autorizar a consulta e-Fatura.',
+    EfaturaFailureKind.operationUnavailable =>
+      'Esta consulta e-Fatura não está disponível.',
+    EfaturaFailureKind.rateLimited =>
+      'Foram feitas demasiadas consultas. Tenta novamente mais tarde.',
     EfaturaFailureKind.expired =>
       'A ligação ao e-Fatura expirou. Liga novamente para continuar.',
     EfaturaFailureKind.network => 'Não foi possível estabelecer ligação.',

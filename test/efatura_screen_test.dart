@@ -12,13 +12,15 @@ void main() {
   const sector = AtExpenseSector(
     code: 'C05',
     label: 'Saúde',
-    provisionalBenefitCents: 250,
+    provisionalBenefitCents: AtValue.available(250),
+    totalExpensesCents: AtValue.available(2345),
+    totalVatExpensesCents: AtValue.available(439),
   );
   const overview = EfaturaOverview(
-    provisionalBenefitCents: 1200,
-    pendingValidation: 0,
-    pendingRevenueAssociation: 0,
-    sectors: [sector],
+    provisionalBenefitCents: AtValue.available(1200),
+    pendingValidation: AtValue.available(0),
+    pendingRevenueAssociation: AtValue.available(0),
+    sectors: AtValue.available([sector]),
   );
   const invoice = EfaturaInvoice(
     date: '2026-08-29',
@@ -40,13 +42,45 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Resumo e-Fatura'), findsOneWidget);
     expect(find.text('Benefício provisório'), findsOneWidget);
-    expect(find.textContaining('12,00'), findsOneWidget);
-    expect(find.text('Sem faturas por validar'), findsOneWidget);
+    expect(find.textContaining('12,00'), findsWidgets);
+    expect(find.text('Sem faturas pendentes'), findsOneWidget);
+    expect(find.byKey(const Key('efatura-irs-evidence')), findsOneWidget);
+    expect(find.text('Dados para previsão de IRS'), findsOneWidget);
+  });
+  testWidgets('distingue benefício indisponível de zero real', (tester) async {
+    const partial = EfaturaOverview(
+      provisionalBenefitCents: AtValue.unavailable(),
+      pendingValidation: AtValue.available(5),
+      pendingRevenueAssociation: AtValue.unavailable(),
+      sectors: AtValue.unavailable(),
+    );
+    await _pump(tester, _FakeGateway(overview: partial), _readyStore());
+    await tester.pumpAndSettle();
+    expect(find.text('Indisponível'), findsWidgets);
+    expect(find.textContaining('Alguns valores'), findsOneWidget);
+    expect(find.textContaining('0,00'), findsNothing);
+    expect(find.text('5'), findsOneWidget);
+  });
+  testWidgets('mostra zero real quando o benefício está disponível', (
+    tester,
+  ) async {
+    const zero = EfaturaOverview(
+      provisionalBenefitCents: AtValue.available(0),
+      pendingValidation: AtValue.available(0),
+      pendingRevenueAssociation: AtValue.available(0),
+      sectors: AtValue.available([]),
+    );
+    await _pump(tester, _FakeGateway(overview: zero), _readyStore());
+    await tester.pumpAndSettle();
+    expect(find.textContaining('0,00'), findsWidgets);
+    expect(find.text('Indisponível'), findsNothing);
   });
   testWidgets('mostra setores sem inventar contagem', (tester) async {
     await _pump(tester, _FakeGateway(overview: overview), _readyStore());
     await tester.pumpAndSettle();
     expect(find.text('Saúde'), findsOneWidget);
+    expect(find.textContaining('Despesas listadas'), findsWidgets);
+    expect(find.textContaining('23,45'), findsWidgets);
     expect(find.textContaining('2,50'), findsOneWidget);
     expect(find.textContaining('faturas no setor'), findsNothing);
   });
@@ -65,7 +99,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Emitente sintético'), 250);
     expect(find.text('Emitente sintético'), findsOneWidget);
-    expect(find.textContaining('23,45'), findsOneWidget);
+    expect(find.textContaining('23,45'), findsWidgets);
     expect(find.textContaining('IdDocumento'), findsNothing);
     expect(find.textContaining('NIF'), findsNothing);
   });
@@ -174,6 +208,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Erro de ligação'), findsOneWidget);
   });
+
+  testWidgets('sessão expirada regressa ao login sem estado ligado falso', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const _FailingGateway(EfaturaFailureKind.expired),
+      _readyStore(),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Sessão expirada'), findsOneWidget);
+    expect(find.byKey(const Key('efatura-connect')), findsOneWidget);
+    expect(find.text('Resumo e-Fatura'), findsNothing);
+  });
   testWidgets('erro após guardar credenciais continua a permitir desligar', (
     tester,
   ) async {
@@ -229,8 +277,79 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('e-Fatura overview'), findsOneWidget);
     expect(find.text('Provisional tax benefit'), findsOneWidget);
-    expect(find.text('No invoices to validate'), findsOneWidget);
+    expect(find.text('No pending invoices'), findsOneWidget);
+    expect(find.text('Data for your IRS estimate'), findsOneWidget);
     expect(find.text('Health'), findsOneWidget);
+  });
+
+  testWidgets(
+    'pending count opens a read-only list without validation actions',
+    (tester) async {
+      const pendingOverview = EfaturaOverview(
+        provisionalBenefitCents: AtValue.available(50339),
+        pendingValidation: AtValue.available(5),
+        pendingRevenueAssociation: AtValue.available(0),
+        sectors: AtValue.available([]),
+      );
+      await _pump(
+        tester,
+        _FakeGateway(overview: pendingOverview),
+        _readyStore(),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('5'), findsOneWidget);
+      expect(
+        find.text(
+          'A Taxy apresenta esta contagem apenas para consulta. A validação '
+          'continua a ser feita no e-Fatura oficial.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Ver faturas por validar'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('efatura-view-pending')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('efatura-view-pending')));
+      await tester.pumpAndSettle();
+      expect(find.text('Faturas pendentes'), findsOneWidget);
+      expect(find.text('Sem faturas pendentes'), findsOneWidget);
+      expect(find.textContaining('Classificar'), findsNothing);
+      expect(find.textContaining('Validar'), findsNothing);
+      expect(find.byType(FilledButton), findsNothing);
+    },
+  );
+
+  testWidgets('pending list renders normalized synthetic backend data', (
+    tester,
+  ) async {
+    const pendingOverview = EfaturaOverview(
+      provisionalBenefitCents: AtValue.unavailable(),
+      pendingValidation: AtValue.available(1),
+      pendingRevenueAssociation: AtValue.unavailable(),
+      sectors: AtValue.unavailable(),
+    );
+    await _pump(
+      tester,
+      _FakeGateway(
+        overview: pendingOverview,
+        pendingInvoices: const [
+          EfaturaInvoice(
+            issuerDisplayName: 'Emitente sintético',
+            date: '2026-08-29',
+            totalCents: 2345,
+            pendingClassification: true,
+          ),
+        ],
+      ),
+      _readyStore(),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('efatura-view-pending')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('efatura-view-pending')));
+    await tester.pumpAndSettle();
+    expect(find.text('Emitente sintético'), findsOneWidget);
+    expect(find.text('23,45 €'), findsOneWidget);
+    expect(find.textContaining('Classificar'), findsNothing);
   });
 
   testWidgets('local validation blocks malformed credentials', (tester) async {
@@ -356,9 +475,14 @@ final class _FakeStore implements EfaturaCredentialStore {
 }
 
 final class _FakeGateway implements EfaturaReadOnlyGateway {
-  _FakeGateway({required this.overview, this.sectorInvoices = const []});
+  _FakeGateway({
+    required this.overview,
+    this.sectorInvoices = const [],
+    this.pendingInvoices = const [],
+  });
   final EfaturaOverview overview;
   final List<EfaturaInvoice> sectorInvoices;
+  final List<EfaturaInvoice> pendingInvoices;
   int overviewCalls = 0;
   @override
   Future<EfaturaOverview> fetchOverview() async {
@@ -367,7 +491,7 @@ final class _FakeGateway implements EfaturaReadOnlyGateway {
   }
 
   @override
-  Future<List<EfaturaInvoice>> fetchPendingInvoices() async => const [];
+  Future<List<EfaturaInvoice>> fetchPendingInvoices() async => pendingInvoices;
   @override
   Future<List<EfaturaInvoice>> fetchSectorInvoices(String sectorCode) async =>
       sectorInvoices;

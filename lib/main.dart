@@ -12,7 +12,9 @@ import 'l10n/language_controller.dart';
 import 'navigation/app_navigation.dart';
 import 'modules/efatura/application/efatura_read_only_service.dart';
 import 'modules/efatura/infrastructure/efatura_backend_bridge.dart';
-import 'modules/efatura/infrastructure/efatura_runtime_bridge.dart';
+import 'modules/efatura/infrastructure/efatura_api_configuration.dart';
+import 'modules/efatura/infrastructure/efatura_screen_protection.dart';
+import 'modules/efatura/infrastructure/efatura_session_token_store.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'screens/how_we_calculate_screen.dart';
@@ -772,24 +774,20 @@ Future<void> _openWizard(
 }
 
 Future<void> _openEfatura(BuildContext context) {
-  const backendUrl = String.fromEnvironment('TAXY_EFATURA_BACKEND_URL');
-  final directBridge = AndroidEfaturaRuntimeBridge();
-  late final EfaturaScreen screen;
-  if (backendUrl.trim().isEmpty) {
-    screen = EfaturaScreen(
-      service: EfaturaReadOnlyService(directBridge, directBridge),
-      provisioning: directBridge,
-    );
-  } else {
-    final backendBridge = BackendEfaturaRuntimeBridge(
-      baseUri: Uri.parse(backendUrl),
-      screenProtection: directBridge,
-    );
-    screen = EfaturaScreen(
-      service: EfaturaReadOnlyService(backendBridge, backendBridge),
-      provisioning: backendBridge,
-    );
-  }
+  final screenProtection = AndroidEfaturaScreenProtection();
+  final backendBridge = BackendEfaturaRuntimeBridge(
+    baseUri: EfaturaApiConfiguration.baseUri,
+    sessionTokenStore: SecureEfaturaSessionTokenStore(),
+    screenProtection: screenProtection,
+  );
+  final screen = EfaturaScreen(
+    service: EfaturaReadOnlyService(
+      backendBridge,
+      backendBridge,
+      backendBridge,
+    ),
+    provisioning: backendBridge,
+  );
   return Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 }
 

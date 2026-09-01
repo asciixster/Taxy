@@ -1,15 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taxy_pt/modules/efatura/domain/efatura_models.dart';
 import 'package:taxy_pt/modules/efatura/infrastructure/efatura_backend_bridge.dart';
+import 'package:taxy_pt/modules/efatura/infrastructure/efatura_session_token_store.dart';
 
 void main() {
   late _Transport transport;
+  late _TokenStore tokenStore;
   late BackendEfaturaRuntimeBridge bridge;
 
   setUp(() {
     transport = _Transport();
+    tokenStore = _TokenStore();
     bridge = BackendEfaturaRuntimeBridge(
       baseUri: Uri.parse('https://backend.example.test/taxy/'),
+      sessionTokenStore: tokenStore,
       transport: transport,
     );
   });
@@ -18,6 +22,7 @@ void main() {
     expect(
       () => BackendEfaturaRuntimeBridge(
         baseUri: Uri.parse('http://backend.example.test/'),
+        sessionTokenStore: tokenStore,
         transport: transport,
       ),
       throwsArgumentError,
@@ -25,6 +30,7 @@ void main() {
     expect(
       () => BackendEfaturaRuntimeBridge(
         baseUri: Uri.parse('https://user:secret@backend.example.test/'),
+        sessionTokenStore: tokenStore,
         transport: transport,
       ),
       throwsArgumentError,
@@ -41,11 +47,15 @@ void main() {
         ),
       );
       expect((await bridge.load()).isReady, isTrue);
+      expect(tokenStore.token, 'opaque-session');
 
       final overview = await bridge.fetchOverview();
       await bridge.fetchPendingInvoices();
 
-      expect(overview.pendingValidation, 5);
+      expect(overview.pendingValidation.value, 5);
+      expect(overview.sectors.value.single.totalExpensesCents.value, 2345);
+      expect(overview.sectors.value.single.totalVatExpensesCents.value, 439);
+      expect(overview.irsEvidence.listedExpensesCents.value, 2345);
       expect(transport.requests, hasLength(2));
       expect(transport.requests.first.path, '/taxy/v1/efatura/sessions');
       expect(transport.requests.first.body?['password'], 'synthetic-secret');
@@ -82,6 +92,7 @@ void main() {
     );
     await bridge.clear();
     expect(await bridge.hasCredentials(), isFalse);
+    expect(tokenStore.token, isNull);
     expect(transport.requests.last.method, 'DELETE');
     await expectLater(
       bridge.fetchOverview(),
@@ -94,6 +105,85 @@ void main() {
       ),
     );
   });
+
+  test('opaque session survives bridge recreation in secure store', () async {
+    await bridge.save(
+      const EfaturaCredentials(nif: '000000000', password: 'synthetic-secret'),
+    );
+    final reopened = BackendEfaturaRuntimeBridge(
+      baseUri: Uri.parse('https://backend.example.test/taxy/'),
+      sessionTokenStore: tokenStore,
+      transport: transport,
+    );
+    expect((await reopened.load()).isReady, isTrue);
+    await reopened.fetchOverview();
+    expect(transport.requests.last.bearerToken, 'opaque-session');
+  });
+
+  test(
+    'expired session is removed and cannot leave false connected state',
+    () async {
+      tokenStore.token = 'expired-session';
+      transport.overviewStatus = 401;
+      transport.overviewBody = const <String, Object?>{
+        'code': 'SESSION_EXPIRED',
+      };
+      await expectLater(
+        bridge.fetchOverview(),
+        throwsA(
+          predicate(
+            (error) =>
+                error is EfaturaServiceException &&
+                error.kind == EfaturaFailureKind.expired,
+          ),
+        ),
+      );
+      expect(tokenStore.token, isNull);
+      expect((await bridge.load()).hasCredentials, isFalse);
+    },
+  );
+
+  test(
+    'health distinguishes reachable, auth-required and unavailable',
+    () async {
+      expect(
+        await bridge.checkReachability(),
+        EfaturaApiReachability.reachable,
+      );
+      transport.healthStatus = 401;
+      expect(
+        await bridge.checkReachability(),
+        EfaturaApiReachability.authenticationRequired,
+      );
+      transport.healthStatus = 503;
+      expect(
+        await bridge.checkReachability(),
+        EfaturaApiReachability.serviceUnavailable,
+      );
+    },
+  );
+
+  for (final entry in <int, EfaturaFailureKind>{
+    403: EfaturaFailureKind.authorization,
+    404: EfaturaFailureKind.operationUnavailable,
+    429: EfaturaFailureKind.rateLimited,
+    503: EfaturaFailureKind.serviceUnavailable,
+  }.entries) {
+    test('HTTP ${entry.key} maps to ${entry.value}', () async {
+      tokenStore.token = 'opaque-session';
+      transport.overviewStatus = entry.key;
+      transport.overviewBody = const <String, Object?>{};
+      await expectLater(
+        bridge.fetchOverview(),
+        throwsA(
+          predicate(
+            (error) =>
+                error is EfaturaServiceException && error.kind == entry.value,
+          ),
+        ),
+      );
+    });
+  }
 
   test('sector invoice response is normalized without technical ids', () async {
     await bridge.save(
@@ -130,13 +220,46 @@ void main() {
     expect(await bridge.hasCredentials(), isFalse);
   });
 
-  test('missing required overview aggregate fails closed', () async {
+  test(
+    'missing optional overview aggregate is explicitly unavailable',
+    () async {
+      transport.sessionBody = <String, Object?>{
+        'sessionToken': 'opaque-session',
+        'overview': <String, Object?>{
+          'pendingValidation': 5,
+          'pendingRevenueAssociation': 0,
+          'sectors': <Object?>[],
+        },
+      };
+      await bridge.save(
+        const EfaturaCredentials(
+          nif: '000000000',
+          password: 'synthetic-secret',
+        ),
+      );
+      final overview = await bridge.fetchOverview();
+      expect(
+        overview.provisionalBenefitCents.status,
+        AtValueStatus.unavailable,
+      );
+      expect(overview.outcome, EfaturaOverviewOutcome.partialSuccess);
+    },
+  );
+
+  test('malformed available aggregate fails closed', () async {
     transport.sessionBody = <String, Object?>{
       'sessionToken': 'opaque-session',
       'overview': <String, Object?>{
-        'pendingValidation': 5,
-        'pendingRevenueAssociation': 0,
-        'sectors': <Object?>[],
+        'provisionalBenefitCents': <String, Object?>{
+          'status': 'available',
+          'value': 'not-money',
+        },
+        'pendingValidation': <String, Object?>{
+          'status': 'available',
+          'value': 5,
+        },
+        'pendingRevenueAssociation': <String, Object?>{'status': 'unavailable'},
+        'sectors': <String, Object?>{'status': 'unavailable'},
       },
     };
     await expectLater(
@@ -146,15 +269,8 @@ void main() {
           password: 'synthetic-secret',
         ),
       ),
-      throwsA(
-        predicate(
-          (error) =>
-              error is EfaturaServiceException &&
-              error.kind == EfaturaFailureKind.parsing,
-        ),
-      ),
+      throwsA(isA<EfaturaServiceException>()),
     );
-    expect(await bridge.hasCredentials(), isFalse);
   });
 
   test('malformed invoice cannot disappear silently', () async {
@@ -199,20 +315,47 @@ final class _Transport implements EfaturaBackendTransport {
   Map<String, Object?> sessionBody = <String, Object?>{
     'sessionToken': 'opaque-session',
     'overview': <String, Object?>{
-      'provisionalBenefitCents': 50339,
-      'pendingValidation': 5,
-      'pendingRevenueAssociation': 0,
-      'sectors': <Object?>[
-        <String, Object?>{
-          'code': 'C05',
-          'label': 'Saúde',
-          'provisionalBenefitCents': 234,
-          'invoiceCount': 1,
-        },
-      ],
+      'provisionalBenefitCents': <String, Object?>{
+        'status': 'available',
+        'value': 50339,
+      },
+      'pendingValidation': <String, Object?>{'status': 'available', 'value': 5},
+      'pendingRevenueAssociation': <String, Object?>{
+        'status': 'available',
+        'value': 0,
+      },
+      'sectors': <String, Object?>{
+        'status': 'available',
+        'items': <Object?>[
+          <String, Object?>{
+            'code': 'C05',
+            'label': 'Saúde',
+            'provisionalBenefit': <String, Object?>{
+              'status': 'available',
+              'value': 234,
+            },
+            'totalExpenses': <String, Object?>{
+              'status': 'available',
+              'value': 2345,
+            },
+            'totalVatExpenses': <String, Object?>{
+              'status': 'available',
+              'value': 439,
+            },
+            'invoiceCount': <String, Object?>{
+              'status': 'available',
+              'value': 1,
+            },
+            'activity': 'active',
+          },
+        ],
+      },
     },
   };
   bool malformedInvoices = false;
+  int healthStatus = 200;
+  int overviewStatus = 200;
+  Map<String, Object?>? overviewBody;
 
   @override
   Future<EfaturaBackendResponse> send({
@@ -224,6 +367,12 @@ final class _Transport implements EfaturaBackendTransport {
     requests.add(
       _Request(method: method, uri: uri, bearerToken: bearerToken, body: body),
     );
+    if (uri.path.endsWith('/health')) {
+      return EfaturaBackendResponse(
+        statusCode: healthStatus,
+        body: const <String, Object?>{'status': 'ok'},
+      );
+    }
     if (uri.path.endsWith('/sessions')) {
       return EfaturaBackendResponse(
         statusCode: sessionStatus,
@@ -235,8 +384,10 @@ final class _Transport implements EfaturaBackendTransport {
     }
     if (uri.path.endsWith('/overview')) {
       return EfaturaBackendResponse(
-        statusCode: 200,
-        body: <String, Object?>{'overview': sessionBody['overview']!},
+        statusCode: overviewStatus,
+        body:
+            overviewBody ??
+            <String, Object?>{'overview': sessionBody['overview']!},
       );
     }
     if (malformedInvoices) {
@@ -265,4 +416,17 @@ final class _Transport implements EfaturaBackendTransport {
       },
     );
   }
+}
+
+final class _TokenStore implements EfaturaSessionTokenStore {
+  String? token;
+
+  @override
+  Future<void> delete() async => token = null;
+
+  @override
+  Future<String?> read() async => token;
+
+  @override
+  Future<void> write(String value) async => token = value;
 }

@@ -353,6 +353,8 @@ internal object FactIntWsResponseParser {
                 "code" to code,
                 "label" to text(sector, "DescSetor")?.takeIf(String::isNotBlank),
                 "provisionalBenefitCents" to optionalMoney(sector, "ValorBeneficioProvisorioPorSetor"),
+                "totalExpensesCents" to optionalMoney(sector, "ValorTotalDespesas"),
+                "totalVatExpensesCents" to optionalMoney(sector, "ValorTotalIvaDespesas"),
                 "invoiceCount" to optionalInteger(sector, "NumFaturas"),
             )
         }

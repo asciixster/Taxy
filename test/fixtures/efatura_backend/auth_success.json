@@ -1,0 +1,9 @@
+{
+  "sessionToken": "synthetic-opaque-session",
+  "overview": {
+    "pendingValidation": {"status": "available", "value": 3},
+    "pendingRevenueAssociation": {"status": "unavailable"},
+    "provisionalBenefitCents": {"status": "unavailable"},
+    "sectors": {"status": "unavailable"}
+  }
+}

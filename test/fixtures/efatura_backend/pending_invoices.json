@@ -1,0 +1,11 @@
+{
+  "invoices": [
+    {
+      "issuerDisplayName": "Emitente sintético",
+      "date": "2026-08-29",
+      "totalCents": 2345,
+      "classificationStatus": "pending",
+      "pendingClassification": true
+    }
+  ]
+}

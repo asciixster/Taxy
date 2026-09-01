@@ -75,12 +75,12 @@ void main() {
 
   test('overview is normalized before reaching application service', () async {
     final overview = await bridge.fetchOverview();
-    expect(overview.provisionalBenefitCents, 50339);
-    expect(overview.pendingValidation, 5);
-    expect(overview.sectors.single.code, 'C05');
+    expect(overview.provisionalBenefitCents.value, 50339);
+    expect(overview.pendingValidation.value, 5);
+    expect(overview.sectors.value.single.code, 'C05');
   });
 
-  test('overview missing required aggregate fails closed', () async {
+  test('overview missing optional aggregate is unavailable', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           channel,
@@ -90,16 +90,10 @@ void main() {
             'sectors': <Object>[],
           },
         );
-    await expectLater(
-      bridge.fetchOverview(),
-      throwsA(
-        predicate(
-          (error) =>
-              error is EfaturaServiceException &&
-              error.kind == EfaturaFailureKind.parsing,
-        ),
-      ),
-    );
+    final overview = await bridge.fetchOverview();
+    expect(overview.provisionalBenefitCents.status, AtValueStatus.unavailable);
+    expect(overview.pendingValidation.value, 5);
+    expect(overview.outcome, EfaturaOverviewOutcome.partialSuccess);
   });
 
   test('pending and sector operations remain explicit and on-demand', () async {

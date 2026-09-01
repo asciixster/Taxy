@@ -17,11 +17,24 @@ abstract interface class EfaturaReadOnlyGateway {
   Future<List<EfaturaInvoice>> fetchSectorInvoices(String sectorCode);
 }
 
+abstract interface class EfaturaReachabilityProbe {
+  Future<EfaturaApiReachability> checkReachability();
+}
+
 final class EfaturaReadOnlyService {
-  const EfaturaReadOnlyService(this._gateway, [this._credentialStore]);
+  const EfaturaReadOnlyService(
+    this._gateway, [
+    this._credentialStore,
+    this._reachabilityProbe,
+  ]);
 
   final EfaturaReadOnlyGateway _gateway;
   final EfaturaCredentialStore? _credentialStore;
+  final EfaturaReachabilityProbe? _reachabilityProbe;
+
+  Future<EfaturaApiReachability> reachability() async =>
+      await _reachabilityProbe?.checkReachability() ??
+      EfaturaApiReachability.reachable;
 
   Future<EfaturaRuntimeReadiness> readiness() async {
     final store = _credentialStore;
@@ -67,7 +80,8 @@ final class EfaturaReadOnlyService {
   Future<List<EfaturaInvoice>> loadPendingInvoicesIfNeeded(
     EfaturaOverview overview,
   ) async {
-    if (overview.pendingValidation <= 0) return const [];
+    final pending = overview.pendingValidation.valueOrNull;
+    if (pending == null || pending <= 0) return const [];
     return loadPendingInvoices();
   }
 
