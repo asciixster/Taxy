@@ -110,4 +110,9 @@
   ,"savedDataLoadError": "Não foi possível abrir os dados guardados neste dispositivo."
   ,"simulationsLoadError": "Não foi possível abrir as simulações guardadas neste dispositivo."
   ,"simulationRulesLoadError": "Não foi possível carregar as regras desta simulação com segurança."
+  ,"internalBetaBuild": "Informação da beta interna"
+  ,"appVersion": "Versão"
+  ,"gitRevision": "Revisão"
+  ,"environment": "Ambiente"
+  ,"apiHost": "Servidor API"
 }
