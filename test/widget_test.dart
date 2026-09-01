@@ -10,6 +10,7 @@ import 'package:taxy_pt/main.dart';
 import 'package:taxy_pt/l10n/app_localizations.dart';
 import 'package:taxy_pt/question_engine/question_engine.dart';
 import 'package:taxy_pt/tax_engine/tax_rules.dart';
+import 'package:taxy_pt/product/product_repository.dart';
 
 void main() {
   testWidgets('a aplicação arranca', (tester) async {
@@ -17,6 +18,7 @@ void main() {
       ProviderScope(
         overrides: [
           repositoryProvider.overrideWithValue(MemorySimulationRepository()),
+          productRepositoryProvider.overrideWithValue(MemoryProductRepository()),
         ],
         child: const TaxyApp(),
       ),
@@ -162,6 +164,9 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('pt', 'PT'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         home: ResultScreen(simulation: simulation, rules: rules),
       ),
     );

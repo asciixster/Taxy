@@ -770,6 +770,444 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Servidor API'**
   String get apiHost;
+
+  /// No description provided for @fiscalProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil fiscal'**
+  String get fiscalProfile;
+
+  /// No description provided for @profileComplete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil completo'**
+  String get profileComplete;
+
+  /// No description provided for @profileIncomplete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil incompleto'**
+  String get profileIncomplete;
+
+  /// No description provided for @profilePurpose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estes dados mantêm o ano fiscal e as simulações coerentes. Valores desconhecidos continuam indisponíveis.'**
+  String get profilePurpose;
+
+  /// No description provided for @activeTaxYear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ano fiscal ativo'**
+  String get activeTaxYear;
+
+  /// No description provided for @taxResidence.
+  ///
+  /// In pt, this message translates to:
+  /// **'Residência fiscal'**
+  String get taxResidence;
+
+  /// No description provided for @unknownValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não indicado'**
+  String get unknownValue;
+
+  /// No description provided for @mainlandPortugal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Portugal continental'**
+  String get mainlandPortugal;
+
+  /// No description provided for @madeira.
+  ///
+  /// In pt, this message translates to:
+  /// **'Madeira'**
+  String get madeira;
+
+  /// No description provided for @azores.
+  ///
+  /// In pt, this message translates to:
+  /// **'Açores'**
+  String get azores;
+
+  /// No description provided for @civilStatusLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estado civil'**
+  String get civilStatusLabel;
+
+  /// No description provided for @single.
+  ///
+  /// In pt, this message translates to:
+  /// **'Solteiro/a'**
+  String get single;
+
+  /// No description provided for @married.
+  ///
+  /// In pt, this message translates to:
+  /// **'Casado/a'**
+  String get married;
+
+  /// No description provided for @deFactoUnion.
+  ///
+  /// In pt, this message translates to:
+  /// **'União de facto'**
+  String get deFactoUnion;
+
+  /// No description provided for @dependants.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dependentes'**
+  String get dependants;
+
+  /// No description provided for @employmentIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos de trabalho dependente'**
+  String get employmentIncome;
+
+  /// No description provided for @selfEmploymentIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos de trabalho independente'**
+  String get selfEmploymentIncome;
+
+  /// No description provided for @yes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sim'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não'**
+  String get no;
+
+  /// No description provided for @save.
+  ///
+  /// In pt, this message translates to:
+  /// **'Guardar'**
+  String get save;
+
+  /// No description provided for @localDataUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir os dados guardados neste dispositivo.'**
+  String get localDataUnavailable;
+
+  /// No description provided for @income.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos'**
+  String get income;
+
+  /// No description provided for @expenses.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesas'**
+  String get expenses;
+
+  /// No description provided for @addIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar rendimento'**
+  String get addIncome;
+
+  /// No description provided for @addExpense.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar despesa'**
+  String get addExpense;
+
+  /// No description provided for @totalForYear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total de {year}'**
+  String totalForYear(int year);
+
+  /// No description provided for @localIncomeNotice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registos apenas locais. Não são importados nem apresentados como dados oficiais.'**
+  String get localIncomeNotice;
+
+  /// No description provided for @localExpenseNotice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os registos locais são informação de apoio e não são tratados automaticamente como deduções de IRS.'**
+  String get localExpenseNotice;
+
+  /// No description provided for @noIncomeRegistered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem rendimentos registados neste ano'**
+  String get noIncomeRegistered;
+
+  /// No description provided for @noExpensesRegistered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem despesas registadas neste ano'**
+  String get noExpensesRegistered;
+
+  /// No description provided for @amountEuros.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor em euros'**
+  String get amountEuros;
+
+  /// No description provided for @remove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover'**
+  String get remove;
+
+  /// No description provided for @sourceManual.
+  ///
+  /// In pt, this message translates to:
+  /// **'Introduzido manualmente'**
+  String get sourceManual;
+
+  /// No description provided for @sourceImported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Importado'**
+  String get sourceImported;
+
+  /// No description provided for @sourceExternal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fonte externa'**
+  String get sourceExternal;
+
+  /// No description provided for @sourceCalculated.
+  ///
+  /// In pt, this message translates to:
+  /// **'Calculado'**
+  String get sourceCalculated;
+
+  /// No description provided for @statusConfirmed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmado'**
+  String get statusConfirmed;
+
+  /// No description provided for @statusEstimated.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimado'**
+  String get statusEstimated;
+
+  /// No description provided for @statusPossibleDuplicate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Possível duplicado'**
+  String get statusPossibleDuplicate;
+
+  /// No description provided for @privacyAndSecurity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Privacidade e segurança'**
+  String get privacyAndSecurity;
+
+  /// No description provided for @privacyIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Taxy guarda as simulações e os registos locais neste dispositivo. As credenciais e-Fatura são enviadas por HTTPS apenas para api.taxy.pt durante a ligação e não regressam à interface.'**
+  String get privacyIntro;
+
+  /// No description provided for @privacyEfatura.
+  ///
+  /// In pt, this message translates to:
+  /// **'O acesso ao e-Fatura é apenas de leitura. Desligar remove deste dispositivo a capacidade de sessão guardada.'**
+  String get privacyEfatura;
+
+  /// No description provided for @diagnostics.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diagnóstico'**
+  String get diagnostics;
+
+  /// No description provided for @copyDiagnostics.
+  ///
+  /// In pt, this message translates to:
+  /// **'Copiar informações de diagnóstico'**
+  String get copyDiagnostics;
+
+  /// No description provided for @diagnosticsCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informações de diagnóstico copiadas'**
+  String get diagnosticsCopied;
+
+  /// No description provided for @diagnosticsNotice.
+  ///
+  /// In pt, this message translates to:
+  /// **'O diagnóstico contém apenas versão e ambiente — nunca NIF, credenciais, tokens ou dados de faturas.'**
+  String get diagnosticsNotice;
+
+  /// No description provided for @sendFeedback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar feedback'**
+  String get sendFeedback;
+
+  /// No description provided for @feedbackCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foi copiado um modelo seguro de feedback.'**
+  String get feedbackCopied;
+
+  /// No description provided for @appearance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparência'**
+  String get appearance;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar definição do dispositivo'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In pt, this message translates to:
+  /// **'Claro'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escuro'**
+  String get themeDark;
+
+  /// No description provided for @profileModuleDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ano ativo e dados fiscais'**
+  String get profileModuleDescription;
+
+  /// No description provided for @incomeModuleDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos locais com origem'**
+  String get incomeModuleDescription;
+
+  /// No description provided for @expensesModuleDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesas locais de apoio'**
+  String get expensesModuleDescription;
+
+  /// No description provided for @estimateBasis.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que esta estimativa considera'**
+  String get estimateBasis;
+
+  /// No description provided for @incomeConsidered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos considerados'**
+  String get incomeConsidered;
+
+  /// No description provided for @deductionsConsidered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deduções consideradas'**
+  String get deductionsConsidered;
+
+  /// No description provided for @withholdingConsidered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retenções consideradas'**
+  String get withholdingConsidered;
+
+  /// No description provided for @userEnteredSource.
+  ///
+  /// In pt, this message translates to:
+  /// **'Introduzido por ti'**
+  String get userEnteredSource;
+
+  /// No description provided for @estimateNotOfficial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativa baseada na informação introduzida e nas regras suportadas pela Taxy. Não é uma liquidação oficial da AT.'**
+  String get estimateNotOfficial;
+
+  /// No description provided for @missingInformationImprove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta informação para melhorar esta estimativa.'**
+  String get missingInformationImprove;
+
+  /// No description provided for @category.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categoria'**
+  String get category;
+
+  /// No description provided for @categoryEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trabalho dependente'**
+  String get categoryEmployment;
+
+  /// No description provided for @categorySelfEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trabalho independente'**
+  String get categorySelfEmployment;
+
+  /// No description provided for @categoryPension.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pensão'**
+  String get categoryPension;
+
+  /// No description provided for @categoryOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outra'**
+  String get categoryOther;
+
+  /// No description provided for @categoryGeneral.
+  ///
+  /// In pt, this message translates to:
+  /// **'Geral'**
+  String get categoryGeneral;
+
+  /// No description provided for @categoryHealth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saúde'**
+  String get categoryHealth;
+
+  /// No description provided for @categoryEducation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Educação'**
+  String get categoryEducation;
+
+  /// No description provided for @categoryHousing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Habitação'**
+  String get categoryHousing;
+
+  /// No description provided for @categoryProfessional.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atividade profissional'**
+  String get categoryProfessional;
+
+  /// No description provided for @edit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar'**
+  String get edit;
 }
 
 class _AppLocalizationsDelegate
