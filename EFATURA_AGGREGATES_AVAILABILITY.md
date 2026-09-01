@@ -25,10 +25,11 @@ The authenticated personal source is
 `actividadeEmitente`, `actividadeEmitenteDesc`,
 `valorTotalBeneficioProv`, `valorTotalSetorBeneficio` and
 `valorTotalDespesasGerais`. This establishes a source for personal sector and
-benefit inputs. The backend now aggregates the integer-cent document benefits
-and applies only statutory caps explicitly documented by AT. Unknown non-zero
-categories, malformed amounts, incomplete retrieval and inexact shared-cap
-allocation all fail closed.
+benefit inputs. An internal experiment aggregated the integer-cent document
+benefits and applied documented caps. This is useful diagnostic evidence, but
+is not semantically equivalent to the official consolidated overview. External
+beta policy therefore keeps provisional benefit and sectors **unavailable**;
+document sums must never be presented as an official e-Fatura aggregate.
 
 ## Official-app 6.0.10 cross-check
 
@@ -67,14 +68,15 @@ with HTTP 200/SOAP success and a divergent logical population.
 
 ## Backend contract
 
-Every aggregate now carries explicit availability:
+Every aggregate carries explicit availability. Until an official equivalent
+source exists, production benefit and sector values must remain unavailable:
 
 ```json
 {
-  "provisionalBenefitCents": { "status": "available", "value": 12345 },
+  "provisionalBenefitCents": { "status": "unavailable" },
   "pendingValidation": { "status": "available", "value": 5 },
   "pendingRevenueAssociation": { "status": "unavailable" },
-  "sectors": { "status": "available", "items": [] }
+  "sectors": { "status": "unavailable" }
 }
 ```
 
@@ -111,8 +113,7 @@ and total were 40 cents higher. The same live source also reported two more
 pending documents than that earlier app screenshot. These two changes support
 snapshot/update drift rather than a missing Taxy cap or category rule.
 
-The current Portal data is now the runtime source used by the backend. The
-historical official-app screenshot remains comparison evidence, not a frozen
-expected value. No real response, credential, document identifier, taxpayer
-identifier or issuer identity is persisted. Revenue-association count remains
-unavailable because no equivalent safe source has been demonstrated.
+The observation demonstrates access to current Portal document data, not
+semantic equivalence with the official aggregate. It must not cross the
+external-beta product boundary. No real response, credential, document
+identifier, taxpayer identifier or issuer identity is persisted.

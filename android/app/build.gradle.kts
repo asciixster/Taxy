@@ -4,6 +4,25 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val signingEnvironment = mapOf(
+    "storeFile" to System.getenv("TAXY_ANDROID_KEYSTORE_PATH"),
+    "storePassword" to System.getenv("TAXY_ANDROID_KEYSTORE_PASSWORD"),
+    "keyAlias" to System.getenv("TAXY_ANDROID_KEY_ALIAS"),
+    "keyPassword" to System.getenv("TAXY_ANDROID_KEY_PASSWORD"),
+)
+val releaseSigningConfigured = signingEnvironment.values.all { !it.isNullOrBlank() }
+val releaseBuildRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true) || it.contains("bundle", ignoreCase = true)
+}
+
+if (releaseBuildRequested && !releaseSigningConfigured) {
+    throw GradleException(
+        "Production signing is not configured. Set TAXY_ANDROID_KEYSTORE_PATH, " +
+            "TAXY_ANDROID_KEYSTORE_PASSWORD, TAXY_ANDROID_KEY_ALIAS and " +
+            "TAXY_ANDROID_KEY_PASSWORD.",
+    )
+}
+
 android {
     namespace = "pt.taxy.app"
     compileSdk = 36
@@ -30,11 +49,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            create("production") {
+                storeFile = file(signingEnvironment.getValue("storeFile")!!)
+                storePassword = signingEnvironment.getValue("storePassword")
+                keyAlias = signingEnvironment.getValue("keyAlias")
+                keyPassword = signingEnvironment.getValue("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (releaseSigningConfigured) {
+                signingConfigs.getByName("production")
+            } else {
+                null
+            }
         }
     }
 }

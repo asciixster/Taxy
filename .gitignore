@@ -31,6 +31,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/android/build/
 /coverage/
 
 # Symbolication related
@@ -49,6 +50,12 @@ app.*.map.json
 *.p12
 *.key
 *.cer
+*.keystore
+*.jks
+*.pfx.password
+.env.local
+android/key.properties
+android/keystore.properties
 tools/at_connector/.env
 tools/at_connector/.env.*
 !tools/at_connector/.env.example

@@ -1,6 +1,9 @@
-# taxy.pt — 0.7.7 Secure e-Fatura runtime bridge
+# Taxy 0.7.11 — product beta hardening
 
-Taxy is a multi-module Portuguese tax and personal finance application. IRS is the first production module.
+Taxy is a Portuguese personal tax assistant. IRS is its first beta-ready module;
+e-Fatura remains an experimental, read-only module. Product boundaries and
+release gates are documented in `PRODUCT_AUDIT_0.7.11.md`,
+`PRODUCT_GAP_MATRIX.md` and `EXTERNAL_BETA_SCOPE.md`.
 
 The FactIntWS connector implements the read-only `EcraInicial`,
 `FaturasPorClassificar` and `FaturasPorSetor` operations. The application now
