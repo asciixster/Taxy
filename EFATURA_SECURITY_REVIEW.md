@@ -1,4 +1,18 @@
-# e-Fatura security review (0.7.7)
+# e-Fatura and application security review (updated for 0.7.11)
+
+## Current production boundary
+
+- Normal application traffic is restricted to `https://api.taxy.pt` and API
+  contract v1. Direct FactIntWS/Android code is retained only as research and is
+  not a normal-flow fallback.
+- The public bridge sends credentials only to create a short-lived backend
+  session, stores the opaque capability in platform secure storage, and exposes
+  neither credentials nor raw fiscal payloads to UI state or observability.
+- The app requests only Android Internet permission. The launcher is the only
+  exported activity; there are no WebViews or custom deep-link handlers.
+- Production signing is fail-closed and documented in `PRODUCTION_SIGNING.md`.
+- The previously exposed Cloudflare key is treated as compromised. Rotation
+  remains `UNKNOWN`; this blocks external beta.
 
 ## Credential storage
 
