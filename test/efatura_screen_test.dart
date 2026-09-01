@@ -265,6 +265,22 @@ void main() {
     expect(gateway.overviewCalls, 2);
   });
 
+  testWidgets('duplo toque em refresh produz apenas um pedido', (tester) async {
+    final gateway = _BlockingRefreshGateway(overview);
+    await _pump(tester, gateway, _readyStore());
+    await tester.pumpAndSettle();
+    final refresh = find.byKey(const Key('efatura-manual-refresh'));
+    await tester.ensureVisible(refresh);
+    await tester.pumpAndSettle();
+    await tester.tap(refresh);
+    await tester.tap(refresh);
+    await tester.pump();
+    expect(gateway.overviewCalls, 2);
+    gateway.completeRefresh();
+    await tester.pumpAndSettle();
+    expect(gateway.overviewCalls, 2);
+  });
+
   testWidgets('English copy and localized sector are rendered naturally', (
     tester,
   ) async {
@@ -504,6 +520,28 @@ final class _DeferredGateway implements EfaturaReadOnlyGateway {
   Future<EfaturaOverview> fetchOverview() => future;
   @override
   Future<List<EfaturaInvoice>> fetchPendingInvoices() async => const [];
+  @override
+  Future<List<EfaturaInvoice>> fetchSectorInvoices(String sectorCode) async =>
+      const [];
+}
+
+final class _BlockingRefreshGateway implements EfaturaReadOnlyGateway {
+  _BlockingRefreshGateway(this.overview);
+  final EfaturaOverview overview;
+  final Completer<EfaturaOverview> _refresh = Completer<EfaturaOverview>();
+  int overviewCalls = 0;
+
+  void completeRefresh() => _refresh.complete(overview);
+
+  @override
+  Future<EfaturaOverview> fetchOverview() {
+    overviewCalls++;
+    return overviewCalls == 1 ? Future.value(overview) : _refresh.future;
+  }
+
+  @override
+  Future<List<EfaturaInvoice>> fetchPendingInvoices() async => const [];
+
   @override
   Future<List<EfaturaInvoice>> fetchSectorInvoices(String sectorCode) async =>
       const [];

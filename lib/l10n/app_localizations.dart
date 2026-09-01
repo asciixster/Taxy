@@ -740,6 +740,36 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Não foi possível carregar as regras desta simulação com segurança.'**
   String get simulationRulesLoadError;
+
+  /// No description provided for @internalBetaBuild.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informação da beta interna'**
+  String get internalBetaBuild;
+
+  /// No description provided for @appVersion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Versão'**
+  String get appVersion;
+
+  /// No description provided for @gitRevision.
+  ///
+  /// In pt, this message translates to:
+  /// **'Revisão'**
+  String get gitRevision;
+
+  /// No description provided for @environment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ambiente'**
+  String get environment;
+
+  /// No description provided for @apiHost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Servidor API'**
+  String get apiHost;
 }
 
 class _AppLocalizationsDelegate

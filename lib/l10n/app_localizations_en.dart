@@ -363,4 +363,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get simulationRulesLoadError =>
       'We couldn\'t load the rules for this simulation securely.';
+
+  @override
+  String get internalBetaBuild => 'Internal beta build';
+
+  @override
+  String get appVersion => 'Version';
+
+  @override
+  String get gitRevision => 'Revision';
+
+  @override
+  String get environment => 'Environment';
+
+  @override
+  String get apiHost => 'API host';
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../application/efatura_read_only_service.dart';
 import '../domain/efatura_models.dart';
+import 'efatura_observability.dart';
 import 'efatura_runtime_bridge.dart';
 import 'efatura_session_token_store.dart';
 import 'efatura_wire_mapping.dart';
@@ -284,13 +285,24 @@ final class BackendEfaturaRuntimeBridge
 final class IoEfaturaBackendTransport implements EfaturaBackendTransport {
   IoEfaturaBackendTransport({
     HttpClient? client,
-    this.timeout = const Duration(minutes: 3),
+    this.connectTimeout = const Duration(seconds: 20),
+    this.responseTimeout = const Duration(seconds: 90),
     this.maximumResponseBytes = 1024 * 1024,
-  }) : _client = client ?? HttpClient();
+    EfaturaObservabilitySink? observability,
+    EfaturaCorrelationIdFactory? correlationIds,
+  }) : _client = client ?? HttpClient(),
+       _observability =
+           observability ?? const DeveloperEfaturaObservabilitySink(),
+       _correlationIds = correlationIds ?? EfaturaCorrelationIdFactory() {
+    _client.connectionTimeout = connectTimeout;
+  }
 
   final HttpClient _client;
-  final Duration timeout;
+  final Duration connectTimeout;
+  final Duration responseTimeout;
   final int maximumResponseBytes;
+  final EfaturaObservabilitySink _observability;
+  final EfaturaCorrelationIdFactory _correlationIds;
 
   @override
   Future<EfaturaBackendResponse> send({
@@ -305,44 +317,101 @@ final class IoEfaturaBackendTransport implements EfaturaBackendTransport {
         'A ligação segura ao backend e-Fatura não está configurada.',
       );
     }
-    final request = await _client.openUrl(method, uri).timeout(timeout);
-    request.followRedirects = false;
-    request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-    request.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
-    if (bearerToken != null) {
-      request.headers.set(
-        HttpHeaders.authorizationHeader,
-        'Bearer $bearerToken',
-      );
-    }
-    if (body != null) {
-      request.headers.contentType = ContentType.json;
-      request.add(utf8.encode(jsonEncode(body)));
-    }
-    final response = await request.close().timeout(timeout);
-    final bytes = <int>[];
-    await for (final chunk in response.timeout(timeout)) {
-      if (bytes.length + chunk.length > maximumResponseBytes) {
-        throw const EfaturaServiceException(
-          EfaturaFailureKind.parsing,
-          'Recebemos uma resposta inesperada do e-Fatura.',
+    final correlationId = _correlationIds.create();
+    final stopwatch = Stopwatch()..start();
+    int? statusCode;
+    EfaturaApiErrorCategory? category;
+    try {
+      final request = await _client
+          .openUrl(method, uri)
+          .timeout(connectTimeout);
+      request.followRedirects = false;
+      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      request.headers.set(HttpHeaders.cacheControlHeader, 'no-store');
+      request.headers.set('X-Correlation-ID', correlationId);
+      if (bearerToken != null) {
+        request.headers.set(
+          HttpHeaders.authorizationHeader,
+          'Bearer $bearerToken',
         );
       }
-      bytes.addAll(chunk);
-    }
-    if (bytes.isEmpty && response.statusCode == HttpStatus.noContent) {
+      if (body != null) {
+        request.headers.contentType = ContentType.json;
+        request.add(utf8.encode(jsonEncode(body)));
+      }
+      final response = await request.close().timeout(responseTimeout);
+      statusCode = response.statusCode;
+      category = _categoryForStatus(statusCode);
+      final bytes = <int>[];
+      await for (final chunk in response.timeout(responseTimeout)) {
+        if (bytes.length + chunk.length > maximumResponseBytes) {
+          category = EfaturaApiErrorCategory.malformedResponse;
+          throw const EfaturaServiceException(
+            EfaturaFailureKind.parsing,
+            'Recebemos uma resposta inesperada do e-Fatura.',
+          );
+        }
+        bytes.addAll(chunk);
+      }
+      if (bytes.isEmpty && response.statusCode == HttpStatus.noContent) {
+        return EfaturaBackendResponse(
+          statusCode: response.statusCode,
+          body: const {},
+        );
+      }
+      final decoded = jsonDecode(utf8.decode(bytes));
+      if (decoded is! Map<String, Object?>) throw const FormatException();
       return EfaturaBackendResponse(
         statusCode: response.statusCode,
-        body: const {},
+        body: decoded,
+      );
+    } on TimeoutException {
+      category = EfaturaApiErrorCategory.timeout;
+      rethrow;
+    } on HandshakeException {
+      category = EfaturaApiErrorCategory.tlsError;
+      rethrow;
+    } on SocketException catch (error) {
+      category = _socketCategory(error);
+      rethrow;
+    } on FormatException {
+      category = EfaturaApiErrorCategory.malformedResponse;
+      rethrow;
+    } catch (_) {
+      category ??= EfaturaApiErrorCategory.unknown;
+      rethrow;
+    } finally {
+      stopwatch.stop();
+      _observability.record(
+        EfaturaApiObservation(
+          correlationId: correlationId,
+          route: normalizeEfaturaRoute(uri),
+          httpStatus: statusCode,
+          latencyMs: stopwatch.elapsedMilliseconds,
+          errorCategory: category,
+          manualAttempt: true,
+          attempt: 1,
+        ),
       );
     }
-    final decoded = jsonDecode(utf8.decode(bytes));
-    if (decoded is! Map<String, Object?>) throw const FormatException();
-    return EfaturaBackendResponse(
-      statusCode: response.statusCode,
-      body: decoded,
-    );
   }
+}
+
+EfaturaApiErrorCategory? _categoryForStatus(int statusCode) =>
+    switch (statusCode) {
+      401 => EfaturaApiErrorCategory.sessionExpired,
+      403 => EfaturaApiErrorCategory.authFailed,
+      429 => EfaturaApiErrorCategory.rateLimited,
+      502 || 503 || 504 => EfaturaApiErrorCategory.backendUnavailable,
+      _ when statusCode >= 400 => EfaturaApiErrorCategory.unknown,
+      _ => null,
+    };
+
+EfaturaApiErrorCategory _socketCategory(SocketException error) {
+  final normalized = error.message.toLowerCase();
+  return normalized.contains('host lookup') || normalized.contains('resolve')
+      ? EfaturaApiErrorCategory.dnsError
+      : EfaturaApiErrorCategory.networkOffline;
 }
 
 EfaturaServiceException _backendFailure(
@@ -355,6 +424,9 @@ EfaturaServiceException _backendFailure(
     'AUTHORIZATION_ERROR' => EfaturaFailureKind.authorization,
     'SESSION_EXPIRED' => EfaturaFailureKind.expired,
     'NETWORK_ERROR' => EfaturaFailureKind.network,
+    'TIMEOUT' => EfaturaFailureKind.network,
+    'BACKEND_UNAVAILABLE' ||
+    'UPSTREAM_PORTAL_UNAVAILABLE' => EfaturaFailureKind.serviceUnavailable,
     'SERVICE_ERROR' => EfaturaFailureKind.serviceUnavailable,
     'BUSINESS_ERROR' => EfaturaFailureKind.business,
     'PARSING_ERROR' => EfaturaFailureKind.parsing,

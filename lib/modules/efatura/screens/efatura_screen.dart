@@ -29,6 +29,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
   List<EfaturaInvoice> _invoices = const [];
   bool _invoiceListLoaded = false;
   bool _showingPendingInvoices = false;
+  bool _requestInFlight = false;
 
   @override
   void initState() {
@@ -89,7 +90,9 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
   }
 
   Future<void> _connect() async {
+    if (_requestInFlight) return;
     if (_formKey.currentState?.validate() != true) return;
+    _requestInFlight = true;
     setState(() {
       _status = EfaturaConnectionStatus.connecting;
       _failure = null;
@@ -118,10 +121,13 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       _applyFailure(error);
     } finally {
       _passwordController.clear();
+      _requestInFlight = false;
     }
   }
 
   Future<void> _refresh() async {
+    if (_requestInFlight) return;
+    _requestInFlight = true;
     setState(() {
       _status = EfaturaConnectionStatus.connecting;
       _failure = null;
@@ -142,6 +148,8 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
           'Não foi possível atualizar o e-Fatura. Tenta novamente mais tarde.',
         ),
       );
+    } finally {
+      _requestInFlight = false;
     }
   }
 
@@ -169,23 +177,29 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
   }
 
   Future<void> _disconnect() async {
-    await widget.service.disconnect();
-    if (!mounted) return;
-    _passwordController.clear();
-    _nifController.clear();
-    setState(() {
-      _overview = null;
-      _invoices = const [];
-      _invoiceListLoaded = false;
-      _showingPendingInvoices = false;
-      _failure = null;
-      _readiness = EfaturaRuntimeReadiness(
-        hasCredentials: false,
-        hasClientIdentity: _readiness?.hasClientIdentity ?? false,
-        hasCipherCertificate: _readiness?.hasCipherCertificate ?? false,
-      );
-      _status = EfaturaConnectionStatus.disconnected;
-    });
+    if (_requestInFlight) return;
+    _requestInFlight = true;
+    try {
+      await widget.service.disconnect();
+      if (!mounted) return;
+      _passwordController.clear();
+      _nifController.clear();
+      setState(() {
+        _overview = null;
+        _invoices = const [];
+        _invoiceListLoaded = false;
+        _showingPendingInvoices = false;
+        _failure = null;
+        _readiness = EfaturaRuntimeReadiness(
+          hasCredentials: false,
+          hasClientIdentity: _readiness?.hasClientIdentity ?? false,
+          hasCipherCertificate: _readiness?.hasCipherCertificate ?? false,
+        );
+        _status = EfaturaConnectionStatus.disconnected;
+      });
+    } finally {
+      _requestInFlight = false;
+    }
   }
 
   Future<void> _selectClientIdentity() async {
@@ -203,6 +217,8 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       _loadInvoices(sector);
 
   Future<void> _loadPendingInvoices() async {
+    if (_requestInFlight) return;
+    _requestInFlight = true;
     setState(() {
       _status = EfaturaConnectionStatus.connecting;
       _failure = null;
@@ -218,10 +234,14 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       });
     } on EfaturaServiceException catch (error) {
       _applyFailure(error);
+    } finally {
+      _requestInFlight = false;
     }
   }
 
   Future<void> _loadInvoices(AtExpenseSector sector) async {
+    if (_requestInFlight) return;
+    _requestInFlight = true;
     setState(() {
       _status = EfaturaConnectionStatus.connecting;
       _failure = null;
@@ -237,6 +257,8 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       });
     } on EfaturaServiceException catch (error) {
       _applyFailure(error);
+    } finally {
+      _requestInFlight = false;
     }
   }
 

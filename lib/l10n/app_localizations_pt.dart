@@ -368,6 +368,21 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get simulationRulesLoadError =>
       'Não foi possível carregar as regras desta simulação com segurança.';
+
+  @override
+  String get internalBetaBuild => 'Informação da beta interna';
+
+  @override
+  String get appVersion => 'Versão';
+
+  @override
+  String get gitRevision => 'Revisão';
+
+  @override
+  String get environment => 'Ambiente';
+
+  @override
+  String get apiHost => 'Servidor API';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -733,4 +748,19 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get simulationRulesLoadError =>
       'Não foi possível carregar as regras desta simulação com segurança.';
+
+  @override
+  String get internalBetaBuild => 'Informação da beta interna';
+
+  @override
+  String get appVersion => 'Versão';
+
+  @override
+  String get gitRevision => 'Revisão';
+
+  @override
+  String get environment => 'Ambiente';
+
+  @override
+  String get apiHost => 'Servidor API';
 }

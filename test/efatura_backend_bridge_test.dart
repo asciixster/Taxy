@@ -167,7 +167,9 @@ void main() {
     403: EfaturaFailureKind.authorization,
     404: EfaturaFailureKind.operationUnavailable,
     429: EfaturaFailureKind.rateLimited,
+    502: EfaturaFailureKind.serviceUnavailable,
     503: EfaturaFailureKind.serviceUnavailable,
+    504: EfaturaFailureKind.serviceUnavailable,
   }.entries) {
     test('HTTP ${entry.key} maps to ${entry.value}', () async {
       tokenStore.token = 'opaque-session';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/internal_beta_build_info.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/language_controller.dart';
 
@@ -61,6 +62,38 @@ final class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
+          if (InternalBetaBuildInfo.isInternalBeta) ...[
+            const SizedBox(height: 24),
+            Semantics(
+              header: true,
+              child: Text(
+                l10n.internalBetaBuild,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Card(
+              key: const Key('internal-beta-build-info'),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${l10n.appVersion}: ${InternalBetaBuildInfo.appVersion}+${InternalBetaBuildInfo.buildNumber}',
+                    ),
+                    Text(
+                      '${l10n.gitRevision}: ${InternalBetaBuildInfo.gitShortSha}',
+                    ),
+                    Text(
+                      '${l10n.environment}: ${InternalBetaBuildInfo.environment}',
+                    ),
+                    Text('${l10n.apiHost}: ${InternalBetaBuildInfo.apiHost}'),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
