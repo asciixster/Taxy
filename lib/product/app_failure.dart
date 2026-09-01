@@ -9,6 +9,10 @@ enum AppFailureKind {
   unknown,
 }
 
+/// Shared presentation state. `stale` is valid only when a module has a
+/// documented persisted snapshot; e-Fatura deliberately does not use it.
+enum AppDataState { online, offline, loading, stale, unavailable, error }
+
 final class AppFailure implements Exception {
   const AppFailure(this.kind, {this.correlationId});
 

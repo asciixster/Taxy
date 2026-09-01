@@ -1,5 +1,13 @@
 # Application state and error semantics
 
+The shared presentation states are `online`, `offline`, `loading`, `stale`,
+`unavailable` and `error`. `stale` is allowed only when a module already has a
+documented persisted snapshot. It is not a synonym for an old in-memory response.
+
+Profile, income, expenses, IRS calculation and saved estimates are local and remain
+usable offline. e-Fatura is network-only: offline means unavailable with manual
+retry. The app does not persist raw invoice payloads merely to claim stale support.
+
 ## Shared failure taxonomy
 
 | Diagnostic category | User meaning | Expected action |

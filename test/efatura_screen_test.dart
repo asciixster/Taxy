@@ -99,7 +99,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('sector-C05')));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Emitente sintético'), 250);
+    await tester.scrollUntilVisible(
+      find.text('Emitente sintético'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Emitente sintético'), findsOneWidget);
     expect(find.textContaining('23,45'), findsWidgets);
     expect(find.textContaining('IdDocumento'), findsNothing);
@@ -366,7 +370,7 @@ void main() {
     await tester.tap(find.byKey(const Key('efatura-view-pending')));
     await tester.pumpAndSettle();
     expect(find.text('Emitente sintético'), findsOneWidget);
-    expect(find.text('23,45 €'), findsOneWidget);
+    expect(find.text('23,45 €'), findsWidgets);
     expect(find.textContaining('Classificar'), findsNothing);
   });
 

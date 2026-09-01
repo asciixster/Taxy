@@ -6,6 +6,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../l10n/taxy_formatters.dart';
 import '../application/efatura_read_only_service.dart';
 import '../domain/efatura_models.dart';
+import '../domain/invoice_explorer.dart';
 import '../infrastructure/efatura_runtime_bridge.dart';
 
 final class EfaturaScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
   bool _invoiceListLoaded = false;
   bool _showingPendingInvoices = false;
   bool _requestInFlight = false;
+  DateTime? _lastUpdatedAt;
 
   @override
   void initState() {
@@ -111,6 +113,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
         _invoiceListLoaded = false;
         _showingPendingInvoices = false;
         _status = EfaturaConnectionStatus.connected;
+        _lastUpdatedAt = DateTime.now();
         _readiness = const EfaturaRuntimeReadiness(
           hasCredentials: true,
           hasClientIdentity: true,
@@ -138,6 +141,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       setState(() {
         _overview = overview;
         _status = EfaturaConnectionStatus.connected;
+        _lastUpdatedAt = DateTime.now();
       });
     } on EfaturaServiceException catch (error) {
       _applyFailure(error);
@@ -231,6 +235,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
         _invoiceListLoaded = true;
         _showingPendingInvoices = true;
         _status = EfaturaConnectionStatus.connected;
+        _lastUpdatedAt = DateTime.now();
       });
     } on EfaturaServiceException catch (error) {
       _applyFailure(error);
@@ -254,6 +259,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
         _invoiceListLoaded = true;
         _showingPendingInvoices = false;
         _status = EfaturaConnectionStatus.connected;
+        _lastUpdatedAt = DateTime.now();
       });
     } on EfaturaServiceException catch (error) {
       _applyFailure(error);
@@ -377,6 +383,16 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                       if (_overview != null) ...[
                         if (busy) const LinearProgressIndicator(minHeight: 3),
                         _OverviewCard(overview: _overview!),
+                        if (_lastUpdatedAt != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            l10n.lastUpdatedThisSession(
+                              TimeOfDay.fromDateTime(_lastUpdatedAt!)
+                                  .format(context),
+                            ),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
                         if ((_overview!.pendingValidation.valueOrNull ?? 0) >
                             0) ...[
                           const SizedBox(height: 10),
@@ -441,15 +457,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                                   : l10n.noInvoicesInCategory,
                             )
                           else
-                            ..._invoices.indexed.map(
-                              (entry) => Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: _InvoiceTile(
-                                  key: Key('efatura-invoice-${entry.$1}'),
-                                  invoice: entry.$2,
-                                ),
-                              ),
-                            ),
+                            _InvoiceExplorer(invoices: _invoices),
                         ],
                         const SizedBox(height: 18),
                         OutlinedButton.icon(
@@ -917,6 +925,204 @@ final class _SectorTile extends StatelessWidget {
     );
   }
 }
+
+final class _InvoiceExplorer extends StatefulWidget {
+  const _InvoiceExplorer({required this.invoices});
+  final List<EfaturaInvoice> invoices;
+
+  @override
+  State<_InvoiceExplorer> createState() => _InvoiceExplorerState();
+}
+
+final class _InvoiceExplorerState extends State<_InvoiceExplorer> {
+  final _search = TextEditingController();
+  final _minimum = TextEditingController();
+  final _maximum = TextEditingController();
+  InvoiceSort _sort = InvoiceSort.newest;
+  DateTimeRange? _range;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    _minimum.dispose();
+    _maximum.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final invoices = filterInvoices(
+      widget.invoices,
+      InvoiceFilter(
+        query: _search.text,
+        from: _range?.start,
+        to: _range?.end,
+        minimumCents: _moneyCents(_minimum.text),
+        maximumCents: _moneyCents(_maximum.text),
+        sort: _sort,
+      ),
+    );
+    final summaries = summarizeInvoicesByMonth(invoices);
+    final total = invoices.fold<int>(0, (sum, item) => sum + item.totalCents);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.invoiceExplorer,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _search,
+                  decoration: InputDecoration(
+                    labelText: l10n.searchInvoices,
+                    prefixIcon: const Icon(Icons.search),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _minimum,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: l10n.minimumAmount,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _maximum,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: l10n.maximumAmount,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _pickRange,
+                  icon: const Icon(Icons.date_range_outlined),
+                  label: Text(
+                    _range == null
+                        ? l10n.dateFilter
+                        : '${TaxyFormatters.date(context, _range!.start.toIso8601String())} – '
+                              '${TaxyFormatters.date(context, _range!.end.toIso8601String())}',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<InvoiceSort>(
+                  initialValue: _sort,
+                  items: InvoiceSort.values
+                      .map(
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(_sortLabel(l10n, value)),
+                        ),
+                      )
+                      .toList(growable: false),
+                  onChanged: (value) =>
+                      setState(() => _sort = value ?? InvoiceSort.newest),
+                ),
+                const SizedBox(height: 12),
+                Text(l10n.filteredInvoiceCount(invoices.length)),
+                Text(
+                  '${l10n.documentTotal}: ${TaxyFormatters.euros(context, total)}',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (summaries.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.monthlySummary,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  for (final month in summaries)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        '${month.month.toString().padLeft(2, '0')}/${month.year}',
+                      ),
+                      subtitle: Text(
+                        '${l10n.invoiceCount(month.documentCount)} · '
+                        '${l10n.averageDocument}: ${TaxyFormatters.euros(context, month.averageCents)}',
+                      ),
+                      trailing: Text(
+                        TaxyFormatters.euros(context, month.totalCents),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 10),
+        for (final entry in invoices.indexed)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _InvoiceTile(
+              key: Key('efatura-invoice-${entry.$1}'),
+              invoice: entry.$2,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _pickRange() async {
+    final value = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2015),
+      lastDate: DateTime.now(),
+      initialDateRange: _range,
+    );
+    if (value != null) setState(() => _range = value);
+  }
+}
+
+int? _moneyCents(String value) {
+  final normalized = value.trim().replaceAll(' ', '').replaceAll(',', '.');
+  if (normalized.isEmpty) return null;
+  final decimal = double.tryParse(normalized);
+  return decimal == null ? null : (decimal * 100).round();
+}
+
+String _sortLabel(AppLocalizations l10n, InvoiceSort value) => switch (value) {
+  InvoiceSort.newest => l10n.sortNewest,
+  InvoiceSort.oldest => l10n.sortOldest,
+  InvoiceSort.highestValue => l10n.sortHighest,
+  InvoiceSort.lowestValue => l10n.sortLowest,
+  InvoiceSort.issuer => l10n.sortIssuer,
+};
 
 final class _InvoiceTile extends StatelessWidget {
   const _InvoiceTile({super.key, required this.invoice});

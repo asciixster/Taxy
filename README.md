@@ -1,4 +1,4 @@
-# Taxy 0.7.12 — product completion pass
+# Taxy 0.7.13 — beta utility and quality closure
 
 Taxy is a Portuguese personal tax assistant. IRS is its first beta-ready module;
 e-Fatura remains an experimental, read-only module. Product boundaries and

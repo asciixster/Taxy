@@ -1208,6 +1208,288 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Editar'**
   String get edit;
+
+  /// No description provided for @profileChecklist.
+  ///
+  /// In pt, this message translates to:
+  /// **'Checklist fiscal'**
+  String get profileChecklist;
+
+  /// No description provided for @completedEssential.
+  ///
+  /// In pt, this message translates to:
+  /// **'{completed} de {total} elementos essenciais preenchidos'**
+  String completedEssential(int completed, int total);
+
+  /// No description provided for @checkActiveYear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ano fiscal ativo'**
+  String get checkActiveYear;
+
+  /// No description provided for @checkResidence.
+  ///
+  /// In pt, this message translates to:
+  /// **'Residência fiscal'**
+  String get checkResidence;
+
+  /// No description provided for @checkCivilStatus.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estado civil'**
+  String get checkCivilStatus;
+
+  /// No description provided for @checkHousehold.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agregado'**
+  String get checkHousehold;
+
+  /// No description provided for @checkWorkContext.
+  ///
+  /// In pt, this message translates to:
+  /// **'Situação profissional'**
+  String get checkWorkContext;
+
+  /// No description provided for @checkIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos do ano ativo'**
+  String get checkIncome;
+
+  /// No description provided for @impactResidence.
+  ///
+  /// In pt, this message translates to:
+  /// **'A residência determina as regras regionais suportadas aplicáveis.'**
+  String get impactResidence;
+
+  /// No description provided for @impactCivilStatus.
+  ///
+  /// In pt, this message translates to:
+  /// **'O estado civil é necessário para escolher um modo de cálculo aplicável.'**
+  String get impactCivilStatus;
+
+  /// No description provided for @impactHousehold.
+  ///
+  /// In pt, this message translates to:
+  /// **'O agregado pode afetar deduções e benefícios suportados.'**
+  String get impactHousehold;
+
+  /// No description provided for @impactWorkContext.
+  ///
+  /// In pt, this message translates to:
+  /// **'A situação profissional permite saber se o modelo atual suporta os rendimentos.'**
+  String get impactWorkContext;
+
+  /// No description provided for @impactIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os rendimentos e retenções são necessários para estimar o saldo final de IRS.'**
+  String get impactIncome;
+
+  /// No description provided for @scenarioComparison.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comparar cenários'**
+  String get scenarioComparison;
+
+  /// No description provided for @scenarioIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Testa alterações hipotéticas sem mudar a informação base.'**
+  String get scenarioIntro;
+
+  /// No description provided for @currentScenario.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cenário atual'**
+  String get currentScenario;
+
+  /// No description provided for @alternativeScenario.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cenário alternativo'**
+  String get alternativeScenario;
+
+  /// No description provided for @resultDifference.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diferença no resultado'**
+  String get resultDifference;
+
+  /// No description provided for @whatChanged.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que mudou'**
+  String get whatChanged;
+
+  /// No description provided for @noScenarioChanges.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não existem alterações hipotéticas.'**
+  String get noScenarioChanges;
+
+  /// No description provided for @scenarioOverrideNotice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os valores alternativos são hipóteses do cenário, não dados confirmados do perfil.'**
+  String get scenarioOverrideNotice;
+
+  /// No description provided for @savedEstimates.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativas guardadas'**
+  String get savedEstimates;
+
+  /// No description provided for @saveEstimate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Guardar estimativa'**
+  String get saveEstimate;
+
+  /// No description provided for @estimateSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativa guardada neste dispositivo.'**
+  String get estimateSaved;
+
+  /// No description provided for @savedEstimate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativa guardada'**
+  String get savedEstimate;
+
+  /// No description provided for @noSavedEstimates.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem estimativas guardadas'**
+  String get noSavedEstimates;
+
+  /// No description provided for @deleteSavedEstimate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar estimativa guardada'**
+  String get deleteSavedEstimate;
+
+  /// No description provided for @duplicateAsScenario.
+  ///
+  /// In pt, this message translates to:
+  /// **'Duplicar como cenário'**
+  String get duplicateAsScenario;
+
+  /// No description provided for @invoiceExplorer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Explorador de faturas'**
+  String get invoiceExplorer;
+
+  /// No description provided for @searchInvoices.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pesquisar emitente'**
+  String get searchInvoices;
+
+  /// No description provided for @documentTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total dos documentos'**
+  String get documentTotal;
+
+  /// No description provided for @monthlySummary.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resumo mensal'**
+  String get monthlySummary;
+
+  /// No description provided for @averageDocument.
+  ///
+  /// In pt, this message translates to:
+  /// **'Média por documento'**
+  String get averageDocument;
+
+  /// No description provided for @sortNewest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais recentes'**
+  String get sortNewest;
+
+  /// No description provided for @sortOldest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais antigas'**
+  String get sortOldest;
+
+  /// No description provided for @sortHighest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Maior valor'**
+  String get sortHighest;
+
+  /// No description provided for @sortLowest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Menor valor'**
+  String get sortLowest;
+
+  /// No description provided for @sortIssuer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome do emitente'**
+  String get sortIssuer;
+
+  /// No description provided for @filteredInvoiceCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =0{Sem faturas correspondentes} =1{1 fatura correspondente} other{{count} faturas correspondentes}}'**
+  String filteredInvoiceCount(int count);
+
+  /// No description provided for @lastUpdatedThisSession.
+  ///
+  /// In pt, this message translates to:
+  /// **'Última atualização nesta sessão: {time}'**
+  String lastUpdatedThisSession(String time);
+
+  /// No description provided for @offlineUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta área precisa de ligação. Verifica a rede e tenta novamente.'**
+  String get offlineUnavailable;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get tryAgain;
+
+  /// No description provided for @dateFilter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Intervalo de datas'**
+  String get dateFilter;
+
+  /// No description provided for @minimumAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor mínimo'**
+  String get minimumAmount;
+
+  /// No description provided for @maximumAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor máximo'**
+  String get maximumAmount;
+
+  /// No description provided for @privacySnapshots.
+  ///
+  /// In pt, this message translates to:
+  /// **'As estimativas IRS guardadas ficam apenas neste dispositivo. Contêm inputs e resultados normalizados, nunca credenciais ou respostas e-Fatura em bruto.'**
+  String get privacySnapshots;
+
+  /// No description provided for @all.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get all;
 }
 
 class _AppLocalizationsDelegate
