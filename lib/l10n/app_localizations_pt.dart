@@ -70,7 +70,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get disconnectExplanation =>
-      'Isto remove as credenciais guardadas neste dispositivo.';
+      'Isto termina a sessão guardada neste dispositivo.';
 
   @override
   String get cancel => 'Cancelar';
@@ -188,6 +188,20 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get authorizationErrorMessage =>
       'O Portal das Finanças não autorizou esta consulta.';
+
+  @override
+  String get operationUnavailableTitle => 'Consulta indisponível';
+
+  @override
+  String get operationUnavailableMessage =>
+      'Esta consulta ainda não está disponível.';
+
+  @override
+  String get rateLimitedTitle => 'Demasiadas consultas';
+
+  @override
+  String get rateLimitedMessage =>
+      'Aguarda um pouco antes de tentar novamente.';
 
   @override
   String get networkErrorTitle => 'Erro de ligação';
@@ -421,7 +435,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get disconnectExplanation =>
-      'Isto remove as credenciais guardadas neste dispositivo.';
+      'Isto termina a sessão guardada neste dispositivo.';
 
   @override
   String get cancel => 'Cancelar';
@@ -539,6 +553,20 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get authorizationErrorMessage =>
       'O Portal das Finanças não autorizou esta consulta.';
+
+  @override
+  String get operationUnavailableTitle => 'Consulta indisponível';
+
+  @override
+  String get operationUnavailableMessage =>
+      'Esta consulta ainda não está disponível.';
+
+  @override
+  String get rateLimitedTitle => 'Demasiadas consultas';
+
+  @override
+  String get rateLimitedMessage =>
+      'Aguarda um pouco antes de tentar novamente.';
 
   @override
   String get networkErrorTitle => 'Erro de ligação';

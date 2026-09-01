@@ -70,7 +70,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get disconnectExplanation =>
-      'This removes the credentials saved on this device.';
+      'This ends the session saved on this device.';
 
   @override
   String get cancel => 'Cancel';
@@ -187,6 +187,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authorizationErrorMessage =>
       'Portal das Finanças did not authorize this request.';
+
+  @override
+  String get operationUnavailableTitle => 'Request unavailable';
+
+  @override
+  String get operationUnavailableMessage =>
+      'This request is not available yet.';
+
+  @override
+  String get rateLimitedTitle => 'Too many requests';
+
+  @override
+  String get rateLimitedMessage => 'Wait a moment before trying again.';
 
   @override
   String get networkErrorTitle => 'Connection error';

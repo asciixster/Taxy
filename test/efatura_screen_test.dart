@@ -208,6 +208,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Erro de ligação'), findsOneWidget);
   });
+
+  testWidgets('sessão expirada regressa ao login sem estado ligado falso', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const _FailingGateway(EfaturaFailureKind.expired),
+      _readyStore(),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Sessão expirada'), findsOneWidget);
+    expect(find.byKey(const Key('efatura-connect')), findsOneWidget);
+    expect(find.text('Resumo e-Fatura'), findsNothing);
+  });
   testWidgets('erro após guardar credenciais continua a permitir desligar', (
     tester,
   ) async {
@@ -269,7 +283,7 @@ void main() {
   });
 
   testWidgets(
-    'pending count is informational and offers no validation action',
+    'pending count opens a read-only list without validation actions',
     (tester) async {
       const pendingOverview = EfaturaOverview(
         provisionalBenefitCents: AtValue.available(50339),
@@ -291,10 +305,52 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Ver faturas por validar'), findsNothing);
+      expect(find.text('Ver faturas por validar'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('efatura-view-pending')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('efatura-view-pending')));
+      await tester.pumpAndSettle();
+      expect(find.text('Faturas pendentes'), findsOneWidget);
+      expect(find.text('Sem faturas pendentes'), findsOneWidget);
+      expect(find.textContaining('Classificar'), findsNothing);
+      expect(find.textContaining('Validar'), findsNothing);
       expect(find.byType(FilledButton), findsNothing);
     },
   );
+
+  testWidgets('pending list renders normalized synthetic backend data', (
+    tester,
+  ) async {
+    const pendingOverview = EfaturaOverview(
+      provisionalBenefitCents: AtValue.unavailable(),
+      pendingValidation: AtValue.available(1),
+      pendingRevenueAssociation: AtValue.unavailable(),
+      sectors: AtValue.unavailable(),
+    );
+    await _pump(
+      tester,
+      _FakeGateway(
+        overview: pendingOverview,
+        pendingInvoices: const [
+          EfaturaInvoice(
+            issuerDisplayName: 'Emitente sintético',
+            date: '2026-08-29',
+            totalCents: 2345,
+            pendingClassification: true,
+          ),
+        ],
+      ),
+      _readyStore(),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('efatura-view-pending')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('efatura-view-pending')));
+    await tester.pumpAndSettle();
+    expect(find.text('Emitente sintético'), findsOneWidget);
+    expect(find.text('23,45 €'), findsOneWidget);
+    expect(find.textContaining('Classificar'), findsNothing);
+  });
 
   testWidgets('local validation blocks malformed credentials', (tester) async {
     final store = _FakeStore(
@@ -419,9 +475,14 @@ final class _FakeStore implements EfaturaCredentialStore {
 }
 
 final class _FakeGateway implements EfaturaReadOnlyGateway {
-  _FakeGateway({required this.overview, this.sectorInvoices = const []});
+  _FakeGateway({
+    required this.overview,
+    this.sectorInvoices = const [],
+    this.pendingInvoices = const [],
+  });
   final EfaturaOverview overview;
   final List<EfaturaInvoice> sectorInvoices;
+  final List<EfaturaInvoice> pendingInvoices;
   int overviewCalls = 0;
   @override
   Future<EfaturaOverview> fetchOverview() async {
@@ -430,7 +491,7 @@ final class _FakeGateway implements EfaturaReadOnlyGateway {
   }
 
   @override
-  Future<List<EfaturaInvoice>> fetchPendingInvoices() async => const [];
+  Future<List<EfaturaInvoice>> fetchPendingInvoices() async => pendingInvoices;
   @override
   Future<List<EfaturaInvoice>> fetchSectorInvoices(String sectorCode) async =>
       sectorInvoices;

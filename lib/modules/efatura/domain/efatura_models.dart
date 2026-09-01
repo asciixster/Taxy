@@ -13,6 +13,8 @@ enum EfaturaFailureKind {
   notConfigured,
   authentication,
   authorization,
+  operationUnavailable,
+  rateLimited,
   network,
   serviceUnavailable,
   expired,
@@ -22,6 +24,13 @@ enum EfaturaFailureKind {
   business,
   parsing,
   unknown,
+}
+
+enum EfaturaApiReachability {
+  reachable,
+  authenticationRequired,
+  serviceUnavailable,
+  networkOffline,
 }
 
 enum AtValueStatus { available, unavailable, loading, error }

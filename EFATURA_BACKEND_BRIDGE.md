@@ -12,19 +12,20 @@ Flutter UI
   -> EfaturaReadOnlyService
 ```
 
-The existing Android/FactIntWS implementation remains available only when no
-backend URL is configured. It is not removed because it contains useful protocol
-and runtime evidence, but it is not the recommended production path.
+The existing Android/FactIntWS implementation remains in the repository only as
+isolated protocol research. The normal application flow cannot select it: a
+missing or invalid public API configuration fails closed.
 
 Enable the backend path only in an experimental build:
 
 ```text
 --dart-define=TAXY_EFATURA_EXPERIMENTAL=true
---dart-define=TAXY_EFATURA_BACKEND_URL=https://api.taxy.pt/
+--dart-define=TAXY_API_BASE_URL=https://api.taxy.pt/
 ```
 
-The URL must use HTTPS, must not contain user information and is never derived
-from user input.
+The default and only accepted normal-flow origin is `https://api.taxy.pt/` over
+HTTPS. It must not contain user information and is never derived from user
+input. The API contract is explicitly versioned below `/v1/`.
 
 `api.taxy.pt` is the dedicated Taxy API. It runs independently from
 `dev.contabilidades.pt`; the latter is no longer part of the intended mobile
@@ -78,16 +79,20 @@ overview. It must not log the request body.
 {
   "sessionToken": "<opaque random value>",
   "overview": {
-    "provisionalBenefitCents": 0,
-    "pendingValidation": 0,
-    "pendingRevenueAssociation": 0,
-    "sectors": []
+    "provisionalBenefitCents": {"status":"unavailable"},
+    "pendingValidation": {"status":"available","value":3},
+    "pendingRevenueAssociation": {"status":"unavailable"},
+    "sectors": {"status":"unavailable"}
   }
 }
 ```
 
-The Flutter bridge holds only the opaque token in memory. The first overview is
-reused, so connecting does not create an immediate duplicate request.
+The Flutter bridge stores only the opaque short-lived token using platform
+secure storage (Android RSA-OAEP key wrapping and AES-GCM storage through
+`flutter_secure_storage`). Portal passwords are never persisted. The first
+overview is reused, so connecting does not create an immediate duplicate
+request. Expired or invalid sessions are deleted before the UI can claim a
+connected state.
 
 ### Read-only operations
 
@@ -160,6 +165,22 @@ errors and unknown session states are mapped to the existing safe application
 error taxonomy. They are never silently converted to zero. The feature flag
 remains disabled by default.
 
+The app performs one lightweight `/health` request when the feature is opened
+without a session. This distinguishes a reachable API from offline and service
+failure states; it is not polling and performs no Portal operation. User actions
+are never retried automatically.
+
+## Internal beta build
+
+```text
+flutter build apk --debug \
+  --dart-define=TAXY_EFATURA_EXPERIMENTAL=true \
+  --dart-define=TAXY_API_BASE_URL=https://api.taxy.pt/
+```
+
+The feature flag remains `false` when omitted. The beta contains no PFX, AT
+client identity, upstream cookie, write route or direct FactIntWS fallback.
+
 ## Android runtime validation (2026-08-31)
 
 The experimental Android build completed the real read-only path through
@@ -178,3 +199,19 @@ explicitly, and their unavailable state represented separately, before the
 corresponding UI values can be treated as real data. No write
 operation was implemented or invoked, and the experimental feature flag remains
 disabled by default.
+
+## Public beta validation (2026-09-01)
+
+An internal Android debug build completed the normal production-shaped path
+through `https://api.taxy.pt`: public health, login, normalized overview,
+read-only pending-invoice list and logout. The UI observed a real pending count
+of seven at test time and rendered real normalized invoice tiles. This count is
+runtime evidence, not an application constant.
+
+The same run displayed sectors, provisional benefit and pending revenue
+association as `Unavailable`; it did not convert any of them to zero. A separate
+Android runtime check proved that an invalid/expired opaque token is rejected
+by the public API, removed from secure storage and returns the UI to the login
+state. Network inspection showed only the HTTPS `api.taxy.pt` origin for this
+flow. No FactIntWS endpoint, legacy backend, HTTP fallback or write operation was
+used.

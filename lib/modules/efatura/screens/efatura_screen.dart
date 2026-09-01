@@ -28,6 +28,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
   EfaturaServiceException? _failure;
   List<EfaturaInvoice> _invoices = const [];
   bool _invoiceListLoaded = false;
+  bool _showingPendingInvoices = false;
 
   @override
   void initState() {
@@ -65,7 +66,23 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
             ? EfaturaConnectionStatus.connecting
             : EfaturaConnectionStatus.notConfigured;
       });
-      if (readiness.isReady) await _refresh();
+      if (readiness.isReady) {
+        await _refresh();
+      } else {
+        final reachability = await widget.service.reachability();
+        if (reachability == EfaturaApiReachability.networkOffline) {
+          throw const EfaturaServiceException(
+            EfaturaFailureKind.network,
+            'Não foi possível estabelecer ligação.',
+          );
+        }
+        if (reachability == EfaturaApiReachability.serviceUnavailable) {
+          throw const EfaturaServiceException(
+            EfaturaFailureKind.serviceUnavailable,
+            'O serviço e-Fatura não está disponível de momento.',
+          );
+        }
+      }
     } on EfaturaServiceException catch (error) {
       _applyFailure(error);
     }
@@ -87,6 +104,9 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       _nifController.clear();
       setState(() {
         _overview = overview;
+        _invoices = const [];
+        _invoiceListLoaded = false;
+        _showingPendingInvoices = false;
         _status = EfaturaConnectionStatus.connected;
         _readiness = const EfaturaRuntimeReadiness(
           hasCredentials: true,
@@ -157,6 +177,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       _overview = null;
       _invoices = const [];
       _invoiceListLoaded = false;
+      _showingPendingInvoices = false;
       _failure = null;
       _readiness = EfaturaRuntimeReadiness(
         hasCredentials: false,
@@ -181,6 +202,25 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
   Future<void> _loadSector(AtExpenseSector sector) async =>
       _loadInvoices(sector);
 
+  Future<void> _loadPendingInvoices() async {
+    setState(() {
+      _status = EfaturaConnectionStatus.connecting;
+      _failure = null;
+    });
+    try {
+      final invoices = await widget.service.loadPendingInvoices();
+      if (!mounted) return;
+      setState(() {
+        _invoices = invoices;
+        _invoiceListLoaded = true;
+        _showingPendingInvoices = true;
+        _status = EfaturaConnectionStatus.connected;
+      });
+    } on EfaturaServiceException catch (error) {
+      _applyFailure(error);
+    }
+  }
+
   Future<void> _loadInvoices(AtExpenseSector sector) async {
     setState(() {
       _status = EfaturaConnectionStatus.connecting;
@@ -192,6 +232,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       setState(() {
         _invoices = invoices;
         _invoiceListLoaded = true;
+        _showingPendingInvoices = false;
         _status = EfaturaConnectionStatus.connected;
       });
     } on EfaturaServiceException catch (error) {
@@ -201,8 +242,22 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
 
   void _applyFailure(EfaturaServiceException error) {
     if (!mounted) return;
+    final sessionEnded =
+        error.kind == EfaturaFailureKind.expired ||
+        error.kind == EfaturaFailureKind.authentication;
     setState(() {
       _failure = error;
+      if (sessionEnded) {
+        _overview = null;
+        _invoices = const [];
+        _invoiceListLoaded = false;
+        _showingPendingInvoices = false;
+        _readiness = const EfaturaRuntimeReadiness(
+          hasCredentials: false,
+          hasClientIdentity: true,
+          hasCipherCertificate: true,
+        );
+      }
       _status = switch (error.kind) {
         EfaturaFailureKind.notConfigured =>
           EfaturaConnectionStatus.notConfigured,
@@ -300,6 +355,16 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                       if (_overview != null) ...[
                         if (busy) const LinearProgressIndicator(minHeight: 3),
                         _OverviewCard(overview: _overview!),
+                        if ((_overview!.pendingValidation.valueOrNull ?? 0) >
+                            0) ...[
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            key: const Key('efatura-view-pending'),
+                            onPressed: busy ? null : _loadPendingInvoices,
+                            icon: const Icon(Icons.receipt_long_outlined),
+                            label: Text(l10n.viewPendingInvoices),
+                          ),
+                        ],
                         const SizedBox(height: 10),
                         _IrsEvidenceCard(evidence: _overview!.irsEvidence),
                         if (_overview!.outcome ==
@@ -339,7 +404,9 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                           Semantics(
                             header: true,
                             child: Text(
-                              l10n.sectorInvoicesTitle,
+                              _showingPendingInvoices
+                                  ? l10n.pendingInvoicesTitle
+                                  : l10n.sectorInvoicesTitle,
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                           ),
@@ -347,13 +414,18 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
                           if (_invoices.isEmpty)
                             _EmptyCard(
                               icon: Icons.receipt_long_outlined,
-                              text: l10n.noInvoicesInCategory,
+                              text: _showingPendingInvoices
+                                  ? l10n.noInvoicesToValidate
+                                  : l10n.noInvoicesInCategory,
                             )
                           else
-                            ..._invoices.map(
-                              (invoice) => Padding(
+                            ..._invoices.indexed.map(
+                              (entry) => Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
-                                child: _InvoiceTile(invoice: invoice),
+                                child: _InvoiceTile(
+                                  key: Key('efatura-invoice-${entry.$1}'),
+                                  invoice: entry.$2,
+                                ),
                               ),
                             ),
                         ],
@@ -809,7 +881,7 @@ final class _SectorTile extends StatelessWidget {
 }
 
 final class _InvoiceTile extends StatelessWidget {
-  const _InvoiceTile({required this.invoice});
+  const _InvoiceTile({super.key, required this.invoice});
 
   final EfaturaInvoice invoice;
 
@@ -982,6 +1054,8 @@ String _errorTitle(AppLocalizations l10n, EfaturaFailureKind kind) =>
       EfaturaFailureKind.notConfigured => l10n.notConfiguredTitle,
       EfaturaFailureKind.authentication => l10n.authErrorTitle,
       EfaturaFailureKind.authorization => l10n.authorizationErrorTitle,
+      EfaturaFailureKind.operationUnavailable => l10n.operationUnavailableTitle,
+      EfaturaFailureKind.rateLimited => l10n.rateLimitedTitle,
       EfaturaFailureKind.network ||
       EfaturaFailureKind.tls => l10n.networkErrorTitle,
       EfaturaFailureKind.serviceUnavailable ||
@@ -997,6 +1071,9 @@ String _errorMessage(AppLocalizations l10n, EfaturaFailureKind kind) =>
     switch (kind) {
       EfaturaFailureKind.authentication => l10n.authErrorMessage,
       EfaturaFailureKind.authorization => l10n.authorizationErrorMessage,
+      EfaturaFailureKind.operationUnavailable =>
+        l10n.operationUnavailableMessage,
+      EfaturaFailureKind.rateLimited => l10n.rateLimitedMessage,
       EfaturaFailureKind.network ||
       EfaturaFailureKind.tls => l10n.networkErrorMessage,
       EfaturaFailureKind.serviceUnavailable ||

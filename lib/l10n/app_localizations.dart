@@ -216,7 +216,7 @@ abstract class AppLocalizations {
   /// No description provided for @disconnectExplanation.
   ///
   /// In pt, this message translates to:
-  /// **'Isto remove as credenciais guardadas neste dispositivo.'**
+  /// **'Isto termina a sessão guardada neste dispositivo.'**
   String get disconnectExplanation;
 
   /// No description provided for @cancel.
@@ -422,6 +422,30 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'O Portal das Finanças não autorizou esta consulta.'**
   String get authorizationErrorMessage;
+
+  /// No description provided for @operationUnavailableTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Consulta indisponível'**
+  String get operationUnavailableTitle;
+
+  /// No description provided for @operationUnavailableMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta consulta ainda não está disponível.'**
+  String get operationUnavailableMessage;
+
+  /// No description provided for @rateLimitedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Demasiadas consultas'**
+  String get rateLimitedTitle;
+
+  /// No description provided for @rateLimitedMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguarda um pouco antes de tentar novamente.'**
+  String get rateLimitedMessage;
 
   /// No description provided for @networkErrorTitle.
   ///

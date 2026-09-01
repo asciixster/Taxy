@@ -6,8 +6,7 @@ plugins {
 
 android {
     namespace = "pt.taxy.app"
-    compileSdk = 35
-    buildToolsVersion = "35.0.1"
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -54,10 +53,4 @@ dependencies {
     testImplementation(kotlin("test"))
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
-}
-
-// A app não usa plugins Android auto-registados. O único canal nativo vive em
-// MainActivity.kt, pelo que o registrant Java vazio não precisa de compilação.
-tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
-    enabled = false
 }
