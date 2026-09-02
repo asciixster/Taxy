@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/money.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/taxy_formatters.dart';
 import '../state/providers.dart';
@@ -59,7 +58,7 @@ final class SnapshotsScreen extends ConsumerWidget {
                   subtitle: Text(
                     '${l10n.savedEstimate} · ${snapshot.taxYear}\n'
                     '${TaxyFormatters.date(context, snapshot.createdAt.toIso8601String())} · '
-                    '${Money.fromCents(snapshot.balanceCents).format()}',
+                    '${TaxyFormatters.euros(context, snapshot.balanceCents)}',
                   ),
                   isThreeLine: true,
                   trailing: PopupMenuButton<String>(

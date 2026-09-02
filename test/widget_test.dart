@@ -18,7 +18,9 @@ void main() {
       ProviderScope(
         overrides: [
           repositoryProvider.overrideWithValue(MemorySimulationRepository()),
-          productRepositoryProvider.overrideWithValue(MemoryProductRepository()),
+          productRepositoryProvider.overrideWithValue(
+            MemoryProductRepository(),
+          ),
         ],
         child: const TaxyApp(),
       ),
@@ -115,7 +117,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'Ainda não suportado: Madeira e Açores em 2025 permanecem NEEDS_VERIFICATION.',
+          'Ainda não suportado: Madeira e Açores em 2025 permanecem por verificar.',
         ),
         findsOneWidget,
       );
@@ -189,10 +191,10 @@ void main() {
     expect(find.text('Ver cálculo detalhado'), findsOneWidget);
   });
 
-  testWidgets('home compacta funciona em ecrã pequeno e dark mode', (
+  testWidgets('home funciona a 320x640, dark mode e texto a 200%', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(320, 700);
+    tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -213,6 +215,11 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           theme: ThemeData.dark(useMaterial3: true),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
           home: const HomeScreen(),
         ),
       ),
@@ -221,6 +228,39 @@ void main() {
 
     expect(find.text('Outros simuladores · Em breve'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wizard funciona a 320x640, dark mode e texto a 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final rules = TaxRuleSet.fromJsonString(
+      File('assets/tax_rules/2026.json').readAsStringSync(),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          repositoryProvider.overrideWithValue(MemorySimulationRepository()),
+        ],
+        child: MaterialApp(
+          locale: const Locale('en'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          theme: ThemeData.dark(useMaterial3: true),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: WizardScreen(rules: rules),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Which year do you want to simulate?'), findsOneWidget);
   });
 }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/money.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/taxy_formatters.dart';
 import '../state/providers.dart';
 import 'app_error_state.dart';
 import 'app_failure.dart';
@@ -98,7 +99,7 @@ final class _LedgerScaffold extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  total.format(),
+                  TaxyFormatters.euros(context, total.cents),
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 8),
@@ -410,7 +411,7 @@ final class _IncomeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
     leading: const CircleAvatar(child: Icon(Icons.payments_outlined)),
-    title: Text(entry.amount.format()),
+    title: Text(TaxyFormatters.euros(context, entry.amount.cents)),
     subtitle: Text(
       '${_incomeCategory(context, entry.category)} · ${_provenance(context, entry.provenance)} · ${_status(context, entry.status)}',
     ),
@@ -444,7 +445,7 @@ final class _ExpenseTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
     leading: const CircleAvatar(child: Icon(Icons.shopping_bag_outlined)),
-    title: Text(entry.amount.format()),
+    title: Text(TaxyFormatters.euros(context, entry.amount.cents)),
     subtitle: Text(
       '${_expenseCategory(context, entry.category)} · ${_provenance(context, entry.provenance)} · ${_status(context, entry.status)}',
     ),

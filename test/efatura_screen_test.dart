@@ -146,6 +146,26 @@ void main() {
     expect(find.text('Ligar ao e-Fatura'), findsWidgets);
     expect(find.text('Erro desconhecido'), findsNothing);
   });
+  testWidgets('campos de autenticação têm rótulos para leitores de ecrã', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await _pump(
+      tester,
+      _FakeGateway(overview: overview),
+      _FakeStore(
+        readiness: const EfaturaRuntimeReadiness(
+          hasCredentials: false,
+          hasClientIdentity: true,
+          hasCipherCertificate: true,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel('NIF'), findsAtLeast(1));
+    expect(find.bySemanticsLabel('Senha'), findsAtLeast(1));
+    semantics.dispose();
+  });
   testWidgets('login guarda com segurança, valida com overview e limpa senha', (
     tester,
   ) async {

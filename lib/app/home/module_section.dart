@@ -24,6 +24,9 @@ final class ModuleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final compactBadges =
+        MediaQuery.sizeOf(context).width < 360 ||
+        MediaQuery.textScalerOf(context).scale(1) > 1.5;
     final active = TaxyModuleRegistry.byId('irs');
     final comingCount = TaxyModuleRegistry.modules
         .where((module) => !module.isActive)
@@ -43,8 +46,14 @@ final class ModuleSection extends StatelessWidget {
               active.title,
               style: const TextStyle(fontWeight: FontWeight.w800),
             ),
-            subtitle: Text(active.description),
-            trailing: Chip(label: Text(l10n.available)),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.irsModuleDescription),
+                if (compactBadges) Text(l10n.available),
+              ],
+            ),
+            trailing: compactBadges ? null : Chip(label: Text(l10n.available)),
             onTap: onOpenIrs,
           ),
         ),
@@ -96,8 +105,16 @@ final class ModuleSection extends StatelessWidget {
                 'e-Fatura',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
-              subtitle: Text(l10n.efaturaModuleDescription),
-              trailing: Chip(label: Text(l10n.experimental)),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.efaturaModuleDescription),
+                  if (compactBadges) Text(l10n.experimental),
+                ],
+              ),
+              trailing: compactBadges
+                  ? null
+                  : Chip(label: Text(l10n.experimental)),
               onTap: onOpenEfatura,
             ),
           ),

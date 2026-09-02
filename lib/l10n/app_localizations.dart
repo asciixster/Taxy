@@ -615,6 +615,138 @@ abstract class AppLocalizations {
   /// **'Privado'**
   String get privateLabel;
 
+  /// No description provided for @previewClearAnswer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Uma resposta clara,'**
+  String get previewClearAnswer;
+
+  /// No description provided for @previewTransparentAccounts.
+  ///
+  /// In pt, this message translates to:
+  /// **'contas transparentes.'**
+  String get previewTransparentAccounts;
+
+  /// No description provided for @explainedLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Explicado'**
+  String get explainedLabel;
+
+  /// No description provided for @irsModuleDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Simula, compara e compreende a tua liquidação.'**
+  String get irsModuleDescription;
+
+  /// No description provided for @whatEstimateMeans.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que isto significa'**
+  String get whatEstimateMeans;
+
+  /// No description provided for @refundEstimateMeaning.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retiveste mais IRS ao longo do ano do que o imposto estimado nesta simulação.'**
+  String get refundEstimateMeaning;
+
+  /// No description provided for @taxDueEstimateMeaning.
+  ///
+  /// In pt, this message translates to:
+  /// **'As retenções feitas durante o ano ficam abaixo do imposto estimado.'**
+  String get taxDueEstimateMeaning;
+
+  /// No description provided for @draftRestoreError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível recuperar o rascunho. Os dados guardados não foram alterados.'**
+  String get draftRestoreError;
+
+  /// No description provided for @draftSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível guardar o progresso neste dispositivo. Podes continuar, mas confirma o armazenamento antes de fechar.'**
+  String get draftSaveError;
+
+  /// No description provided for @partialResidenceError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não suportado: residência fiscal parcial.'**
+  String get partialResidenceError;
+
+  /// No description provided for @regionalYearError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não suportado: Madeira e Açores em 2025 permanecem por verificar.'**
+  String get regionalYearError;
+
+  /// No description provided for @incomeScopeError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não suportado: só conseguimos calcular quando existe exclusivamente trabalho dependente.'**
+  String get incomeScopeError;
+
+  /// No description provided for @specialSituationError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não suportado: este caso exige validação adicional e não será aproximado.'**
+  String get specialSituationError;
+
+  /// No description provided for @historyAError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados insuficientes: falta o histórico anual completo do titular A.'**
+  String get historyAError;
+
+  /// No description provided for @historyBError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados insuficientes: falta o histórico anual completo do titular B.'**
+  String get historyBError;
+
+  /// No description provided for @singleParentScopeError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não suportado: com dependentes, só está validado o agregado monoparental standard.'**
+  String get singleParentScopeError;
+
+  /// No description provided for @positiveIncomeError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados inválidos: indica um rendimento superior a zero.'**
+  String get positiveIncomeError;
+
+  /// No description provided for @secondaryIncomeError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados inválidos: o rendimento do segundo titular não pode ser negativo.'**
+  String get secondaryIncomeError;
+
+  /// No description provided for @moneyValuesError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados inválidos: revê os valores monetários antes de calcular.'**
+  String get moneyValuesError;
+
+  /// No description provided for @calculationSafetyError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível concluir o cálculo com segurança. O teu rascunho continua guardado; tenta novamente.'**
+  String get calculationSafetyError;
+
+  /// No description provided for @upToAdditional.
+  ///
+  /// In pt, this message translates to:
+  /// **'até +{amount}'**
+  String upToAdditional(String amount);
+
+  /// No description provided for @enteredExpenseMargin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Margem de despesas introduzidas: {amount}'**
+  String enteredExpenseMargin(String amount);
+
   /// No description provided for @efaturaSemantics.
   ///
   /// In pt, this message translates to:
@@ -1808,6 +1940,72 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Deficiência, estudante deslocado, guarda partilhada e outras situações especiais.'**
   String get specialSituationsUnsupported;
+
+  /// No description provided for @wizardStepTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'{step, select, taxYear{Que ano queres simular?} residency{Viveste fiscalmente em Portugal todo o ano?} region{Onde tens residência fiscal?} civilStatus{Qual é o teu estado civil?} incomeTypes{Que tipos de rendimento tiveste?} specialSituations{Existe alguma situação fiscal especial?} irsJovemInterest{Queres verificar o IRS Jovem?} irsJovemHistory{Confirma o histórico anual de trabalho} age{Qual é a tua idade?} secondaryAge{Qual é a idade do segundo titular?} filingMode{Que opção queres ver primeiro?} dependents{Tens filhos ou outros dependentes?} dependentAges{Que idade têm os dependentes?} singleParent{O teu agregado é uma família monoparental?} incomeMode{Como preferes indicar o rendimento?} grossAnnual{Qual foi o teu rendimento bruto anual?} grossMonthly{Qual foi o rendimento bruto mensal?} withholding{Quanto foi retido em IRS?} socialSecurity{Quanto descontaste para a Segurança Social?} secondaryGross{Rendimento bruto anual do segundo titular} secondaryWithholding{Retenção anual do segundo titular} secondarySocialSecurity{Segurança Social do segundo titular} general{Despesas gerais familiares} health{Quanto tiveste em despesas de saúde?} education{E em educação e formação?} rent{Pagaste renda de habitação permanente?} careHomes{Tiveste encargos com lares?} invoiceVat15{IVA com dedução de 15%} invoiceVat30{IVA com dedução de 30%} invoiceVat35{IVA com dedução de 35%} invoiceVat100{IVA com dedução de 100%} ppr{Quanto aplicaste num PPR?} secondaryDeductions{Despesas do segundo titular} review{Está tudo pronto para calcular} other{Passo da simulação}}'**
+  String wizardStepTitle(String step);
+
+  /// No description provided for @wizardStepHelper.
+  ///
+  /// In pt, this message translates to:
+  /// **'{step, select, taxYear{As regras fiscais mudam todos os anos.} residency{A residência parcial segue regras diferentes.} region{Continente, Madeira e Açores podem ter tabelas diferentes.} civilStatus{Casados e unidos de facto podem comparar conjunta e separada.} incomeTypes{Se existir um tipo ainda não suportado, avisamos já e não ignoramos rendimentos.} specialSituations{Guarda partilhada, deficiência, residência parcial e outros regimes exigem tratamento próprio.} irsJovemInterest{Se não fores elegível, continuamos a calcular o IRS normal.} irsJovemHistory{Cada ano é descrito objetivamente; anos como dependente ou sem rendimentos A/B não consomem o benefício.} age{A idade pode alterar benefícios como a dedução do PPR.} secondaryAge{Os dois titulares são calculados individualmente e em conjunto.} filingMode{A Taxy calculará sempre conjunta e separada para comparar.} dependents{Indica quantos fazem parte do teu agregado.} dependentAges{A idade em 31 de dezembro pode aumentar a dedução.} singleParent{Confirma apenas um agregado monoparental standard. Residência alternada ou responsabilidades partilhadas ainda não são suportadas.} incomeMode{Podes usar o total anual ou um valor mensal.} grossAnnual{Usa valores antes de IRS e Segurança Social.} grossMonthly{Usa valores antes de IRS e Segurança Social.} withholding{É o total anual que aparece nos recibos ou declaração da entidade patronal.} socialSecurity{Indica apenas contribuições obrigatórias do trabalhador.} secondaryGross{Introduz apenas Categoria A deste titular.} secondaryWithholding{Total de IRS já retido.} secondarySocialSecurity{Contribuições obrigatórias anuais.} general{Compras e serviços elegíveis no e-Fatura, sem contar saúde, educação ou rendas.} health{Indica despesas elegíveis e não reembolsadas.} education{Inclui apenas educação standard. Estudante deslocado e majorações territoriais não são suportados.} rent{Indica o total anual de rendas comunicadas à AT.} careHomes{Pode incluir apoio domiciliário e instituições elegíveis.} invoiceVat15{Indica o IVA, não o total da despesa, dos setores standard elegíveis.} invoiceVat30{Indica o IVA de ensino desportivo, clubes e ginásios elegíveis.} invoiceVat35{Indica apenas IVA de medicamentos de uso veterinário elegíveis.} invoiceVat100{Indica o IVA de transportes públicos e assinaturas de periódicos elegíveis.} ppr{O benefício depende da idade e das condições legais de manutenção.} secondaryDeductions{Introduz as despesas tituladas pelo segundo titular; não dividimos automaticamente as despesas próprias.} review{Revê os principais valores antes de guardar a simulação.} other{Revê os dados deste passo.}}'**
+  String wizardStepHelper(String step);
+
+  /// No description provided for @wizardSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'{section, select, eligibility{Âmbito} profile{Perfil} income{Rendimentos} deductions{Despesas} review{Revisão} other{Simulação}}'**
+  String wizardSection(String section);
+
+  /// No description provided for @calculateEstimate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Calcular estimativa'**
+  String get calculateEstimate;
+
+  /// No description provided for @continueAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get continueAction;
+
+  /// No description provided for @wizardText.
+  ///
+  /// In pt, this message translates to:
+  /// **'{key, select, year2025Helper{Declaração entregue em 2026} currentYear{Ano corrente} singleStatus{Não casado/a nem unido/a de facto} individualAssessment{Liquidação individual} marriedStatus{Casado/a} deFactoStatus{União de facto} compareJointSeparate{Compara conjunta e separada} fullYearResident{Residente todo o ano} unsupportedCannotContinue{Não suportado — não será possível continuar} calculationAvailable{Cálculo disponível} available2026{Disponível para 2026} categoryAAvailable{Categoria A · disponível} notAvailableYet{Ainda não disponível} standardCase{Caso standard} yesUnsure{Sim / não tenho a certeza} calculationBlockedSafety{O cálculo será bloqueado por segurança} checkIrsJovemA{Verificar IRS Jovem para o titular A} checkIrsJovemB{Verificar IRS Jovem para o titular B} eligibilityByHistory{A elegibilidade será apurada por histórico.} historyFormat{Uma linha por ano: ano,A|B|AB|N,dependente,residente,regime incompatível} historyA{Histórico do titular A} historyB{Histórico do titular B} historyCompleteA{O histórico A está completo} historyCompleteB{O histórico B está completo} taxRegularA{Situação tributária A regularizada} taxRegularB{Situação tributária B regularizada} separate{Separada} separateFirst{Mostra primeiro as duas liquidações} joint{Conjunta} maritalQuotient{Aplica quociente conjugal 2} standardSingleParent{Agregado monoparental standard} noUnsure{Não / não tenho a certeza} annualTotal{Total anual} oneAnnualValue{Um único valor do ano} monthlyTimesMonths{Mensal × meses} appCalculatesAnnual{A app calcula o total anual} annualIncome{Rendimento anual} monthlyIncome{Rendimento mensal} paymentCount{Número de pagamentos} annualWithholding{Retenção anual de IRS} annualContributions{Contribuições anuais} secondaryAnnualIncome{Rendimento anual do titular B} secondaryAnnualWithholding{Retenção anual do titular B} secondaryAnnualContributions{Contribuições anuais do titular B} generalExpensesTotal{Total de despesas gerais} healthTotal{Total de saúde} eligibleEducation{Educação standard elegível} educationExclusions{Não inclui estudante deslocado ou majorações territoriais} annualRent{Rendas anuais} annualCharges{Encargos anuais} vat15{IVA elegível à taxa de 15%} vat30{IVA elegível à taxa de 30%} vat35{IVA elegível à taxa de 35%} vat100{IVA elegível à taxa de 100%} annualPpr{Aplicações anuais em PPR} secondaryGeneral{Despesas gerais · titular B} secondaryHealth{Saúde · titular B} secondaryEducation{Educação standard · titular B} secondaryRent{Rendas · titular B} secondaryCareHomes{Lares · titular B} secondaryPpr{PPR · titular B} other{—}}'**
+  String wizardText(String key);
+
+  /// No description provided for @dependentNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dependente {number}'**
+  String dependentNumber(int number);
+
+  /// No description provided for @yearsSuffix.
+  ///
+  /// In pt, this message translates to:
+  /// **'anos'**
+  String get yearsSuffix;
+
+  /// No description provided for @monthCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 mês} other{{count} meses}}'**
+  String monthCount(int count);
+
+  /// No description provided for @incomeTypeName.
+  ///
+  /// In pt, this message translates to:
+  /// **'{type, select, employment{Trabalho dependente} selfEmployment{Trabalho independente} pensions{Pensões} property{Rendas} capital{Juros ou dividendos} securities{Ações ou ETFs} crypto{Criptoativos} foreign{Rendimentos estrangeiros} other{Outros rendimentos}}'**
+  String incomeTypeName(String type);
+
+  /// No description provided for @legacyUiText.
+  ///
+  /// In pt, this message translates to:
+  /// **'{key, select, estimateTitle{A tua estimativa} normalIrs{IRS normal} estimatedTaxBenefit{Benefício fiscal estimado} whyEligible{Porque sou elegível?} whyEligiblePlural{Porque somos elegíveis?} eligibilityDefault{A elegibilidade foi determinada pelo histórico anual, idade, residência e situação tributária indicados.} separateWithoutJovem{Separada sem IRS Jovem} jointWithoutJovem{Conjunta sem IRS Jovem} separateWithJovem{Separada com IRS Jovem} jointWithJovem{Conjunta com IRS Jovem} estimatedBestBenefit{Benefício fiscal estimado na melhor opção} taxpayerA{Titular A} taxpayerB{Titular B} estimateDisclaimer{Com os dados introduzidos, esta é a diferença de imposto estimado; não constitui garantia de benefício.} taxComparison{Comparação de tributação} separateTaxation{Tributação separada} jointTaxation{Tributação conjunta} difference{Diferença} estimatedBestOption{Opção estimada mais favorável} noEstimatedDifference{Sem diferença estimada} equalTax{Nesta simulação, as duas opções apresentam o mesmo imposto estimado.} jointLower{Nesta simulação, a tributação conjunta apresenta menor imposto estimado.} separateLower{Nesta simulação, a tributação separada apresenta menor imposto estimado.} officialDisclaimer{Simulação baseada nos dados introduzidos e regras fiscais configuradas; não substitui a liquidação oficial da AT.} categoryA{Categoria A} individualTaxpayer{Titular individual} rules{Regras} jovemApplied{IRS Jovem aplicado} jovemNotApplied{IRS Jovem não aplicado} taxableIncome{Rendimento coletável} retainedYear{Retido durante o ano} compareScenario{Comparar cenário} viewOpportunities{Ver oportunidades} detailedCalculation{Ver cálculo detalhado} detailedCalculationSubtitle{Valores e explicações linha a linha} limitsWarning{Atenção aos limites} calculationUnavailable{Cálculo não disponível} simulationAssumptions{Pressupostos da simulação} ppr{PPR} health{Saúde} education{Educação} rent{Rendas} generalExpenses{Despesas gerais} annualApplied{Valor aplicado durante o ano} eligibleExpenses{Despesas elegíveis} eligibleRents{Rendas elegíveis} nifInvoice{Com NIF na fatura} saveNewSimulation{Guardar como nova simulação} pprDisclaimer{A vantagem fiscal de um PPR está sujeita a condições de elegibilidade e manutenção. Esta comparação não avalia custos, risco ou rentabilidade do produto.} scenarioSaved{Cenário guardado no dispositivo.} opportunities{Oportunidades} whereMargin{Onde pode existir margem?} opportunitiesIntro{Simulamos cada categoria isoladamente até ao respetivo limite. Não assumimos que tiveste despesas que não declaraste.} noExtraOpportunities{Sem oportunidades adicionais nesta simulação} limitsReached{Os limites podem já estar atingidos ou não existir imposto suficiente para deduzir.} important{Importante} upToDisclaimer{“Até” não é uma promessa de reembolso: depende do conjunto da simulação.} dontSpend{Não gastes apenas para obter uma dedução fiscal.} realExpensesOnly{Introduz somente despesas reais, elegíveis e documentadas.} fiscalScope{Âmbito fiscal} yearAndRegion{Ano e região} household{Agregado} pendingReview{A verificar} notRequested{Não pedido} profileHousehold{Perfil e agregado} dependants{Dependentes} none{Nenhum} incomeWithholding{Rendimentos e retenções} incomeA{Rendimento A} withholdingA{Retenção A} socialA{Segurança Social A} incomeB{Rendimento B} withholdingB{Retenção B} socialB{Segurança Social B} deductionsEntered{Deduções introduzidas} totalA{Total titular A} totalB{Total titular B} standardEducationOnly{Apenas cenário standard} edit{Editar} other{—}}'**
+  String legacyUiText(String key);
 }
 
 class _AppLocalizationsDelegate

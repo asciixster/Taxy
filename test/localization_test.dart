@@ -33,6 +33,27 @@ void main() {
     );
   });
 
+  test('critical IRS surfaces do not regress to legacy hardcoded copy', () {
+    final source = File('lib/main.dart').readAsStringSync();
+    const retiredLiterals = <String>[
+      "const Text('A tua estimativa')",
+      "const Text('Tributação separada')",
+      "const Text('Tributação conjunta')",
+      "const Text('Comparar cenário')",
+      "const Text('Ver oportunidades')",
+      "const Text('Guardar como nova simulação')",
+      "const Text('Oportunidades')",
+      "title: 'Âmbito fiscal'",
+      "title: 'Perfil e agregado'",
+      "title: 'Rendimentos e retenções'",
+      "title: 'Deduções introduzidas'",
+      "label: const Text('Editar')",
+    ];
+    for (final literal in retiredLiterals) {
+      expect(source, isNot(contains(literal)), reason: literal);
+    }
+  });
+
   test('language preference persists without secure storage', () async {
     final store = MemoryLanguagePreferenceStore();
     final first = LanguageController(store);
