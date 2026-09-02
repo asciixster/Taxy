@@ -31,6 +31,8 @@ import 'product/ledger_screens.dart';
 import 'product/product_models.dart';
 import 'product/irs_scenario_models.dart';
 import 'product/snapshots_screen.dart';
+import 'product/app_error_state.dart';
+import 'product/app_failure.dart';
 
 const _taxyViolet = Color(0xFF6557E8);
 const _taxyInk = Color(0xFF17172B);
@@ -244,7 +246,6 @@ final class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final rules = ref.watch(rulesProvider);
     final simulations = ref.watch(simulationsProvider);
     final savedDraft = ref.watch(simulationDraftProvider);
@@ -252,19 +253,31 @@ final class HomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: rules.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => _FatalError(message: l10n.rulesLoadError),
+          error: (_, _) => AppErrorState(
+            failure: const AppFailure(AppFailureKind.localDataError),
+            onRetry: () => ref.invalidate(rulesProvider),
+          ),
           data: (ruleSet) => savedDraft.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, _) => simulations.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => _FatalError(message: l10n.savedDataLoadError),
+              error: (_, _) => AppErrorState(
+                failure: const AppFailure(AppFailureKind.localDataError),
+                onRetry: () {
+                  ref.invalidate(simulationsProvider);
+                  ref.invalidate(simulationDraftProvider);
+                },
+              ),
               data: (items) => items.isEmpty
                   ? _Welcome(rules: ruleSet, hasDraft: false)
                   : _DashboardRuleLoader(simulations: items, hasDraft: false),
             ),
             data: (draft) => simulations.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => _FatalError(message: l10n.simulationsLoadError),
+              error: (_, _) => AppErrorState(
+                failure: const AppFailure(AppFailureKind.localDataError),
+                onRetry: () => ref.invalidate(simulationsProvider),
+              ),
               data: (items) => items.isEmpty
                   ? _Welcome(rules: ruleSet, hasDraft: draft != null)
                   : _DashboardRuleLoader(
@@ -290,14 +303,18 @@ final class _DashboardRuleLoader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final profile = simulations.first.profile;
     final rules = ref.watch(
       rulesForProvider((year: profile.taxYear, region: profile.region)),
     );
     return rules.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => _FatalError(message: l10n.simulationRulesLoadError),
+      error: (_, _) => AppErrorState(
+        failure: const AppFailure(AppFailureKind.localDataError),
+        onRetry: () => ref.invalidate(
+          rulesForProvider((year: profile.taxYear, region: profile.region)),
+        ),
+      ),
       data: (value) => _Dashboard(
         rules: value,
         simulations: simulations,
@@ -507,12 +524,12 @@ final class _Dashboard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'O teu IRS, num relance',
+                  l10n.dashboardTitle,
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  'Simulação atualizada com as regras ${rules.taxYear}.',
+                  l10n.simulationUpdatedForYear(rules.taxYear),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -522,7 +539,7 @@ final class _Dashboard extends ConsumerWidget {
                   OutlinedButton.icon(
                     onPressed: () => _openWizard(context, rules),
                     icon: const Icon(Icons.restore_rounded),
-                    label: const Text('Retomar simulação em curso'),
+                    label: Text(l10n.resumeDraft),
                   ),
                 ],
                 const SizedBox(height: 22),
@@ -537,7 +554,7 @@ final class _Dashboard extends ConsumerWidget {
                     Expanded(
                       child: _QuickAction(
                         icon: Icons.receipt_long_outlined,
-                        label: 'Ver cálculo',
+                        label: l10n.viewCalculation,
                         onTap: () => _openResult(context, latest, rules),
                       ),
                     ),
@@ -545,7 +562,7 @@ final class _Dashboard extends ConsumerWidget {
                     Expanded(
                       child: _QuickAction(
                         icon: Icons.tune_rounded,
-                        label: 'Alterar',
+                        label: l10n.change,
                         onTap: () =>
                             _openWizard(context, rules, source: latest),
                       ),
@@ -554,7 +571,7 @@ final class _Dashboard extends ConsumerWidget {
                     Expanded(
                       child: _QuickAction(
                         icon: Icons.compare_arrows_rounded,
-                        label: 'Comparar',
+                        label: l10n.compare,
                         onTap: result.available
                             ? () => Navigator.push(
                                 context,
@@ -585,7 +602,7 @@ final class _Dashboard extends ConsumerWidget {
                       ),
                     ),
                     icon: const Icon(Icons.auto_awesome_outlined),
-                    label: const Text('Explorar oportunidades fiscais'),
+                    label: Text(l10n.exploreTaxOpportunities),
                   ),
                 ],
                 if (EfaturaFeatureFlags.experimental) ...[
@@ -594,9 +611,9 @@ final class _Dashboard extends ConsumerWidget {
                     child: ListTile(
                       key: const Key('efatura-dashboard-entry'),
                       leading: const Icon(Icons.receipt_outlined),
-                      title: const Text('e-Fatura'),
-                      subtitle: const Text('Consulta read-only experimental'),
-                      trailing: const Chip(label: Text('Experimental')),
+                      title: Text(l10n.efaturaTitle),
+                      subtitle: Text(l10n.readOnlyExperimental),
+                      trailing: Chip(label: Text(l10n.experimental)),
                       onTap: () => _openEfatura(context),
                     ),
                   ),
@@ -683,12 +700,12 @@ final class _Dashboard extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'As tuas simulações',
+                            l10n.yourSimulations,
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            '${simulations.length} guardada${simulations.length == 1 ? '' : 's'} neste dispositivo',
+                            l10n.savedSimulationCount(simulations.length),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -698,7 +715,7 @@ final class _Dashboard extends ConsumerWidget {
                       onPressed: () =>
                           _openWizard(context, rules, resumeDraft: false),
                       icon: const Icon(Icons.add_rounded),
-                      label: const Text('Nova'),
+                      label: Text(l10n.newSimulation),
                     ),
                   ],
                 ),
@@ -744,41 +761,43 @@ final class _Dashboard extends ConsumerWidget {
                   subtitle: Text(
                     itemResult.available
                         ? (itemResult.isRefund
-                              ? 'Reembolso ${itemResult.balance.format()}'
-                              : 'A pagar ${(-itemResult.balance).format()}')
-                        : 'Cálculo indisponível',
+                              ? l10n.refundAmount(itemResult.balance.format())
+                              : l10n.taxDueAmount(
+                                  (-itemResult.balance).format(),
+                                ))
+                        : l10n.calculationUnavailable,
                   ),
                   trailing: PopupMenuButton<String>(
-                    tooltip: 'Opções',
+                    tooltip: l10n.options,
                     onSelected: (action) => _manage(context, ref, item, action),
-                    itemBuilder: (_) => const [
+                    itemBuilder: (_) => [
                       PopupMenuItem(
                         value: 'rename',
                         child: ListTile(
-                          leading: Icon(Icons.drive_file_rename_outline),
-                          title: Text('Renomear'),
+                          leading: const Icon(Icons.drive_file_rename_outline),
+                          title: Text(l10n.rename),
                         ),
                       ),
                       PopupMenuItem(
                         value: 'duplicate',
                         child: ListTile(
-                          leading: Icon(Icons.copy_rounded),
-                          title: Text('Duplicar'),
+                          leading: const Icon(Icons.copy_rounded),
+                          title: Text(l10n.duplicate),
                         ),
                       ),
                       PopupMenuItem(
                         value: 'edit',
                         child: ListTile(
-                          leading: Icon(Icons.tune_rounded),
-                          title: Text('Alterar dados'),
+                          leading: const Icon(Icons.tune_rounded),
+                          title: Text(l10n.changeData),
                         ),
                       ),
-                      PopupMenuDivider(),
+                      const PopupMenuDivider(),
                       PopupMenuItem(
                         value: 'delete',
                         child: ListTile(
-                          leading: Icon(Icons.delete_outline_rounded),
-                          title: Text('Apagar'),
+                          leading: const Icon(Icons.delete_outline_rounded),
+                          title: Text(l10n.delete),
                         ),
                       ),
                     ],
@@ -799,6 +818,7 @@ final class _Dashboard extends ConsumerWidget {
     TaxSimulation simulation,
     String action,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final repository = ref.read(repositoryProvider);
     if (action == 'edit') {
       await _openWizard(context, rules, source: simulation);
@@ -809,7 +829,7 @@ final class _Dashboard extends ConsumerWidget {
       await repository.save(
         simulation.copyWith(
           id: now.microsecondsSinceEpoch.toString(),
-          name: '${simulation.name} — cópia',
+          name: l10n.copySimulationName(simulation.name),
           updatedAt: now,
         ),
       );
@@ -821,20 +841,20 @@ final class _Dashboard extends ConsumerWidget {
       final name = await showDialog<String>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Renomear simulação'),
+          title: Text(l10n.renameSimulation),
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(labelText: 'Nome'),
+            decoration: InputDecoration(labelText: l10n.name),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Guardar'),
+              child: Text(l10n.save),
             ),
           ],
         ),
@@ -853,18 +873,16 @@ final class _Dashboard extends ConsumerWidget {
         context: context,
         builder: (context) => AlertDialog(
           icon: const Icon(Icons.delete_outline_rounded),
-          title: const Text('Apagar esta simulação?'),
-          content: Text(
-            '“${simulation.name}” será removida apenas deste dispositivo.',
-          ),
+          title: Text(l10n.deleteSimulationTitle),
+          content: Text(l10n.deleteSimulationMessage(simulation.name)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Apagar'),
+              child: Text(l10n.delete),
             ),
           ],
         ),
@@ -2683,6 +2701,7 @@ final class _ResultHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final positive = result.isRefund;
     final start = positive ? const Color(0xFF153F39) : const Color(0xFF552F39);
@@ -2752,9 +2771,9 @@ final class _ResultHero extends StatelessWidget {
               Text(
                 result.available
                     ? (positive
-                          ? 'Reembolso estimado'
-                          : 'Imposto adicional estimado')
-                    : 'Estimativa indisponível',
+                          ? l10n.estimatedRefund
+                          : l10n.estimatedAdditionalTax)
+                    : l10n.estimateUnavailable,
                 style: TextStyle(
                   color: result.available ? Colors.white : scheme.onSurface,
                   fontWeight: FontWeight.w700,
@@ -2775,7 +2794,7 @@ final class _ResultHero extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'Abrir detalhe',
+                      l10n.openDetails,
                       style: TextStyle(
                         color: result.available
                             ? Colors.white70
@@ -3519,28 +3538,5 @@ final class _TrustRow extends StatelessWidget {
       const SizedBox(width: 10),
       Flexible(child: Text(text)),
     ],
-  );
-}
-
-final class _FatalError extends StatelessWidget {
-  const _FatalError({required this.message});
-  final String message;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(28),
-    child: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            size: 48,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 16),
-          Text(message, textAlign: TextAlign.center),
-        ],
-      ),
-    ),
   );
 }

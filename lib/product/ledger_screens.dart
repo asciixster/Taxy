@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/money.dart';
 import '../l10n/app_localizations.dart';
 import '../state/providers.dart';
+import 'app_error_state.dart';
+import 'app_failure.dart';
 import 'product_models.dart';
 
 final class IncomeScreen extends ConsumerStatefulWidget {
@@ -51,7 +53,10 @@ final class _LedgerScaffold extends ConsumerWidget {
       appBar: AppBar(title: Text(isIncome ? l10n.income : l10n.expenses)),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(child: Text(l10n.localDataUnavailable)),
+        error: (_, _) => AppErrorState(
+          failure: const AppFailure(AppFailureKind.localDataError),
+          onRetry: () => ref.invalidate(productStateProvider),
+        ),
         data: (value) => _body(context, ref, value),
       ),
       floatingActionButton: state.hasValue

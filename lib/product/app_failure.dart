@@ -2,10 +2,13 @@ enum AppFailureKind {
   networkOffline,
   timeout,
   authenticationRequired,
+  authorizationDenied,
   sessionExpired,
   serviceUnavailable,
+  serverError,
   malformedData,
   missingRequiredData,
+  localDataError,
   unknown,
 }
 
@@ -23,10 +26,13 @@ final class AppFailure implements Exception {
     AppFailureKind.networkOffline => 'NETWORK_OFFLINE',
     AppFailureKind.timeout => 'TIMEOUT',
     AppFailureKind.authenticationRequired => 'AUTH_REQUIRED',
+    AppFailureKind.authorizationDenied => 'AUTHORIZATION_DENIED',
     AppFailureKind.sessionExpired => 'SESSION_EXPIRED',
     AppFailureKind.serviceUnavailable => 'SERVICE_UNAVAILABLE',
+    AppFailureKind.serverError => 'SERVER_ERROR',
     AppFailureKind.malformedData => 'MALFORMED_DATA',
     AppFailureKind.missingRequiredData => 'MISSING_REQUIRED_DATA',
+    AppFailureKind.localDataError => 'LOCAL_DATA_ERROR',
     AppFailureKind.unknown => 'UNKNOWN',
   };
 }

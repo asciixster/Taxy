@@ -771,4 +771,200 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get all => 'All';
+
+  @override
+  String get dashboardTitle => 'Your IRS at a glance';
+
+  @override
+  String simulationUpdatedForYear(int year) {
+    return 'Updated using the $year tax rules.';
+  }
+
+  @override
+  String get resumeDraft => 'Resume current simulation';
+
+  @override
+  String get viewCalculation => 'View calculation';
+
+  @override
+  String get change => 'Change';
+
+  @override
+  String get compare => 'Compare';
+
+  @override
+  String get exploreTaxOpportunities => 'Explore tax opportunities';
+
+  @override
+  String get readOnlyExperimental => 'Experimental read-only access';
+
+  @override
+  String get yourSimulations => 'Your simulations';
+
+  @override
+  String savedSimulationCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count saved on this device',
+      one: '1 saved on this device',
+      zero: 'None saved on this device',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get newSimulation => 'New';
+
+  @override
+  String refundAmount(String amount) {
+    return 'Refund $amount';
+  }
+
+  @override
+  String taxDueAmount(String amount) {
+    return 'To pay $amount';
+  }
+
+  @override
+  String get calculationUnavailable => 'Calculation unavailable';
+
+  @override
+  String get options => 'Options';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get duplicate => 'Duplicate';
+
+  @override
+  String get changeData => 'Change details';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get renameSimulation => 'Rename simulation';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String copySimulationName(String name) {
+    return '$name — copy';
+  }
+
+  @override
+  String get deleteSimulationTitle => 'Delete this simulation?';
+
+  @override
+  String deleteSimulationMessage(String name) {
+    return '“$name” will be removed from this device only.';
+  }
+
+  @override
+  String get estimatedRefund => 'Estimated refund';
+
+  @override
+  String get estimatedAdditionalTax => 'Estimated additional tax';
+
+  @override
+  String get estimateUnavailable => 'Estimate unavailable';
+
+  @override
+  String get openDetails => 'Open details';
+
+  @override
+  String get transparencyFirst => 'Transparency first';
+
+  @override
+  String get calculationMethodIntro =>
+      'The calculation is deterministic and does not use artificial intelligence. Monetary values use integer cents with explicit rounding.';
+
+  @override
+  String get netCategoryIncome => 'Net category income';
+
+  @override
+  String get netCategoryIncomeExplanation =>
+      'We subtract the specific employment-income deduction from gross income.';
+
+  @override
+  String get minimumExistence => 'Minimum subsistence amount';
+
+  @override
+  String get minimumExistenceExplanation =>
+      'Where applicable, we calculate the reduction established by article 70 of the Portuguese IRS Code.';
+
+  @override
+  String get progressiveBrackets => 'Progressive tax brackets';
+
+  @override
+  String progressiveBracketsExplanation(int year) {
+    return 'We apply the $year general rates to taxable income.';
+  }
+
+  @override
+  String get deductionsAndWithholding => 'Deductions and withholding';
+
+  @override
+  String get deductionsAndWithholdingExplanation =>
+      'We apply category limits and the combined limit, then subtract IRS already withheld.';
+
+  @override
+  String get validatedScope => 'Validated scope';
+
+  @override
+  String get unsupportedScope => 'Not supported / needs verification';
+
+  @override
+  String get openValidationLab => 'Open tax validation lab';
+
+  @override
+  String validatedResidentScope(String jurisdiction) {
+    return 'Resident for the full year · $jurisdiction.';
+  }
+
+  @override
+  String get categoryAOnlyScope => 'Category A employment income only.';
+
+  @override
+  String get standardHouseholdScope =>
+      'Individuals, single-parent families, married couples and standard de facto unions.';
+
+  @override
+  String get couplesComparisonScope =>
+      'For couples, we calculate separate and joint filing and show the difference.';
+
+  @override
+  String get standardDependantsScope =>
+      'Standard dependants, without shared custody, alternating residence or special allocation.';
+
+  @override
+  String get standardEducationScope =>
+      'Standard education expenses, without displaced students or regional uplifts.';
+
+  @override
+  String verifiedRulesScope(String version, String date) {
+    return 'Rules $version, verified on $date.';
+  }
+
+  @override
+  String get regional2025Unsupported => 'Madeira and the Azores in 2025.';
+
+  @override
+  String get partialResidenceUnsupported =>
+      'Part-year residence or non-residence.';
+
+  @override
+  String get incomeTypesUnsupported =>
+      'IRS Jovem assessment, Category B income and pensions.';
+
+  @override
+  String get foreignIncomeUnsupported =>
+      'Foreign, investment, property and capital-gains income.';
+
+  @override
+  String get specialSituationsUnsupported =>
+      'Disability, displaced students, shared custody and other special situations.';
 }

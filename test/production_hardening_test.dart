@@ -11,14 +11,22 @@ void main() {
   });
 
   test('production identity and secret exclusions are explicit', () {
-    final manifest = File(
-      'android/app/src/main/AndroidManifest.xml',
-    ).readAsStringSync();
+    final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
     final ignores = File('.gitignore').readAsStringSync();
     expect(manifest, contains('android:label="Taxy"'));
     expect(manifest, contains('android:allowBackup="false"'));
     expect(ignores, contains('*.keystore'));
     expect(ignores, contains('.env.local'));
     expect(ignores, contains('*.pfx.password'));
+  });
+
+  test('Android production entrypoint cannot invoke direct FactIntWS', () {
+    final activity = File(
+      'android/app/src/main/kotlin/pt/taxy/app/MainActivity.kt',
+    ).readAsStringSync();
+    expect(activity, isNot(contains('EfaturaRuntimeBridge')));
+    expect(activity, isNot(contains('FactIntWsNativeClient')));
+    expect(activity, contains('setScreenSecure'));
   });
 }

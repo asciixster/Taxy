@@ -776,6 +776,202 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get all => 'Todos';
+
+  @override
+  String get dashboardTitle => 'O teu IRS, num relance';
+
+  @override
+  String simulationUpdatedForYear(int year) {
+    return 'Simulação atualizada com as regras de $year.';
+  }
+
+  @override
+  String get resumeDraft => 'Retomar simulação em curso';
+
+  @override
+  String get viewCalculation => 'Ver cálculo';
+
+  @override
+  String get change => 'Alterar';
+
+  @override
+  String get compare => 'Comparar';
+
+  @override
+  String get exploreTaxOpportunities => 'Explorar oportunidades fiscais';
+
+  @override
+  String get readOnlyExperimental => 'Consulta experimental apenas de leitura';
+
+  @override
+  String get yourSimulations => 'As tuas simulações';
+
+  @override
+  String savedSimulationCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count guardadas neste dispositivo',
+      one: '1 guardada neste dispositivo',
+      zero: 'Nenhuma guardada neste dispositivo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get newSimulation => 'Nova';
+
+  @override
+  String refundAmount(String amount) {
+    return 'Reembolso $amount';
+  }
+
+  @override
+  String taxDueAmount(String amount) {
+    return 'A pagar $amount';
+  }
+
+  @override
+  String get calculationUnavailable => 'Cálculo indisponível';
+
+  @override
+  String get options => 'Opções';
+
+  @override
+  String get rename => 'Renomear';
+
+  @override
+  String get duplicate => 'Duplicar';
+
+  @override
+  String get changeData => 'Alterar dados';
+
+  @override
+  String get delete => 'Apagar';
+
+  @override
+  String get renameSimulation => 'Renomear simulação';
+
+  @override
+  String get name => 'Nome';
+
+  @override
+  String copySimulationName(String name) {
+    return '$name — cópia';
+  }
+
+  @override
+  String get deleteSimulationTitle => 'Apagar esta simulação?';
+
+  @override
+  String deleteSimulationMessage(String name) {
+    return '“$name” será removida apenas deste dispositivo.';
+  }
+
+  @override
+  String get estimatedRefund => 'Reembolso estimado';
+
+  @override
+  String get estimatedAdditionalTax => 'Imposto adicional estimado';
+
+  @override
+  String get estimateUnavailable => 'Estimativa indisponível';
+
+  @override
+  String get openDetails => 'Abrir detalhe';
+
+  @override
+  String get transparencyFirst => 'Transparência primeiro';
+
+  @override
+  String get calculationMethodIntro =>
+      'O cálculo é determinístico e não usa inteligência artificial. Valores monetários são tratados em cêntimos inteiros, com arredondamento explícito.';
+
+  @override
+  String get netCategoryIncome => 'Rendimento líquido da categoria';
+
+  @override
+  String get netCategoryIncomeExplanation =>
+      'Ao rendimento bruto subtraímos a dedução específica aplicável ao trabalho dependente.';
+
+  @override
+  String get minimumExistence => 'Mínimo de existência';
+
+  @override
+  String get minimumExistenceExplanation =>
+      'Quando aplicável, calculamos o abatimento previsto no artigo 70.º do Código do IRS.';
+
+  @override
+  String get progressiveBrackets => 'Escalões progressivos';
+
+  @override
+  String progressiveBracketsExplanation(int year) {
+    return 'Aplicamos as taxas gerais de $year ao rendimento coletável.';
+  }
+
+  @override
+  String get deductionsAndWithholding => 'Deduções e retenções';
+
+  @override
+  String get deductionsAndWithholdingExplanation =>
+      'Aplicamos limites por categoria e o limite conjunto. Por fim, descontamos o IRS já retido.';
+
+  @override
+  String get validatedScope => 'Âmbito validado';
+
+  @override
+  String get unsupportedScope => 'Não suportado / por verificar';
+
+  @override
+  String get openValidationLab => 'Abrir laboratório de validação fiscal';
+
+  @override
+  String validatedResidentScope(String jurisdiction) {
+    return 'Residente durante todo o ano · $jurisdiction.';
+  }
+
+  @override
+  String get categoryAOnlyScope => 'Rendimentos exclusivamente da Categoria A.';
+
+  @override
+  String get standardHouseholdScope =>
+      'Individual, família monoparental, casamento ou união de facto standard.';
+
+  @override
+  String get couplesComparisonScope =>
+      'Nos casais, calculamos separada e conjunta e mostramos a diferença.';
+
+  @override
+  String get standardDependantsScope =>
+      'Dependentes standard, sem guarda partilhada, residência alternada ou alocação especial.';
+
+  @override
+  String get standardEducationScope =>
+      'Educação standard, sem estudante deslocado ou majorações territoriais.';
+
+  @override
+  String verifiedRulesScope(String version, String date) {
+    return 'Regras $version, verificadas em $date.';
+  }
+
+  @override
+  String get regional2025Unsupported => 'Madeira e Açores em 2025.';
+
+  @override
+  String get partialResidenceUnsupported =>
+      'Residência parcial ou não residência.';
+
+  @override
+  String get incomeTypesUnsupported =>
+      'Liquidação IRS Jovem, Categoria B e pensões.';
+
+  @override
+  String get foreignIncomeUnsupported =>
+      'Rendimentos estrangeiros, de capitais, prediais e mais-valias.';
+
+  @override
+  String get specialSituationsUnsupported =>
+      'Deficiência, estudante deslocado, guarda partilhada e outras situações especiais.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1549,4 +1745,200 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get all => 'Todos';
+
+  @override
+  String get dashboardTitle => 'O teu IRS, num relance';
+
+  @override
+  String simulationUpdatedForYear(int year) {
+    return 'Simulação atualizada com as regras de $year.';
+  }
+
+  @override
+  String get resumeDraft => 'Retomar simulação em curso';
+
+  @override
+  String get viewCalculation => 'Ver cálculo';
+
+  @override
+  String get change => 'Alterar';
+
+  @override
+  String get compare => 'Comparar';
+
+  @override
+  String get exploreTaxOpportunities => 'Explorar oportunidades fiscais';
+
+  @override
+  String get readOnlyExperimental => 'Consulta experimental apenas de leitura';
+
+  @override
+  String get yourSimulations => 'As tuas simulações';
+
+  @override
+  String savedSimulationCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count guardadas neste dispositivo',
+      one: '1 guardada neste dispositivo',
+      zero: 'Nenhuma guardada neste dispositivo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get newSimulation => 'Nova';
+
+  @override
+  String refundAmount(String amount) {
+    return 'Reembolso $amount';
+  }
+
+  @override
+  String taxDueAmount(String amount) {
+    return 'A pagar $amount';
+  }
+
+  @override
+  String get calculationUnavailable => 'Cálculo indisponível';
+
+  @override
+  String get options => 'Opções';
+
+  @override
+  String get rename => 'Renomear';
+
+  @override
+  String get duplicate => 'Duplicar';
+
+  @override
+  String get changeData => 'Alterar dados';
+
+  @override
+  String get delete => 'Apagar';
+
+  @override
+  String get renameSimulation => 'Renomear simulação';
+
+  @override
+  String get name => 'Nome';
+
+  @override
+  String copySimulationName(String name) {
+    return '$name — cópia';
+  }
+
+  @override
+  String get deleteSimulationTitle => 'Apagar esta simulação?';
+
+  @override
+  String deleteSimulationMessage(String name) {
+    return '“$name” será removida apenas deste dispositivo.';
+  }
+
+  @override
+  String get estimatedRefund => 'Reembolso estimado';
+
+  @override
+  String get estimatedAdditionalTax => 'Imposto adicional estimado';
+
+  @override
+  String get estimateUnavailable => 'Estimativa indisponível';
+
+  @override
+  String get openDetails => 'Abrir detalhe';
+
+  @override
+  String get transparencyFirst => 'Transparência primeiro';
+
+  @override
+  String get calculationMethodIntro =>
+      'O cálculo é determinístico e não usa inteligência artificial. Valores monetários são tratados em cêntimos inteiros, com arredondamento explícito.';
+
+  @override
+  String get netCategoryIncome => 'Rendimento líquido da categoria';
+
+  @override
+  String get netCategoryIncomeExplanation =>
+      'Ao rendimento bruto subtraímos a dedução específica aplicável ao trabalho dependente.';
+
+  @override
+  String get minimumExistence => 'Mínimo de existência';
+
+  @override
+  String get minimumExistenceExplanation =>
+      'Quando aplicável, calculamos o abatimento previsto no artigo 70.º do Código do IRS.';
+
+  @override
+  String get progressiveBrackets => 'Escalões progressivos';
+
+  @override
+  String progressiveBracketsExplanation(int year) {
+    return 'Aplicamos as taxas gerais de $year ao rendimento coletável.';
+  }
+
+  @override
+  String get deductionsAndWithholding => 'Deduções e retenções';
+
+  @override
+  String get deductionsAndWithholdingExplanation =>
+      'Aplicamos limites por categoria e o limite conjunto. Por fim, descontamos o IRS já retido.';
+
+  @override
+  String get validatedScope => 'Âmbito validado';
+
+  @override
+  String get unsupportedScope => 'Não suportado / por verificar';
+
+  @override
+  String get openValidationLab => 'Abrir laboratório de validação fiscal';
+
+  @override
+  String validatedResidentScope(String jurisdiction) {
+    return 'Residente durante todo o ano · $jurisdiction.';
+  }
+
+  @override
+  String get categoryAOnlyScope => 'Rendimentos exclusivamente da Categoria A.';
+
+  @override
+  String get standardHouseholdScope =>
+      'Individual, família monoparental, casamento ou união de facto standard.';
+
+  @override
+  String get couplesComparisonScope =>
+      'Nos casais, calculamos separada e conjunta e mostramos a diferença.';
+
+  @override
+  String get standardDependantsScope =>
+      'Dependentes standard, sem guarda partilhada, residência alternada ou alocação especial.';
+
+  @override
+  String get standardEducationScope =>
+      'Educação standard, sem estudante deslocado ou majorações territoriais.';
+
+  @override
+  String verifiedRulesScope(String version, String date) {
+    return 'Regras $version, verificadas em $date.';
+  }
+
+  @override
+  String get regional2025Unsupported => 'Madeira e Açores em 2025.';
+
+  @override
+  String get partialResidenceUnsupported =>
+      'Residência parcial ou não residência.';
+
+  @override
+  String get incomeTypesUnsupported =>
+      'Liquidação IRS Jovem, Categoria B e pensões.';
+
+  @override
+  String get foreignIncomeUnsupported =>
+      'Rendimentos estrangeiros, de capitais, prediais e mais-valias.';
+
+  @override
+  String get specialSituationsUnsupported =>
+      'Deficiência, estudante deslocado, guarda partilhada e outras situações especiais.';
 }

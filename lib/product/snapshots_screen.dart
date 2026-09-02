@@ -5,6 +5,8 @@ import '../domain/money.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/taxy_formatters.dart';
 import '../state/providers.dart';
+import 'app_error_state.dart';
+import 'app_failure.dart';
 import 'product_models.dart';
 import 'irs_scenario_models.dart';
 
@@ -19,7 +21,10 @@ final class SnapshotsScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.savedEstimates)),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(child: Text(l10n.localDataUnavailable)),
+        error: (_, _) => AppErrorState(
+          failure: const AppFailure(AppFailureKind.localDataError),
+          onRetry: () => ref.invalidate(productStateProvider),
+        ),
         data: (product) {
           final snapshots = [...product.snapshots]
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt));

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../navigation/app_navigation.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/taxy_formatters.dart';
 import '../tax_engine/tax_rules.dart';
 import '../widgets/notice_card.dart';
 import 'tax_validation_lab_screen.dart';
@@ -11,84 +13,87 @@ final class HowWeCalculateScreen extends StatelessWidget {
   final TaxRuleSet rules;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Como calculamos')),
-    body: ListView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
-      children: [
-        Text(
-          'Transparência primeiro',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'O cálculo é determinístico e não usa inteligência artificial. Valores monetários são tratados em cêntimos inteiros, com arredondamento explícito.',
-        ),
-        const SizedBox(height: 24),
-        const _MethodStep(
-          number: '1',
-          title: 'Rendimento líquido da categoria',
-          text: 'Ao rendimento bruto subtraímos a dedução específica aplicável ao trabalho dependente.',
-        ),
-        const _MethodStep(
-          number: '2',
-          title: 'Mínimo de existência',
-          text: 'Quando aplicável, calculamos o abatimento previsto no artigo 70.º do Código do IRS.',
-        ),
-        _MethodStep(
-          number: '3',
-          title: 'Escalões progressivos',
-          text:
-              'Aplicamos as taxas gerais de ${rules.taxYear} ao rendimento coletável.',
-        ),
-        const _MethodStep(
-          number: '4',
-          title: 'Deduções e retenções',
-          text: 'Aplicamos limites por categoria e o limite conjunto. Por fim, descontamos o IRS já retido.',
-        ),
-        const SizedBox(height: 24),
-        NoticeCard(
-          title: 'Âmbito validado',
-          icon: Icons.verified_outlined,
-          messages: [
-            'Residente durante todo o ano · ${rules.jurisdiction}.',
-            'Rendimentos exclusivamente da Categoria A.',
-            'Individual, família monoparental, casamento ou união de facto standard.',
-            'Nos casais, calculamos separada e conjunta e mostramos a diferença.',
-            'Dependentes standard, sem guarda partilhada, residência alternada ou alocação especial.',
-            'Educação standard, sem estudante deslocado ou majorações territoriais.',
-            'Regras ${rules.rulesVersion}, verificadas em ${_date(rules.verifiedAt)}.',
-          ],
-        ),
-        const SizedBox(height: 18),
-        NoticeCard(
-          title: 'Não suportado / NEEDS_VERIFICATION',
-          icon: Icons.block_outlined,
-          messages: [
-            if (rules.taxYear == 2025) 'Madeira e Açores em 2025.',
-            'Residência parcial ou não residência.',
-            'Liquidação IRS Jovem, Categoria B e pensões.',
-            'Rendimentos estrangeiros, de capitais, prediais e mais-valias.',
-            'Deficiência, estudante deslocado, guarda partilhada e outras situações especiais.',
-          ],
-        ),
-        if (kDebugMode) ...[
-          const SizedBox(height: 18),
-          OutlinedButton.icon(
-            onPressed: () => AppNavigation.push(
-              context,
-              TaxValidationLabScreen(rules: rules),
-            ),
-            icon: const Icon(Icons.science_outlined),
-            label: const Text('Abrir Tax Validation Lab'),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.howWeCalculate)),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
+        children: [
+          Text(
+            l10n.transparencyFirst,
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
+          const SizedBox(height: 12),
+          Text(l10n.calculationMethodIntro),
+          const SizedBox(height: 24),
+          _MethodStep(
+            number: '1',
+            title: l10n.netCategoryIncome,
+            text: l10n.netCategoryIncomeExplanation,
+          ),
+          _MethodStep(
+            number: '2',
+            title: l10n.minimumExistence,
+            text: l10n.minimumExistenceExplanation,
+          ),
+          _MethodStep(
+            number: '3',
+            title: l10n.progressiveBrackets,
+            text: l10n.progressiveBracketsExplanation(rules.taxYear),
+          ),
+          _MethodStep(
+            number: '4',
+            title: l10n.deductionsAndWithholding,
+            text: l10n.deductionsAndWithholdingExplanation,
+          ),
+          const SizedBox(height: 24),
+          NoticeCard(
+            title: l10n.validatedScope,
+            icon: Icons.verified_outlined,
+            messages: [
+              l10n.validatedResidentScope(rules.jurisdiction),
+              l10n.categoryAOnlyScope,
+              l10n.standardHouseholdScope,
+              l10n.couplesComparisonScope,
+              l10n.standardDependantsScope,
+              l10n.standardEducationScope,
+              l10n.verifiedRulesScope(
+                rules.rulesVersion,
+                TaxyFormatters.date(
+                  context,
+                  rules.verifiedAt.toIso8601String(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          NoticeCard(
+            title: l10n.unsupportedScope,
+            icon: Icons.block_outlined,
+            messages: [
+              if (rules.taxYear == 2025) l10n.regional2025Unsupported,
+              l10n.partialResidenceUnsupported,
+              l10n.incomeTypesUnsupported,
+              l10n.foreignIncomeUnsupported,
+              l10n.specialSituationsUnsupported,
+            ],
+          ),
+          if (kDebugMode) ...[
+            const SizedBox(height: 18),
+            OutlinedButton.icon(
+              onPressed: () => AppNavigation.push(
+                context,
+                TaxValidationLabScreen(rules: rules),
+              ),
+              icon: const Icon(Icons.science_outlined),
+              label: Text(l10n.openValidationLab),
+            ),
+          ],
         ],
-      ],
-    ),
-  );
-
-  static String _date(DateTime value) =>
-      '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
+      ),
+    );
+  }
 }
 
 final class _MethodStep extends StatelessWidget {
