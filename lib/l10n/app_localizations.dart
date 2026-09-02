@@ -1490,6 +1490,324 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Todos'**
   String get all;
+
+  /// No description provided for @dashboardTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O teu IRS, num relance'**
+  String get dashboardTitle;
+
+  /// No description provided for @simulationUpdatedForYear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Simulação atualizada com as regras de {year}.'**
+  String simulationUpdatedForYear(int year);
+
+  /// No description provided for @resumeDraft.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retomar simulação em curso'**
+  String get resumeDraft;
+
+  /// No description provided for @viewCalculation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver cálculo'**
+  String get viewCalculation;
+
+  /// No description provided for @change.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterar'**
+  String get change;
+
+  /// No description provided for @compare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comparar'**
+  String get compare;
+
+  /// No description provided for @exploreTaxOpportunities.
+  ///
+  /// In pt, this message translates to:
+  /// **'Explorar oportunidades fiscais'**
+  String get exploreTaxOpportunities;
+
+  /// No description provided for @readOnlyExperimental.
+  ///
+  /// In pt, this message translates to:
+  /// **'Consulta experimental apenas de leitura'**
+  String get readOnlyExperimental;
+
+  /// No description provided for @yourSimulations.
+  ///
+  /// In pt, this message translates to:
+  /// **'As tuas simulações'**
+  String get yourSimulations;
+
+  /// No description provided for @savedSimulationCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =0{Nenhuma guardada neste dispositivo} =1{1 guardada neste dispositivo} other{{count} guardadas neste dispositivo}}'**
+  String savedSimulationCount(int count);
+
+  /// No description provided for @newSimulation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nova'**
+  String get newSimulation;
+
+  /// No description provided for @refundAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reembolso {amount}'**
+  String refundAmount(String amount);
+
+  /// No description provided for @taxDueAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'A pagar {amount}'**
+  String taxDueAmount(String amount);
+
+  /// No description provided for @calculationUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cálculo indisponível'**
+  String get calculationUnavailable;
+
+  /// No description provided for @options.
+  ///
+  /// In pt, this message translates to:
+  /// **'Opções'**
+  String get options;
+
+  /// No description provided for @rename.
+  ///
+  /// In pt, this message translates to:
+  /// **'Renomear'**
+  String get rename;
+
+  /// No description provided for @duplicate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Duplicar'**
+  String get duplicate;
+
+  /// No description provided for @changeData.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterar dados'**
+  String get changeData;
+
+  /// No description provided for @delete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar'**
+  String get delete;
+
+  /// No description provided for @renameSimulation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Renomear simulação'**
+  String get renameSimulation;
+
+  /// No description provided for @name.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome'**
+  String get name;
+
+  /// No description provided for @copySimulationName.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} — cópia'**
+  String copySimulationName(String name);
+
+  /// No description provided for @deleteSimulationTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar esta simulação?'**
+  String get deleteSimulationTitle;
+
+  /// No description provided for @deleteSimulationMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'“{name}” será removida apenas deste dispositivo.'**
+  String deleteSimulationMessage(String name);
+
+  /// No description provided for @estimatedRefund.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reembolso estimado'**
+  String get estimatedRefund;
+
+  /// No description provided for @estimatedAdditionalTax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Imposto adicional estimado'**
+  String get estimatedAdditionalTax;
+
+  /// No description provided for @estimateUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativa indisponível'**
+  String get estimateUnavailable;
+
+  /// No description provided for @openDetails.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir detalhe'**
+  String get openDetails;
+
+  /// No description provided for @transparencyFirst.
+  ///
+  /// In pt, this message translates to:
+  /// **'Transparência primeiro'**
+  String get transparencyFirst;
+
+  /// No description provided for @calculationMethodIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'O cálculo é determinístico e não usa inteligência artificial. Valores monetários são tratados em cêntimos inteiros, com arredondamento explícito.'**
+  String get calculationMethodIntro;
+
+  /// No description provided for @netCategoryIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimento líquido da categoria'**
+  String get netCategoryIncome;
+
+  /// No description provided for @netCategoryIncomeExplanation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ao rendimento bruto subtraímos a dedução específica aplicável ao trabalho dependente.'**
+  String get netCategoryIncomeExplanation;
+
+  /// No description provided for @minimumExistence.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mínimo de existência'**
+  String get minimumExistence;
+
+  /// No description provided for @minimumExistenceExplanation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando aplicável, calculamos o abatimento previsto no artigo 70.º do Código do IRS.'**
+  String get minimumExistenceExplanation;
+
+  /// No description provided for @progressiveBrackets.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escalões progressivos'**
+  String get progressiveBrackets;
+
+  /// No description provided for @progressiveBracketsExplanation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aplicamos as taxas gerais de {year} ao rendimento coletável.'**
+  String progressiveBracketsExplanation(int year);
+
+  /// No description provided for @deductionsAndWithholding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deduções e retenções'**
+  String get deductionsAndWithholding;
+
+  /// No description provided for @deductionsAndWithholdingExplanation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aplicamos limites por categoria e o limite conjunto. Por fim, descontamos o IRS já retido.'**
+  String get deductionsAndWithholdingExplanation;
+
+  /// No description provided for @validatedScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Âmbito validado'**
+  String get validatedScope;
+
+  /// No description provided for @unsupportedScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não suportado / por verificar'**
+  String get unsupportedScope;
+
+  /// No description provided for @openValidationLab.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir laboratório de validação fiscal'**
+  String get openValidationLab;
+
+  /// No description provided for @validatedResidentScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Residente durante todo o ano · {jurisdiction}.'**
+  String validatedResidentScope(String jurisdiction);
+
+  /// No description provided for @categoryAOnlyScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos exclusivamente da Categoria A.'**
+  String get categoryAOnlyScope;
+
+  /// No description provided for @standardHouseholdScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Individual, família monoparental, casamento ou união de facto standard.'**
+  String get standardHouseholdScope;
+
+  /// No description provided for @couplesComparisonScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nos casais, calculamos separada e conjunta e mostramos a diferença.'**
+  String get couplesComparisonScope;
+
+  /// No description provided for @standardDependantsScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dependentes standard, sem guarda partilhada, residência alternada ou alocação especial.'**
+  String get standardDependantsScope;
+
+  /// No description provided for @standardEducationScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Educação standard, sem estudante deslocado ou majorações territoriais.'**
+  String get standardEducationScope;
+
+  /// No description provided for @verifiedRulesScope.
+  ///
+  /// In pt, this message translates to:
+  /// **'Regras {version}, verificadas em {date}.'**
+  String verifiedRulesScope(String version, String date);
+
+  /// No description provided for @regional2025Unsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Madeira e Açores em 2025.'**
+  String get regional2025Unsupported;
+
+  /// No description provided for @partialResidenceUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Residência parcial ou não residência.'**
+  String get partialResidenceUnsupported;
+
+  /// No description provided for @incomeTypesUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Liquidação IRS Jovem, Categoria B e pensões.'**
+  String get incomeTypesUnsupported;
+
+  /// No description provided for @foreignIncomeUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos estrangeiros, de capitais, prediais e mais-valias.'**
+  String get foreignIncomeUnsupported;
+
+  /// No description provided for @specialSituationsUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deficiência, estudante deslocado, guarda partilhada e outras situações especiais.'**
+  String get specialSituationsUnsupported;
 }
 
 class _AppLocalizationsDelegate

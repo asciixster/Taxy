@@ -21,11 +21,14 @@ final class AppErrorState extends StatelessWidget {
     final message = switch (failure.kind) {
       AppFailureKind.networkOffline => l10n.offlineUnavailable,
       AppFailureKind.timeout => l10n.networkErrorMessage,
-      AppFailureKind.authenticationRequired ||
-      AppFailureKind.sessionExpired => l10n.authErrorMessage,
+      AppFailureKind.authenticationRequired => l10n.authErrorMessage,
+      AppFailureKind.authorizationDenied => l10n.authorizationErrorMessage,
+      AppFailureKind.sessionExpired => l10n.sessionExpiredMessage,
       AppFailureKind.serviceUnavailable => l10n.serviceErrorMessage,
+      AppFailureKind.serverError => l10n.serviceErrorMessage,
       AppFailureKind.malformedData => l10n.parsingErrorMessage,
       AppFailureKind.missingRequiredData => l10n.missingInformationImprove,
+      AppFailureKind.localDataError => l10n.localDataUnavailable,
       AppFailureKind.unknown => l10n.genericErrorMessage,
     };
     return Semantics(

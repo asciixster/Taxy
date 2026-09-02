@@ -28,11 +28,11 @@
 
 ## Quality
 
-- [ ] Backend/contract and connector suites pass
-- [ ] Android native tests pass
-- [ ] Flutter analyze and tests pass
-- [ ] Gradle debug/release-signing gates pass
-- [ ] 320 px, normal/large phone and 200% text checks pass
+- [x] Backend/contract and connector suites pass
+- [x] Android native tests pass
+- [x] Flutter analyze and tests pass
+- [x] Gradle debug/release-signing gates pass
+- [x] Critical surfaces pass automated 320 px and 200% text checks
 - [ ] Dark mode and screen-reader checks pass
 - [ ] Clean-install global Android smoke passes
 

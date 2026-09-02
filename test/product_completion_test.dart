@@ -99,7 +99,7 @@ void main() {
       const AppFailure(AppFailureKind.missingRequiredData).diagnosticCode,
       'MISSING_REQUIRED_DATA',
     );
-    expect(AppFailureKind.values, hasLength(8));
+    expect(AppFailureKind.values, hasLength(11));
   });
 
   test('diagnostic implementation cannot export fiscal secrets', () {
