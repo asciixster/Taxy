@@ -523,32 +523,52 @@ final class _ConnectCard extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                key: const Key('efatura-nif'),
-                controller: nifController,
-                keyboardType: TextInputType.number,
-                autofillHints: const [AutofillHints.username],
-                maxLength: 9,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(labelText: l10n.nif),
-                validator: (value) =>
-                    RegExp(r'^\d{9}$').hasMatch(value?.trim() ?? '')
-                    ? null
-                    : l10n.invalidNif,
+              MergeSemantics(
+                child: Semantics(
+                  label: l10n.nif,
+                  textField: true,
+                  child: TextFormField(
+                    key: const Key('efatura-nif'),
+                    controller: nifController,
+                    keyboardType: TextInputType.number,
+                    autofillHints: const [AutofillHints.username],
+                    maxLength: 9,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: l10n.nif,
+                      hintText: l10n.nif,
+                    ),
+                    validator: (value) =>
+                        RegExp(r'^\d{9}$').hasMatch(value?.trim() ?? '')
+                        ? null
+                        : l10n.invalidNif,
+                  ),
+                ),
               ),
-              TextFormField(
-                key: const Key('efatura-password'),
-                controller: passwordController,
-                obscureText: true,
-                enableSuggestions: false,
-                autocorrect: false,
-                autofillHints: const [AutofillHints.password],
-                onFieldSubmitted: (_) {
-                  if (identityReady && cipherReady) onConnect();
-                },
-                decoration: InputDecoration(labelText: l10n.password),
-                validator: (value) =>
-                    (value?.isNotEmpty ?? false) ? null : l10n.passwordRequired,
+              MergeSemantics(
+                child: Semantics(
+                  label: l10n.password,
+                  textField: true,
+                  obscured: true,
+                  child: TextFormField(
+                    key: const Key('efatura-password'),
+                    controller: passwordController,
+                    obscureText: true,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    autofillHints: const [AutofillHints.password],
+                    onFieldSubmitted: (_) {
+                      if (identityReady && cipherReady) onConnect();
+                    },
+                    decoration: InputDecoration(
+                      labelText: l10n.password,
+                      hintText: l10n.password,
+                    ),
+                    validator: (value) => (value?.isNotEmpty ?? false)
+                        ? null
+                        : l10n.passwordRequired,
+                  ),
+                ),
               ),
               const SizedBox(height: 14),
               if (!identityReady && onSelectIdentity != null)

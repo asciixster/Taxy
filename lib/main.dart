@@ -8,7 +8,9 @@ import 'app/home/module_section.dart';
 import 'domain/models.dart';
 import 'domain/money.dart';
 import 'l10n/app_localizations.dart';
+import 'l10n/app_localizations_pt.dart';
 import 'l10n/language_controller.dart';
+import 'l10n/taxy_formatters.dart';
 import 'l10n/theme_controller.dart';
 import 'navigation/app_navigation.dart';
 import 'modules/efatura/application/efatura_read_only_service.dart';
@@ -38,6 +40,36 @@ const _taxyViolet = Color(0xFF6557E8);
 const _taxyInk = Color(0xFF17172B);
 const _taxyMint = Color(0xFF69E0B4);
 const _taxyCream = Color(0xFFF6F5FA);
+
+AppLocalizations _appLocalizations(BuildContext context) =>
+    Localizations.of<AppLocalizations>(context, AppLocalizations) ??
+    AppLocalizationsPt('pt_PT');
+
+String _localizedRegion(AppLocalizations l10n, TaxRegion region) =>
+    switch (region) {
+      TaxRegion.continent => l10n.mainlandPortugal,
+      TaxRegion.madeira => l10n.madeira,
+      TaxRegion.azores => l10n.azores,
+    };
+
+String _localizedCivilStatus(AppLocalizations l10n, CivilStatus status) =>
+    switch (status) {
+      CivilStatus.single => l10n.single,
+      CivilStatus.married => l10n.married,
+      CivilStatus.deFacto => l10n.deFactoUnion,
+    };
+
+String _localizedMoney(
+  BuildContext context,
+  Money value, {
+  bool signed = false,
+}) {
+  if (!signed || value.cents == 0) {
+    return TaxyFormatters.euros(context, value.cents);
+  }
+  final prefix = value.cents > 0 ? '+' : '−';
+  return '$prefix${TaxyFormatters.euros(context, value.cents.abs())}';
+}
 
 TaxResult _calculateSimulation(TaxSimulation simulation, TaxRuleSet rules) {
   if (simulation.profile.civilStatus == CivilStatus.single) {
@@ -331,7 +363,7 @@ final class _Welcome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = _appLocalizations(context);
     return Stack(
       children: [
         const Positioned(
@@ -463,7 +495,7 @@ final class _Dashboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = _appLocalizations(context);
     final latest = simulations.first;
     final result = _calculateSimulation(latest, rules);
     return CustomScrollView(
@@ -761,9 +793,11 @@ final class _Dashboard extends ConsumerWidget {
                   subtitle: Text(
                     itemResult.available
                         ? (itemResult.isRefund
-                              ? l10n.refundAmount(itemResult.balance.format())
+                              ? l10n.refundAmount(
+                                  _localizedMoney(context, itemResult.balance),
+                                )
                               : l10n.taxDueAmount(
-                                  (-itemResult.balance).format(),
+                                  _localizedMoney(context, -itemResult.balance),
                                 ))
                         : l10n.calculationUnavailable,
                   ),
@@ -994,7 +1028,7 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       if (!mounted) return;
       setState(() {
         restoring = false;
-        error = 'Não foi possível recuperar o rascunho. Os dados guardados não foram alterados.';
+        error = _appLocalizations(context).draftRestoreError;
       });
     }
   }
@@ -1008,10 +1042,17 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final current = step;
+    final l10n = _appLocalizations(context);
+    final localizedStep = current.id == 'gross'
+        ? (draft.incomeEntryMode == IncomeEntryMode.annual
+              ? 'grossAnnual'
+              : 'grossMonthly')
+        : current.id;
     final progress = (index + 1) / steps.length;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
+          tooltip: l10n.back,
           onPressed: index == 0 ? () => Navigator.pop(context) : _back,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
@@ -1049,7 +1090,7 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _sectionLabel(current.section).toUpperCase(),
+                      l10n.wizardSection(current.section.name).toUpperCase(),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                         fontSize: 11,
@@ -1059,12 +1100,12 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      current.title,
+                      l10n.wizardStepTitle(localizedStep),
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      current.helper,
+                      l10n.wizardStepHelper(localizedStep),
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.45,
@@ -1102,7 +1143,9 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
                       : Icons.arrow_forward_rounded,
                 ),
                 label: Text(
-                  current.id == 'review' ? 'Calcular estimativa' : 'Continuar',
+                  current.id == 'review'
+                      ? l10n.calculateEstimate
+                      : l10n.continueAction,
                 ),
               ),
             ),
@@ -1112,407 +1155,421 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
     );
   }
 
-  String _sectionLabel(QuestionSection section) => switch (section) {
-    QuestionSection.eligibility => 'Âmbito',
-    QuestionSection.profile => 'Perfil',
-    QuestionSection.income => 'Rendimentos',
-    QuestionSection.deductions => 'Despesas',
-    QuestionSection.review => 'Revisão',
-  };
-
-  Widget _question(String id) => switch (id) {
-    'taxYear' => _ChoiceGroup<int>(
-      value: draft.taxYear,
-      options: const [
-        (2025, '2025', 'Declaração entregue em 2026'),
-        (2026, '2026', 'Ano corrente'),
-      ],
-      onChanged: (v) => setState(() => draft.taxYear = v),
-    ),
-    'age' => _NumberPicker(
-      value: draft.age,
-      min: 18,
-      max: 99,
-      onChanged: (v) => setState(() => draft.age = v),
-    ),
-    'civilStatus' => _ChoiceGroup<CivilStatus>(
-      value: draft.civilStatus,
-      options: const [
-        (
-          CivilStatus.single,
-          'Não casado/a nem unido/a de facto',
-          'Liquidação individual',
-        ),
-        (CivilStatus.married, 'Casado/a', 'Compara conjunta e separada'),
-        (CivilStatus.deFacto, 'União de facto', 'Compara conjunta e separada'),
-      ],
-      onChanged: (v) => setState(() {
-        draft.civilStatus = v;
-        if (v == CivilStatus.single) draft.filingMode = FilingMode.separate;
-      }),
-    ),
-    'residency' => _ChoiceGroup<bool>(
-      value: draft.fullYearResident,
-      options: const [
-        (true, 'Sim', 'Residente todo o ano'),
-        (false, 'Não', 'Não suportado — não será possível continuar'),
-      ],
-      onChanged: (v) => setState(() => draft.fullYearResident = v),
-    ),
-    'region' => _ChoiceGroup<TaxRegion>(
-      value: draft.region,
-      options: const [
-        (TaxRegion.continent, 'Continente', 'Cálculo disponível'),
-        (TaxRegion.madeira, 'Madeira', 'Disponível para 2026'),
-        (TaxRegion.azores, 'Açores', 'Disponível para 2026'),
-      ],
-      onChanged: (v) => setState(() => draft.region = v),
-    ),
-    'incomeTypes' => Column(
-      children: [
-        for (final type in IncomeType.values)
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: draft.incomeTypes.contains(type),
-            title: Text(_incomeTypeLabel(type)),
-            subtitle: type == IncomeType.employment
-                ? const Text('Categoria A · disponível')
-                : const Text('Ainda não disponível'),
-            onChanged: (selected) => setState(() {
-              if (selected ?? false) {
-                draft.incomeTypes.add(type);
-              } else {
-                draft.incomeTypes.remove(type);
-              }
-            }),
+  Widget _question(String id) {
+    final l10n = _appLocalizations(context);
+    return switch (id) {
+      'taxYear' => _ChoiceGroup<int>(
+        value: draft.taxYear,
+        options: [
+          (2025, '2025', l10n.wizardText('year2025Helper')),
+          (2026, '2026', l10n.wizardText('currentYear')),
+        ],
+        onChanged: (v) => setState(() => draft.taxYear = v),
+      ),
+      'age' => _NumberPicker(
+        value: draft.age,
+        min: 18,
+        max: 99,
+        onChanged: (v) => setState(() => draft.age = v),
+      ),
+      'civilStatus' => _ChoiceGroup<CivilStatus>(
+        value: draft.civilStatus,
+        options: [
+          (
+            CivilStatus.single,
+            l10n.wizardText('singleStatus'),
+            l10n.wizardText('individualAssessment'),
           ),
-      ],
-    ),
-    'specialSituations' => _ChoiceGroup<bool>(
-      value: draft.hasSpecialSituation,
-      options: const [
-        (false, 'Não', 'Caso standard'),
-        (
-          true,
-          'Sim / não tenho a certeza',
-          'O cálculo será bloqueado por segurança',
-        ),
-      ],
-      onChanged: (value) => setState(() => draft.hasSpecialSituation = value),
-    ),
-    'irsJovemInterest' => Column(
-      children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Verificar IRS Jovem para o titular A'),
-          subtitle: const Text('A elegibilidade será apurada por histórico.'),
-          value: draft.wantsIrsJovemA,
-          onChanged: (value) => setState(() => draft.wantsIrsJovemA = value),
-        ),
-        if (draft.civilStatus != CivilStatus.single)
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Verificar IRS Jovem para o titular B'),
-            value: draft.wantsIrsJovemB,
-            onChanged: (value) => setState(() => draft.wantsIrsJovemB = value),
+          (
+            CivilStatus.married,
+            l10n.wizardText('marriedStatus'),
+            l10n.wizardText('compareJointSeparate'),
           ),
-      ],
-    ),
-    'irsJovemHistory' => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Uma linha por ano: ano,A|B|AB|N,dependente,residente,regime incompatível',
-        ),
-        const SizedBox(height: 12),
-        if (draft.wantsIrsJovemA) ...[
-          TextFormField(
-            initialValue: draft.irsJovemHistoryA,
-            minLines: 3,
-            maxLines: 8,
-            decoration: const InputDecoration(
-              labelText: 'Histórico do titular A',
-              hintText: '2024,A,true,true,false\n2025,A,false,true,false',
-            ),
-            onChanged: (value) => draft.irsJovemHistoryA = value,
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('O histórico A está completo'),
-            value: draft.irsJovemHistoryCompleteA,
-            onChanged: (value) =>
-                setState(() => draft.irsJovemHistoryCompleteA = value),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Situação tributária A regularizada'),
-            value: draft.irsJovemRegularizedA,
-            onChanged: (value) =>
-                setState(() => draft.irsJovemRegularizedA = value),
+          (
+            CivilStatus.deFacto,
+            l10n.wizardText('deFactoStatus'),
+            l10n.wizardText('compareJointSeparate'),
           ),
         ],
-        if (draft.wantsIrsJovemB) ...[
-          TextFormField(
-            initialValue: draft.irsJovemHistoryB,
-            minLines: 3,
-            maxLines: 8,
-            decoration: const InputDecoration(
-              labelText: 'Histórico do titular B',
+        onChanged: (v) => setState(() {
+          draft.civilStatus = v;
+          if (v == CivilStatus.single) draft.filingMode = FilingMode.separate;
+        }),
+      ),
+      'residency' => _ChoiceGroup<bool>(
+        value: draft.fullYearResident,
+        options: [
+          (true, l10n.yes, l10n.wizardText('fullYearResident')),
+          (false, l10n.no, l10n.wizardText('unsupportedCannotContinue')),
+        ],
+        onChanged: (v) => setState(() => draft.fullYearResident = v),
+      ),
+      'region' => _ChoiceGroup<TaxRegion>(
+        value: draft.region,
+        options: [
+          (
+            TaxRegion.continent,
+            l10n.mainlandPortugal,
+            l10n.wizardText('calculationAvailable'),
+          ),
+          (TaxRegion.madeira, l10n.madeira, l10n.wizardText('available2026')),
+          (TaxRegion.azores, l10n.azores, l10n.wizardText('available2026')),
+        ],
+        onChanged: (v) => setState(() => draft.region = v),
+      ),
+      'incomeTypes' => Column(
+        children: [
+          for (final type in IncomeType.values)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: draft.incomeTypes.contains(type),
+              title: Text(_incomeTypeLabel(l10n, type)),
+              subtitle: type == IncomeType.employment
+                  ? Text(l10n.wizardText('categoryAAvailable'))
+                  : Text(l10n.wizardText('notAvailableYet')),
+              onChanged: (selected) => setState(() {
+                if (selected ?? false) {
+                  draft.incomeTypes.add(type);
+                } else {
+                  draft.incomeTypes.remove(type);
+                }
+              }),
             ),
-            onChanged: (value) => draft.irsJovemHistoryB = value,
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('O histórico B está completo'),
-            value: draft.irsJovemHistoryCompleteB,
-            onChanged: (value) =>
-                setState(() => draft.irsJovemHistoryCompleteB = value),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Situação tributária B regularizada'),
-            value: draft.irsJovemRegularizedB,
-            onChanged: (value) =>
-                setState(() => draft.irsJovemRegularizedB = value),
+        ],
+      ),
+      'specialSituations' => _ChoiceGroup<bool>(
+        value: draft.hasSpecialSituation,
+        options: [
+          (false, l10n.no, l10n.wizardText('standardCase')),
+          (
+            true,
+            l10n.wizardText('yesUnsure'),
+            l10n.wizardText('calculationBlockedSafety'),
           ),
         ],
-      ],
-    ),
-    'secondaryAge' => _NumberPicker(
-      value: draft.secondaryAge,
-      min: 18,
-      max: 99,
-      onChanged: (value) => setState(() => draft.secondaryAge = value),
-    ),
-    'filingMode' => _ChoiceGroup<FilingMode>(
-      value: draft.filingMode,
-      options: const [
-        (
-          FilingMode.separate,
-          'Separada',
-          'Mostra primeiro as duas liquidações',
-        ),
-        (FilingMode.joint, 'Conjunta', 'Aplica quociente conjugal 2'),
-      ],
-      onChanged: (value) => setState(() => draft.filingMode = value),
-    ),
-    'dependents' => _NumberPicker(
-      value: draft.dependentAges.length,
-      min: 0,
-      max: 8,
-      onChanged: (v) => setState(() {
-        while (draft.dependentAges.length < v) {
-          draft.dependentAges.add(5);
-        }
-        while (draft.dependentAges.length > v) {
-          draft.dependentAges.removeLast();
-        }
-        if (v == 0) draft.isSingleParentHousehold = false;
-      }),
-    ),
-    'singleParent' => _ChoiceGroup<bool>(
-      value: draft.isSingleParentHousehold,
-      options: const [
-        (true, 'Sim', 'Agregado monoparental standard'),
-        (
-          false,
-          'Não / não tenho a certeza',
-          'O cálculo será bloqueado por segurança',
-        ),
-      ],
-      onChanged: (v) => setState(() => draft.isSingleParentHousehold = v),
-    ),
-    'dependentAges' => Column(
-      children: [
-        for (var i = 0; i < draft.dependentAges.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Dependente ${i + 1}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+        onChanged: (value) => setState(() => draft.hasSpecialSituation = value),
+      ),
+      'irsJovemInterest' => Column(
+        children: [
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.wizardText('checkIrsJovemA')),
+            subtitle: Text(l10n.wizardText('eligibilityByHistory')),
+            value: draft.wantsIrsJovemA,
+            onChanged: (value) => setState(() => draft.wantsIrsJovemA = value),
+          ),
+          if (draft.civilStatus != CivilStatus.single)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.wizardText('checkIrsJovemB')),
+              value: draft.wantsIrsJovemB,
+              onChanged: (value) =>
+                  setState(() => draft.wantsIrsJovemB = value),
+            ),
+        ],
+      ),
+      'irsJovemHistory' => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.wizardText('historyFormat')),
+          const SizedBox(height: 12),
+          if (draft.wantsIrsJovemA) ...[
+            TextFormField(
+              initialValue: draft.irsJovemHistoryA,
+              minLines: 3,
+              maxLines: 8,
+              decoration: InputDecoration(
+                labelText: l10n.wizardText('historyA'),
+                hintText: '2024,A,true,true,false\n2025,A,false,true,false',
+              ),
+              onChanged: (value) => draft.irsJovemHistoryA = value,
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.wizardText('historyCompleteA')),
+              value: draft.irsJovemHistoryCompleteA,
+              onChanged: (value) =>
+                  setState(() => draft.irsJovemHistoryCompleteA = value),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.wizardText('taxRegularA')),
+              value: draft.irsJovemRegularizedA,
+              onChanged: (value) =>
+                  setState(() => draft.irsJovemRegularizedA = value),
+            ),
+          ],
+          if (draft.wantsIrsJovemB) ...[
+            TextFormField(
+              initialValue: draft.irsJovemHistoryB,
+              minLines: 3,
+              maxLines: 8,
+              decoration: InputDecoration(
+                labelText: l10n.wizardText('historyB'),
+              ),
+              onChanged: (value) => draft.irsJovemHistoryB = value,
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.wizardText('historyCompleteB')),
+              value: draft.irsJovemHistoryCompleteB,
+              onChanged: (value) =>
+                  setState(() => draft.irsJovemHistoryCompleteB = value),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.wizardText('taxRegularB')),
+              value: draft.irsJovemRegularizedB,
+              onChanged: (value) =>
+                  setState(() => draft.irsJovemRegularizedB = value),
+            ),
+          ],
+        ],
+      ),
+      'secondaryAge' => _NumberPicker(
+        value: draft.secondaryAge,
+        min: 18,
+        max: 99,
+        onChanged: (value) => setState(() => draft.secondaryAge = value),
+      ),
+      'filingMode' => _ChoiceGroup<FilingMode>(
+        value: draft.filingMode,
+        options: [
+          (
+            FilingMode.separate,
+            l10n.wizardText('separate'),
+            l10n.wizardText('separateFirst'),
+          ),
+          (
+            FilingMode.joint,
+            l10n.wizardText('joint'),
+            l10n.wizardText('maritalQuotient'),
+          ),
+        ],
+        onChanged: (value) => setState(() => draft.filingMode = value),
+      ),
+      'dependents' => _NumberPicker(
+        value: draft.dependentAges.length,
+        min: 0,
+        max: 8,
+        onChanged: (v) => setState(() {
+          while (draft.dependentAges.length < v) {
+            draft.dependentAges.add(5);
+          }
+          while (draft.dependentAges.length > v) {
+            draft.dependentAges.removeLast();
+          }
+          if (v == 0) draft.isSingleParentHousehold = false;
+        }),
+      ),
+      'singleParent' => _ChoiceGroup<bool>(
+        value: draft.isSingleParentHousehold,
+        options: [
+          (true, l10n.yes, l10n.wizardText('standardSingleParent')),
+          (
+            false,
+            l10n.wizardText('noUnsure'),
+            l10n.wizardText('calculationBlockedSafety'),
+          ),
+        ],
+        onChanged: (v) => setState(() => draft.isSingleParentHousehold = v),
+      ),
+      'dependentAges' => Column(
+        children: [
+          for (var i = 0; i < draft.dependentAges.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.dependentNumber(i + 1),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
-                ),
-                SizedBox(
-                  width: 150,
-                  child: DropdownButtonFormField<int>(
-                    initialValue: draft.dependentAges[i],
-                    decoration: const InputDecoration(suffixText: 'anos'),
-                    items: [
-                      for (var age = 0; age <= 25; age++)
-                        DropdownMenuItem(value: age, child: Text('$age')),
-                    ],
-                    onChanged: (v) =>
-                        setState(() => draft.dependentAges[i] = v ?? 0),
+                  SizedBox(
+                    width: 150,
+                    child: DropdownButtonFormField<int>(
+                      initialValue: draft.dependentAges[i],
+                      decoration: InputDecoration(suffixText: l10n.yearsSuffix),
+                      items: [
+                        for (var age = 0; age <= 25; age++)
+                          DropdownMenuItem(value: age, child: Text('$age')),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => draft.dependentAges[i] = v ?? 0),
+                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
+        ],
+      ),
+      'incomeMode' => _ChoiceGroup<IncomeEntryMode>(
+        value: draft.incomeEntryMode,
+        options: [
+          (
+            IncomeEntryMode.annual,
+            l10n.wizardText('annualTotal'),
+            l10n.wizardText('oneAnnualValue'),
+          ),
+          (
+            IncomeEntryMode.monthly,
+            l10n.wizardText('monthlyTimesMonths'),
+            l10n.wizardText('appCalculatesAnnual'),
+          ),
+        ],
+        onChanged: (v) => setState(() => draft.incomeEntryMode = v),
+      ),
+      'gross' => Column(
+        children: [
+          _MoneyField(
+            value: draft.incomeEntryMode == IncomeEntryMode.annual
+                ? draft.gross
+                : draft.monthly,
+            label: draft.incomeEntryMode == IncomeEntryMode.annual
+                ? l10n.wizardText('annualIncome')
+                : l10n.wizardText('monthlyIncome'),
+            onChanged: (v) => draft.incomeEntryMode == IncomeEntryMode.annual
+                ? draft.gross = v
+                : draft.monthly = v,
+          ),
+          if (draft.incomeEntryMode == IncomeEntryMode.monthly) ...[
+            const SizedBox(height: 14),
+            DropdownButtonFormField<int>(
+              initialValue: draft.months,
+              decoration: InputDecoration(
+                labelText: l10n.wizardText('paymentCount'),
+              ),
+              items: [
+                for (var n = 1; n <= 14; n++)
+                  DropdownMenuItem(value: n, child: Text(l10n.monthCount(n))),
               ],
+              onChanged: (v) => setState(() => draft.months = v ?? 14),
             ),
+          ],
+        ],
+      ),
+      'withholding' => _MoneyField(
+        value: draft.withholding,
+        label: l10n.wizardText('annualWithholding'),
+        onChanged: (v) => draft.withholding = v,
+      ),
+      'socialSecurity' => _MoneyField(
+        value: draft.socialSecurity,
+        label: l10n.wizardText('annualContributions'),
+        onChanged: (v) => draft.socialSecurity = v,
+      ),
+      'secondaryGross' => _MoneyField(
+        value: draft.secondaryGross,
+        label: l10n.wizardText('secondaryAnnualIncome'),
+        onChanged: (value) => draft.secondaryGross = value,
+      ),
+      'secondaryWithholding' => _MoneyField(
+        value: draft.secondaryWithholding,
+        label: l10n.wizardText('secondaryAnnualWithholding'),
+        onChanged: (value) => draft.secondaryWithholding = value,
+      ),
+      'secondarySocialSecurity' => _MoneyField(
+        value: draft.secondarySocialSecurity,
+        label: l10n.wizardText('secondaryAnnualContributions'),
+        onChanged: (value) => draft.secondarySocialSecurity = value,
+      ),
+      'general' => _MoneyField(
+        value: draft.general,
+        label: l10n.wizardText('generalExpensesTotal'),
+        hint: 'Ex.: 1.200,00',
+        onChanged: (v) => draft.general = v,
+      ),
+      'health' => _MoneyField(
+        value: draft.health,
+        label: l10n.wizardText('healthTotal'),
+        onChanged: (v) => draft.health = v,
+      ),
+      'education' => _MoneyField(
+        value: draft.education,
+        label: l10n.wizardText('eligibleEducation'),
+        hint: l10n.wizardText('educationExclusions'),
+        onChanged: (v) => draft.education = v,
+      ),
+      'rent' => _MoneyField(
+        value: draft.rent,
+        label: l10n.wizardText('annualRent'),
+        onChanged: (v) => draft.rent = v,
+      ),
+      'careHomes' => _MoneyField(
+        value: draft.careHomes,
+        label: l10n.wizardText('annualCharges'),
+        onChanged: (v) => draft.careHomes = v,
+      ),
+      'invoiceVat15' => _MoneyField(
+        value: draft.invoiceVat15,
+        label: l10n.wizardText('vat15'),
+        onChanged: (v) => draft.invoiceVat15 = v,
+      ),
+      'invoiceVat30' => _MoneyField(
+        value: draft.invoiceVat30,
+        label: l10n.wizardText('vat30'),
+        onChanged: (v) => draft.invoiceVat30 = v,
+      ),
+      'invoiceVat35' => _MoneyField(
+        value: draft.invoiceVat35,
+        label: l10n.wizardText('vat35'),
+        onChanged: (v) => draft.invoiceVat35 = v,
+      ),
+      'invoiceVat100' => _MoneyField(
+        value: draft.invoiceVat100,
+        label: l10n.wizardText('vat100'),
+        onChanged: (v) => draft.invoiceVat100 = v,
+      ),
+      'ppr' => _MoneyField(
+        value: draft.ppr,
+        label: l10n.wizardText('annualPpr'),
+        onChanged: (v) => draft.ppr = v,
+      ),
+      'secondaryDeductions' => Column(
+        children: [
+          _MoneyField(
+            value: draft.secondaryGeneral,
+            label: l10n.wizardText('secondaryGeneral'),
+            onChanged: (v) => draft.secondaryGeneral = v,
           ),
-      ],
-    ),
-    'incomeMode' => _ChoiceGroup<IncomeEntryMode>(
-      value: draft.incomeEntryMode,
-      options: const [
-        (IncomeEntryMode.annual, 'Total anual', 'Um único valor do ano'),
-        (
-          IncomeEntryMode.monthly,
-          'Mensal × meses',
-          'A app calcula o total anual',
-        ),
-      ],
-      onChanged: (v) => setState(() => draft.incomeEntryMode = v),
-    ),
-    'gross' => Column(
-      children: [
-        _MoneyField(
-          value: draft.incomeEntryMode == IncomeEntryMode.annual
-              ? draft.gross
-              : draft.monthly,
-          label: draft.incomeEntryMode == IncomeEntryMode.annual
-              ? 'Rendimento anual'
-              : 'Rendimento mensal',
-          onChanged: (v) => draft.incomeEntryMode == IncomeEntryMode.annual
-              ? draft.gross = v
-              : draft.monthly = v,
-        ),
-        if (draft.incomeEntryMode == IncomeEntryMode.monthly) ...[
-          const SizedBox(height: 14),
-          DropdownButtonFormField<int>(
-            initialValue: draft.months,
-            decoration: const InputDecoration(
-              labelText: 'Número de pagamentos',
-            ),
-            items: [
-              for (var n = 1; n <= 14; n++)
-                DropdownMenuItem(value: n, child: Text('$n meses')),
-            ],
-            onChanged: (v) => setState(() => draft.months = v ?? 14),
+          const SizedBox(height: 10),
+          _MoneyField(
+            value: draft.secondaryHealth,
+            label: l10n.wizardText('secondaryHealth'),
+            onChanged: (v) => draft.secondaryHealth = v,
+          ),
+          const SizedBox(height: 10),
+          _MoneyField(
+            value: draft.secondaryEducation,
+            label: l10n.wizardText('secondaryEducation'),
+            onChanged: (v) => draft.secondaryEducation = v,
+          ),
+          const SizedBox(height: 10),
+          _MoneyField(
+            value: draft.secondaryRent,
+            label: l10n.wizardText('secondaryRent'),
+            onChanged: (v) => draft.secondaryRent = v,
+          ),
+          const SizedBox(height: 10),
+          _MoneyField(
+            value: draft.secondaryCareHomes,
+            label: l10n.wizardText('secondaryCareHomes'),
+            onChanged: (v) => draft.secondaryCareHomes = v,
+          ),
+          const SizedBox(height: 10),
+          _MoneyField(
+            value: draft.secondaryPpr,
+            label: l10n.wizardText('secondaryPpr'),
+            onChanged: (v) => draft.secondaryPpr = v,
           ),
         ],
-      ],
-    ),
-    'withholding' => _MoneyField(
-      value: draft.withholding,
-      label: 'Retenção anual de IRS',
-      onChanged: (v) => draft.withholding = v,
-    ),
-    'socialSecurity' => _MoneyField(
-      value: draft.socialSecurity,
-      label: 'Contribuições anuais',
-      onChanged: (v) => draft.socialSecurity = v,
-    ),
-    'secondaryGross' => _MoneyField(
-      value: draft.secondaryGross,
-      label: 'Rendimento anual do titular B',
-      onChanged: (value) => draft.secondaryGross = value,
-    ),
-    'secondaryWithholding' => _MoneyField(
-      value: draft.secondaryWithholding,
-      label: 'Retenção anual do titular B',
-      onChanged: (value) => draft.secondaryWithholding = value,
-    ),
-    'secondarySocialSecurity' => _MoneyField(
-      value: draft.secondarySocialSecurity,
-      label: 'Contribuições anuais do titular B',
-      onChanged: (value) => draft.secondarySocialSecurity = value,
-    ),
-    'general' => _MoneyField(
-      value: draft.general,
-      label: 'Total de despesas gerais',
-      hint: 'Ex.: 1.200,00',
-      onChanged: (v) => draft.general = v,
-    ),
-    'health' => _MoneyField(
-      value: draft.health,
-      label: 'Total de saúde',
-      onChanged: (v) => draft.health = v,
-    ),
-    'education' => _MoneyField(
-      value: draft.education,
-      label: 'Educação standard elegível',
-      hint: 'Não inclui estudante deslocado ou majorações territoriais',
-      onChanged: (v) => draft.education = v,
-    ),
-    'rent' => _MoneyField(
-      value: draft.rent,
-      label: 'Rendas anuais',
-      onChanged: (v) => draft.rent = v,
-    ),
-    'careHomes' => _MoneyField(
-      value: draft.careHomes,
-      label: 'Encargos anuais',
-      onChanged: (v) => draft.careHomes = v,
-    ),
-    'invoiceVat15' => _MoneyField(
-      value: draft.invoiceVat15,
-      label: 'IVA elegível à taxa de 15%',
-      onChanged: (v) => draft.invoiceVat15 = v,
-    ),
-    'invoiceVat30' => _MoneyField(
-      value: draft.invoiceVat30,
-      label: 'IVA elegível à taxa de 30%',
-      onChanged: (v) => draft.invoiceVat30 = v,
-    ),
-    'invoiceVat35' => _MoneyField(
-      value: draft.invoiceVat35,
-      label: 'IVA elegível à taxa de 35%',
-      onChanged: (v) => draft.invoiceVat35 = v,
-    ),
-    'invoiceVat100' => _MoneyField(
-      value: draft.invoiceVat100,
-      label: 'IVA elegível à taxa de 100%',
-      onChanged: (v) => draft.invoiceVat100 = v,
-    ),
-    'ppr' => _MoneyField(
-      value: draft.ppr,
-      label: 'Aplicações anuais em PPR',
-      onChanged: (v) => draft.ppr = v,
-    ),
-    'secondaryDeductions' => Column(
-      children: [
-        _MoneyField(
-          value: draft.secondaryGeneral,
-          label: 'Despesas gerais · titular B',
-          onChanged: (v) => draft.secondaryGeneral = v,
-        ),
-        const SizedBox(height: 10),
-        _MoneyField(
-          value: draft.secondaryHealth,
-          label: 'Saúde · titular B',
-          onChanged: (v) => draft.secondaryHealth = v,
-        ),
-        const SizedBox(height: 10),
-        _MoneyField(
-          value: draft.secondaryEducation,
-          label: 'Educação standard · titular B',
-          onChanged: (v) => draft.secondaryEducation = v,
-        ),
-        const SizedBox(height: 10),
-        _MoneyField(
-          value: draft.secondaryRent,
-          label: 'Rendas · titular B',
-          onChanged: (v) => draft.secondaryRent = v,
-        ),
-        const SizedBox(height: 10),
-        _MoneyField(
-          value: draft.secondaryCareHomes,
-          label: 'Lares · titular B',
-          onChanged: (v) => draft.secondaryCareHomes = v,
-        ),
-        const SizedBox(height: 10),
-        _MoneyField(
-          value: draft.secondaryPpr,
-          label: 'PPR · titular B',
-          onChanged: (v) => draft.secondaryPpr = v,
-        ),
-      ],
-    ),
-    'review' => _ReviewCard(draft: draft, onEdit: _editSection),
-    _ => const SizedBox.shrink(),
-  };
+      ),
+      'review' => _ReviewCard(draft: draft, onEdit: _editSection),
+      _ => const SizedBox.shrink(),
+    };
+  }
 
   Future<void> _back() async {
     setState(() {
@@ -1548,7 +1605,7 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        error = 'Não foi possível guardar o progresso neste dispositivo. Podes continuar, mas confirma o armazenamento antes de fechar.';
+        error = _appLocalizations(context).draftSaveError;
       });
     }
   }
@@ -1565,47 +1622,48 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
   }
 
   String? _validate(String id) {
+    final l10n = _appLocalizations(context);
     if (id == 'residency' && !draft.fullYearResident) {
-      return 'Ainda não suportado: residência fiscal parcial.';
+      return l10n.partialResidenceError;
     }
     if (id == 'region' &&
         draft.taxYear == 2025 &&
         draft.region != TaxRegion.continent) {
-      return 'Ainda não suportado: Madeira e Açores em 2025 permanecem NEEDS_VERIFICATION.';
+      return l10n.regionalYearError;
     }
     if (id == 'incomeTypes' &&
         (draft.incomeTypes.isEmpty ||
             draft.incomeTypes.any((type) => type != IncomeType.employment))) {
-      return 'Ainda não suportado: só conseguimos calcular quando existe exclusivamente trabalho dependente.';
+      return l10n.incomeScopeError;
     }
     if (id == 'specialSituations' && draft.hasSpecialSituation) {
-      return 'Ainda não suportado: este caso exige validação adicional e não será aproximado.';
+      return l10n.specialSituationError;
     }
     if (id == 'irsJovemHistory') {
       if (draft.wantsIrsJovemA &&
           (draft.irsJovemHistoryA.trim().isEmpty ||
               !draft.irsJovemHistoryCompleteA)) {
-        return 'Dados insuficientes: falta o histórico anual completo do titular A.';
+        return l10n.historyAError;
       }
       if (draft.wantsIrsJovemB &&
           (draft.irsJovemHistoryB.trim().isEmpty ||
               !draft.irsJovemHistoryCompleteB)) {
-        return 'Dados insuficientes: falta o histórico anual completo do titular B.';
+        return l10n.historyBError;
       }
     }
     if (id == 'singleParent' && !draft.isSingleParentHousehold) {
-      return 'Ainda não suportado: com dependentes, só está validado o agregado monoparental standard.';
+      return l10n.singleParentScopeError;
     }
     if (id == 'gross') {
       final value = draft.incomeEntryMode == IncomeEntryMode.annual
           ? draft.gross
           : draft.monthly;
       if (_money(value).cents <= 0) {
-        return 'Dados inválidos: indica um rendimento superior a zero.';
+        return l10n.positiveIncomeError;
       }
     }
     if (id == 'secondaryGross' && _money(draft.secondaryGross).cents < 0) {
-      return 'Dados inválidos: o rendimento do segundo titular não pode ser negativo.';
+      return l10n.secondaryIncomeError;
     }
     return null;
   }
@@ -1763,28 +1821,18 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
     } on FormatException {
       if (!mounted) return;
       setState(() {
-        error =
-            'Dados inválidos: revê os valores monetários antes de calcular.';
+        error = _appLocalizations(context).moneyValuesError;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        error = 'Não foi possível concluir o cálculo com segurança. O teu rascunho continua guardado; tenta novamente.';
+        error = _appLocalizations(context).calculationSafetyError;
       });
     }
   }
 
-  String _incomeTypeLabel(IncomeType type) => switch (type) {
-    IncomeType.employment => 'Trabalho dependente',
-    IncomeType.selfEmployment => 'Trabalho independente',
-    IncomeType.pensions => 'Pensões',
-    IncomeType.property => 'Rendas',
-    IncomeType.capital => 'Juros ou dividendos',
-    IncomeType.securities => 'Ações ou ETFs',
-    IncomeType.crypto => 'Criptoativos',
-    IncomeType.foreign => 'Rendimentos estrangeiros',
-    IncomeType.other => 'Outros rendimentos',
-  };
+  String _incomeTypeLabel(AppLocalizations l10n, IncomeType type) =>
+      l10n.incomeTypeName(type.name);
 }
 
 final class ResultScreen extends ConsumerWidget {
@@ -1815,7 +1863,7 @@ final class ResultScreen extends ConsumerWidget {
         ? null
         : HouseholdTaxEngine(rules).compare(simulation);
     return Scaffold(
-      appBar: AppBar(title: const Text('A tua estimativa')),
+      appBar: AppBar(title: Text(l10n.legacyUiText('estimateTitle'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 14, 24, 36),
         children: [
@@ -1834,34 +1882,36 @@ final class ResultScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     if (singleJovem != null) ...[
-                      Text('IRS normal: ${singleJovem.normal.taxDue.format()}'),
+                      Text(
+                        '${l10n.legacyUiText('normalIrs')}: ${_localizedMoney(context, singleJovem.normal.taxDue)}',
+                      ),
                       if (singleJovem.withIrsJovem != null) ...[
                         Text(
-                          'IRS Jovem: ${singleJovem.withIrsJovem!.taxDue.format()}',
+                          'IRS Jovem: ${_localizedMoney(context, singleJovem.withIrsJovem!.taxDue)}',
                         ),
                         Text(
-                          'Benefício fiscal estimado: ${singleJovem.estimatedBenefit.format()}',
+                          '${l10n.legacyUiText('estimatedTaxBenefit')}: ${_localizedMoney(context, singleJovem.estimatedBenefit)}',
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           '${singleJovem.eligibility.relevantIncomeYear}.º ano · '
                           '${singleJovem.eligibility.exemptionRatePpm / 10000}% · '
-                          'limite ${singleJovem.eligibility.exemptionLimit.format()} · '
-                          'isento ${singleJovem.adjustment!.exemptIncome.format()}',
+                          'limite ${_localizedMoney(context, singleJovem.eligibility.exemptionLimit)} · '
+                          'isento ${_localizedMoney(context, singleJovem.adjustment!.exemptIncome)}',
                         ),
                       ] else
                         Text(singleJovem.eligibility.reasons.join(' ')),
                       ExpansionTile(
                         tilePadding: EdgeInsets.zero,
                         childrenPadding: const EdgeInsets.only(bottom: 8),
-                        title: const Text('Porque sou elegível?'),
+                        title: Text(l10n.legacyUiText('whyEligible')),
                         children: [
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
                               singleJovem.eligibility.reasons.isEmpty
-                                  ? 'A elegibilidade foi determinada pelo histórico anual, idade, residência e situação tributária indicados.'
+                                  ? l10n.legacyUiText('eligibilityDefault')
                                   : singleJovem.eligibility.reasons.join(' '),
                             ),
                           ),
@@ -1869,20 +1919,20 @@ final class ResultScreen extends ConsumerWidget {
                       ),
                     ] else if (householdJovem != null) ...[
                       Text(
-                        'Separada sem IRS Jovem: ${householdJovem.normal.separate!.taxDue.format()}',
+                        '${l10n.legacyUiText('separateWithoutJovem')}: ${_localizedMoney(context, householdJovem.normal.separate!.taxDue)}',
                       ),
                       Text(
-                        'Conjunta sem IRS Jovem: ${householdJovem.normal.joint!.taxDue.format()}',
+                        '${l10n.legacyUiText('jointWithoutJovem')}: ${_localizedMoney(context, householdJovem.normal.joint!.taxDue)}',
                       ),
                       if (householdJovem.withIrsJovem != null) ...[
                         Text(
-                          'Separada com IRS Jovem: ${householdJovem.withIrsJovem!.separate!.taxDue.format()}',
+                          '${l10n.legacyUiText('separateWithJovem')}: ${_localizedMoney(context, householdJovem.withIrsJovem!.separate!.taxDue)}',
                         ),
                         Text(
-                          'Conjunta com IRS Jovem: ${householdJovem.withIrsJovem!.joint!.taxDue.format()}',
+                          '${l10n.legacyUiText('jointWithJovem')}: ${_localizedMoney(context, householdJovem.withIrsJovem!.joint!.taxDue)}',
                         ),
                         Text(
-                          'Benefício fiscal estimado na melhor opção: ${householdJovem.estimatedBenefit.format()}',
+                          '${l10n.legacyUiText('estimatedBestBenefit')}: ${_localizedMoney(context, householdJovem.estimatedBenefit)}',
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                       ] else
@@ -1890,22 +1940,20 @@ final class ResultScreen extends ConsumerWidget {
                       ExpansionTile(
                         tilePadding: EdgeInsets.zero,
                         childrenPadding: const EdgeInsets.only(bottom: 8),
-                        title: const Text('Porque somos elegíveis?'),
+                        title: Text(l10n.legacyUiText('whyEligiblePlural')),
                         children: [
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'Titular A: ${householdJovem.primaryEligibility.reasons.join(' ')}\n'
-                              'Titular B: ${householdJovem.secondaryEligibility.reasons.join(' ')}',
+                              '${l10n.legacyUiText('taxpayerA')}: ${householdJovem.primaryEligibility.reasons.join(' ')}\n'
+                              '${l10n.legacyUiText('taxpayerB')}: ${householdJovem.secondaryEligibility.reasons.join(' ')}',
                             ),
                           ),
                         ],
                       ),
                     ],
                     const SizedBox(height: 8),
-                    const Text(
-                      'Com os dados introduzidos, esta é a diferença de imposto estimado; não constitui garantia de benefício.',
-                    ),
+                    Text(l10n.legacyUiText('estimateDisclaimer')),
                   ],
                 ),
               ),
@@ -1920,52 +1968,50 @@ final class ResultScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Comparação de tributação',
+                      l10n.legacyUiText('taxComparison'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
-                    const Text('Tributação separada'),
+                    Text(l10n.legacyUiText('separateTaxation')),
                     const SizedBox(height: 4),
                     Text(
-                      household!.separate!.taxDue.format(),
+                      _localizedMoney(context, household!.separate!.taxDue),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
-                    const Text('Tributação conjunta'),
+                    Text(l10n.legacyUiText('jointTaxation')),
                     const SizedBox(height: 4),
                     Text(
-                      household.joint!.taxDue.format(),
+                      _localizedMoney(context, household.joint!.taxDue),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
-                    const Text('Diferença'),
+                    Text(l10n.legacyUiText('difference')),
                     Text(
-                      household.difference.format(),
+                      _localizedMoney(context, household.difference),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
-                    const Text('Opção estimada mais favorável'),
+                    Text(l10n.legacyUiText('estimatedBestOption')),
                     Text(
                       household.difference.cents == 0
-                          ? 'Sem diferença estimada'
+                          ? l10n.legacyUiText('noEstimatedDifference')
                           : household.recommendedMode == FilingMode.joint
-                          ? 'Tributação conjunta'
-                          : 'Tributação separada',
+                          ? l10n.legacyUiText('jointTaxation')
+                          : l10n.legacyUiText('separateTaxation'),
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       household.difference.cents == 0
-                          ? 'Nesta simulação, as duas opções apresentam o mesmo imposto estimado.'
+                          ? l10n.legacyUiText('equalTax')
                           : household.recommendedMode == FilingMode.joint
-                          ? 'Nesta simulação, a tributação conjunta apresenta menor imposto estimado.'
-                          : 'Nesta simulação, a tributação separada apresenta menor imposto estimado.',
+                          ? l10n.legacyUiText('jointLower')
+                          : l10n.legacyUiText('separateLower'),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Simulação baseada nos dados introduzidos e regras fiscais configuradas; não substitui a liquidação oficial da AT.',
-                    ),
+                    Text(l10n.legacyUiText('officialDisclaimer')),
                   ],
                 ),
               ),
@@ -1978,22 +2024,26 @@ final class ResultScreen extends ConsumerWidget {
             children: [
               Chip(label: Text('IRS ${simulation.profile.taxYear}')),
               Chip(label: Text(rules.jurisdiction)),
-              const Chip(label: Text('Categoria A')),
+              Chip(label: Text(l10n.legacyUiText('categoryA'))),
               Chip(
                 label: Text(
                   simulation.profile.civilStatus == CivilStatus.single
-                      ? 'Titular individual'
+                      ? l10n.legacyUiText('individualTaxpayer')
                       : '${simulation.profile.civilStatus.name} · ${simulation.profile.filingMode.name}',
                 ),
               ),
-              Chip(label: Text('Regras ${rules.rulesVersion}')),
+              Chip(
+                label: Text(
+                  '${l10n.legacyUiText('rules')} ${rules.rulesVersion}',
+                ),
+              ),
               if (jovemRequested)
                 Chip(
                   label: Text(
                     (singleJovem?.applied ??
                             (householdJovem?.withIrsJovem != null))
-                        ? 'IRS Jovem aplicado'
-                        : 'IRS Jovem não aplicado',
+                        ? l10n.legacyUiText('jovemApplied')
+                        : l10n.legacyUiText('jovemNotApplied'),
                   ),
                 ),
             ],
@@ -2012,19 +2062,22 @@ final class ResultScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   _EstimateInputRow(
                     label: l10n.incomeConsidered,
-                    value: simulation.income.gross.format(),
+                    value: _localizedMoney(context, simulation.income.gross),
                     source: l10n.userEnteredSource,
                   ),
                   _EstimateInputRow(
                     label: l10n.deductionsConsidered,
                     value: result.available
-                        ? result.taxCredits.format()
+                        ? _localizedMoney(context, result.taxCredits)
                         : l10n.unavailable,
                     source: l10n.userEnteredSource,
                   ),
                   _EstimateInputRow(
                     label: l10n.withholdingConsidered,
-                    value: simulation.income.withholding.format(),
+                    value: _localizedMoney(
+                      context,
+                      simulation.income.withholding,
+                    ),
                     source: l10n.userEnteredSource,
                   ),
                   const SizedBox(height: 8),
@@ -2044,16 +2097,16 @@ final class ResultScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _MetricCard(
-                    label: 'Rendimento coletável',
-                    value: result.taxableIncome.format(),
+                    label: l10n.legacyUiText('taxableIncome'),
+                    value: _localizedMoney(context, result.taxableIncome),
                     icon: Icons.payments_outlined,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _MetricCard(
-                    label: 'Retido durante o ano',
-                    value: result.withholding.format(),
+                    label: l10n.legacyUiText('retainedYear'),
+                    value: _localizedMoney(context, result.withholding),
                     icon: Icons.savings_outlined,
                   ),
                 ),
@@ -2069,7 +2122,7 @@ final class ResultScreen extends ConsumerWidget {
                 ),
               ),
               icon: const Icon(Icons.compare_arrows_rounded),
-              label: const Text('Comparar cenário'),
+              label: Text(l10n.legacyUiText('compareScenario')),
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(
@@ -2087,18 +2140,20 @@ final class ResultScreen extends ConsumerWidget {
                 ),
               ),
               icon: const Icon(Icons.auto_awesome_outlined),
-              label: const Text('Ver oportunidades'),
+              label: Text(l10n.legacyUiText('viewOpportunities')),
             ),
             const SizedBox(height: 20),
             Card(
               child: ExpansionTile(
                 shape: const Border(),
                 collapsedShape: const Border(),
-                title: const Text(
-                  'Ver cálculo detalhado',
-                  style: TextStyle(fontWeight: FontWeight.w800),
+                title: Text(
+                  l10n.legacyUiText('detailedCalculation'),
+                  style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-                subtitle: const Text('Valores e explicações linha a linha'),
+                subtitle: Text(
+                  l10n.legacyUiText('detailedCalculationSubtitle'),
+                ),
                 children: [
                   const Divider(height: 1),
                   for (var i = 0; i < result.breakdown.length; i++) ...[
@@ -2110,7 +2165,11 @@ final class ResultScreen extends ConsumerWidget {
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       trailing: Text(
-                        result.breakdown[i].amount.format(signed: true),
+                        _localizedMoney(
+                          context,
+                          result.breakdown[i].amount,
+                          signed: true,
+                        ),
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
@@ -2140,21 +2199,21 @@ final class ResultScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             NoticeCard(
               title: result.available
-                  ? 'Atenção aos limites'
-                  : 'Cálculo não disponível',
+                  ? l10n.legacyUiText('limitsWarning')
+                  : l10n.legacyUiText('calculationUnavailable'),
               messages: result.warnings,
               icon: Icons.warning_amber_rounded,
             ),
           ],
           const SizedBox(height: 20),
           NoticeCard(
-            title: 'Pressupostos da simulação',
+            title: l10n.legacyUiText('simulationAssumptions'),
             messages: result.assumptions,
             icon: Icons.fact_check_outlined,
           ),
           const SizedBox(height: 20),
           Text(
-            'Esta é uma simulação baseada nos dados introduzidos e nas regras fiscais configuradas para o ano selecionado. Não substitui a liquidação oficial da Autoridade Tributária.',
+            l10n.legacyUiText('officialDisclaimer'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               height: 1.45,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -2162,7 +2221,11 @@ final class ResultScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Regras fiscais ${rules.taxYear} — versão ${rules.rulesVersion} · validadas em ${rules.verifiedAt.day.toString().padLeft(2, '0')}/${rules.verifiedAt.month.toString().padLeft(2, '0')}/${rules.verifiedAt.year}',
+            l10n.verifiedRulesScope(
+              rules.rulesVersion,
+              MaterialLocalizations.of(context)
+                  .formatCompactDate(rules.verifiedAt),
+            ),
             style: Theme.of(context).textTheme.labelSmall,
           ),
         ],
@@ -2278,36 +2341,36 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
             onChanged: (v) => setState(() => withholdingCents = v),
           ),
           _ScenarioSlider(
-            label: 'PPR',
-            helper: 'Valor aplicado durante o ano',
+            label: l10n.legacyUiText('ppr'),
+            helper: l10n.legacyUiText('annualApplied'),
             cents: pprCents,
             maxCents: 500000,
             onChanged: (v) => setState(() => pprCents = v),
           ),
           _ScenarioSlider(
-            label: 'Saúde',
-            helper: 'Despesas elegíveis',
+            label: l10n.legacyUiText('health'),
+            helper: l10n.legacyUiText('eligibleExpenses'),
             cents: healthCents,
             maxCents: 800000,
             onChanged: (v) => setState(() => healthCents = v),
           ),
           _ScenarioSlider(
-            label: 'Educação',
-            helper: 'Despesas elegíveis',
+            label: l10n.legacyUiText('education'),
+            helper: l10n.legacyUiText('eligibleExpenses'),
             cents: educationCents,
             maxCents: 500000,
             onChanged: (v) => setState(() => educationCents = v),
           ),
           _ScenarioSlider(
-            label: 'Rendas',
-            helper: 'Rendas elegíveis',
+            label: l10n.legacyUiText('rent'),
+            helper: l10n.legacyUiText('eligibleRents'),
             cents: rentCents,
             maxCents: 1500000,
             onChanged: (v) => setState(() => rentCents = v),
           ),
           _ScenarioSlider(
-            label: 'Despesas gerais',
-            helper: 'Com NIF na fatura',
+            label: l10n.legacyUiText('generalExpenses'),
+            helper: l10n.legacyUiText('nifInvoice'),
             cents: generalCents,
             maxCents: 300000,
             onChanged: (v) => setState(() => generalCents = v),
@@ -2348,7 +2411,7 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
                     ),
                   ),
                   Text(
-                    difference.format(signed: true),
+                    _localizedMoney(context, difference, signed: true),
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
@@ -2379,7 +2442,7 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Text(
-                          '• ${change.field}: ${Money.fromCents(change.differenceCents).format(signed: true)}',
+                          '• ${change.field}: ${_localizedMoney(context, Money.fromCents(change.differenceCents), signed: true)}',
                         ),
                       ),
                   const SizedBox(height: 6),
@@ -2395,11 +2458,11 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
           OutlinedButton.icon(
             onPressed: difference.cents == 0 ? null : _saveScenario,
             icon: const Icon(Icons.bookmark_add_outlined),
-            label: const Text('Guardar como nova simulação'),
+            label: Text(l10n.legacyUiText('saveNewSimulation')),
           ),
           const SizedBox(height: 18),
           Text(
-            'A vantagem fiscal de um PPR está sujeita a condições de elegibilidade e manutenção. Esta comparação não avalia custos, risco ou rentabilidade do produto.',
+            l10n.legacyUiText('pprDisclaimer'),
             style: Theme.of(context).textTheme.bodySmall
                 ?.copyWith(height: 1.45),
           ),
@@ -2412,15 +2475,18 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
     final now = DateTime.now();
     final saved = changedSimulation.copyWith(
       id: now.microsecondsSinceEpoch.toString(),
-      name: '${widget.simulation.name} — cenário',
+      name:
+          '${widget.simulation.name} — ${AppLocalizations.of(context).legacyUiText('compareScenario')}',
       updatedAt: now,
     );
     await ref.read(repositoryProvider).save(saved);
     ref.invalidate(simulationsProvider);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Cenário guardado no dispositivo.'),
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).legacyUiText('scenarioSaved'),
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -2438,6 +2504,7 @@ final class OpportunitiesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final baseline = _calculateSimulation(simulation, rules);
     final d = simulation.deductions;
     Money target(String cap, String rate) =>
@@ -2451,16 +2518,16 @@ final class OpportunitiesScreen extends StatelessWidget {
     );
     final candidates = <_OpportunityCandidate>[
       _OpportunityCandidate(
-        'PPR',
-        'Benefício fiscal sujeito às condições legais do produto.',
+        l10n.legacyUiText('ppr'),
+        l10n.legacyUiText('pprDisclaimer'),
         Icons.savings_outlined,
         d.ppr,
         pprTarget,
         (x, value) => x.copyWith(ppr: value),
       ),
       _OpportunityCandidate(
-        'Despesas gerais',
-        'Faturas elegíveis associadas ao teu NIF.',
+        l10n.legacyUiText('generalExpenses'),
+        l10n.legacyUiText('nifInvoice'),
         Icons.receipt_long_outlined,
         d.general,
         simulation.profile.isSingleParentHousehold
@@ -2472,32 +2539,32 @@ final class OpportunitiesScreen extends StatelessWidget {
         (x, value) => x.copyWith(general: value),
       ),
       _OpportunityCandidate(
-        'Saúde',
-        'Apenas despesas reais, elegíveis e não reembolsadas.',
+        l10n.legacyUiText('health'),
+        l10n.legacyUiText('realExpensesOnly'),
         Icons.health_and_safety_outlined,
         d.health,
         target('healthCapCents', 'healthRatePpm'),
         (x, value) => x.copyWith(health: value),
       ),
       _OpportunityCandidate(
-        'Educação',
-        'Propinas e outras despesas elegíveis comprovadas.',
+        l10n.legacyUiText('education'),
+        l10n.legacyUiText('eligibleExpenses'),
         Icons.school_outlined,
         d.education,
         target('educationCapCents', 'educationRatePpm'),
         (x, value) => x.copyWith(education: value),
       ),
       _OpportunityCandidate(
-        'Rendas',
-        'Rendas de habitação permanente fiscalmente elegíveis.',
+        l10n.legacyUiText('rent'),
+        l10n.legacyUiText('eligibleRents'),
         Icons.home_outlined,
         d.rent,
         target('rentFloorCapCents', 'rentRatePpm'),
         (x, value) => x.copyWith(rent: value),
       ),
       _OpportunityCandidate(
-        'Lares',
-        'Encargos elegíveis com apoio residencial.',
+        l10n.sectorNursingHomes,
+        l10n.legacyUiText('eligibleExpenses'),
         Icons.elderly_outlined,
         d.careHomes,
         target('careHomeCapCents', 'careHomeRatePpm'),
@@ -2520,17 +2587,17 @@ final class OpportunitiesScreen extends StatelessWidget {
     }
     opportunities.sort((a, b) => b.delta.compareTo(a.delta));
     return Scaffold(
-      appBar: AppBar(title: const Text('Oportunidades')),
+      appBar: AppBar(title: Text(l10n.legacyUiText('opportunities'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 14, 24, 36),
         children: [
           Text(
-            'Onde pode existir margem?',
+            l10n.legacyUiText('whereMargin'),
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 10),
           Text(
-            'Simulamos cada categoria isoladamente até ao respetivo limite. Não assumimos que tiveste despesas que não declaraste.',
+            l10n.legacyUiText('opportunitiesIntro'),
             style: TextStyle(
               height: 1.45,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -2538,11 +2605,9 @@ final class OpportunitiesScreen extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           if (opportunities.isEmpty)
-            const NoticeCard(
-              title: 'Sem oportunidades adicionais nesta simulação',
-              messages: [
-                'Os limites podem já estar atingidos ou não existir imposto suficiente para deduzir.',
-              ],
+            NoticeCard(
+              title: l10n.legacyUiText('noExtraOpportunities'),
+              messages: [l10n.legacyUiText('limitsReached')],
               icon: Icons.task_alt_rounded,
             )
           else
@@ -2551,13 +2616,13 @@ final class OpportunitiesScreen extends StatelessWidget {
               const SizedBox(height: 12),
             ],
           const SizedBox(height: 10),
-          const NoticeCard(
-            title: 'Importante',
+          NoticeCard(
+            title: l10n.legacyUiText('important'),
             icon: Icons.info_outline_rounded,
             messages: [
-              '“Até” não é uma promessa de reembolso: depende do conjunto da simulação.',
-              'Não gastes apenas para obter uma dedução fiscal.',
-              'Introduz somente despesas reais, elegíveis e documentadas.',
+              l10n.legacyUiText('upToDisclaimer'),
+              l10n.legacyUiText('dontSpend'),
+              l10n.legacyUiText('realExpensesOnly'),
             ],
           ),
         ],
@@ -2597,6 +2662,7 @@ final class _OpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final missing = result.candidate.target - result.candidate.current;
     return Card(
       child: Padding(
@@ -2630,7 +2696,9 @@ final class _OpportunityCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'até +${result.delta.format()}',
+                        l10n.upToAdditional(
+                          _localizedMoney(context, result.delta),
+                        ),
                         style: const TextStyle(
                           color: Color(0xFF137253),
                           fontWeight: FontWeight.w900,
@@ -2645,7 +2713,9 @@ final class _OpportunityCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Margem de despesas introduzidas: ${missing.format()}',
+                    l10n.enteredExpenseMargin(
+                      _localizedMoney(context, missing),
+                    ),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -2782,7 +2852,10 @@ final class _ResultHero extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 result.available
-                    ? (positive ? result.balance : -result.balance).format()
+                    ? _localizedMoney(
+                        context,
+                        positive ? result.balance : -result.balance,
+                      )
                     : '—',
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontSize: 42,
@@ -2938,7 +3011,15 @@ final class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String safe(String value) => value.trim().isEmpty ? '0 €' : '$value €';
+    final l10n = AppLocalizations.of(context);
+    String safe(String value) {
+      try {
+        return _localizedMoney(context, Money.parseEuros(value));
+      } on FormatException {
+        return _localizedMoney(context, Money.zero);
+      }
+    }
+
     final gross = draft.incomeEntryMode == IncomeEntryMode.annual
         ? safe(draft.gross)
         : '${safe(draft.monthly)} × ${draft.months}';
@@ -2977,62 +3058,88 @@ final class _ReviewCard extends StatelessWidget {
     return Column(
       children: [
         _ReviewSection(
-          title: 'Âmbito fiscal',
+          title: l10n.legacyUiText('fiscalScope'),
           onEdit: () => onEdit(QuestionSection.eligibility),
           rows: [
-            ('Ano e região', '${draft.taxYear} · ${draft.region.name}'),
             (
-              'Agregado',
-              '${draft.civilStatus.name} · ${draft.filingMode.name}',
+              l10n.legacyUiText('yearAndRegion'),
+              '${draft.taxYear} · ${_localizedRegion(l10n, draft.region)}',
+            ),
+            (
+              l10n.legacyUiText('household'),
+              '${_localizedCivilStatus(l10n, draft.civilStatus)} · ${l10n.wizardText(draft.filingMode == FilingMode.joint ? 'joint' : 'separate')}',
             ),
             (
               'IRS Jovem',
               draft.wantsIrsJovemA || draft.wantsIrsJovemB
-                  ? 'A verificar'
-                  : 'Não pedido',
+                  ? l10n.legacyUiText('pendingReview')
+                  : l10n.legacyUiText('notRequested'),
             ),
           ],
         ),
         const SizedBox(height: 10),
         _ReviewSection(
-          title: 'Perfil e agregado',
+          title: l10n.legacyUiText('profileHousehold'),
           onEdit: () => onEdit(QuestionSection.profile),
           rows: [
-            ('Titular A', '${draft.age} anos'),
-            if (draft.civilStatus != CivilStatus.single)
-              ('Titular B', '${draft.secondaryAge} anos'),
             (
-              'Dependentes',
+              l10n.legacyUiText('taxpayerA'),
+              '${draft.age} ${l10n.yearsSuffix}',
+            ),
+            if (draft.civilStatus != CivilStatus.single)
+              (
+                l10n.legacyUiText('taxpayerB'),
+                '${draft.secondaryAge} ${l10n.yearsSuffix}',
+              ),
+            (
+              l10n.legacyUiText('dependants'),
               draft.dependentAges.isEmpty
-                  ? 'Nenhum'
-                  : draft.dependentAges.map((age) => '$age anos').join(', '),
+                  ? l10n.legacyUiText('none')
+                  : draft.dependentAges
+                        .map((age) => '$age ${l10n.yearsSuffix}')
+                        .join(', '),
             ),
           ],
         ),
         const SizedBox(height: 10),
         _ReviewSection(
-          title: 'Rendimentos e retenções',
+          title: l10n.legacyUiText('incomeWithholding'),
           onEdit: () => onEdit(QuestionSection.income),
           rows: [
-            ('Rendimento A', gross),
-            ('Retenção A', safe(draft.withholding)),
-            ('Segurança Social A', safe(draft.socialSecurity)),
+            (l10n.legacyUiText('incomeA'), gross),
+            (l10n.legacyUiText('withholdingA'), safe(draft.withholding)),
+            (l10n.legacyUiText('socialA'), safe(draft.socialSecurity)),
             if (draft.civilStatus != CivilStatus.single) ...[
-              ('Rendimento B', safe(draft.secondaryGross)),
-              ('Retenção B', safe(draft.secondaryWithholding)),
-              ('Segurança Social B', safe(draft.secondarySocialSecurity)),
+              (l10n.legacyUiText('incomeB'), safe(draft.secondaryGross)),
+              (
+                l10n.legacyUiText('withholdingB'),
+                safe(draft.secondaryWithholding),
+              ),
+              (
+                l10n.legacyUiText('socialB'),
+                safe(draft.secondarySocialSecurity),
+              ),
             ],
           ],
         ),
         const SizedBox(height: 10),
         _ReviewSection(
-          title: 'Deduções introduzidas',
+          title: l10n.legacyUiText('deductionsEntered'),
           onEdit: () => onEdit(QuestionSection.deductions),
           rows: [
-            ('Total titular A', deductionsA.format()),
+            (
+              l10n.legacyUiText('totalA'),
+              _localizedMoney(context, deductionsA),
+            ),
             if (draft.civilStatus != CivilStatus.single)
-              ('Total titular B', deductionsB.format()),
-            ('Educação', 'Apenas cenário standard'),
+              (
+                l10n.legacyUiText('totalB'),
+                _localizedMoney(context, deductionsB),
+              ),
+            (
+              l10n.legacyUiText('education'),
+              l10n.legacyUiText('standardEducationOnly'),
+            ),
           ],
         ),
       ],
@@ -3068,7 +3175,7 @@ final class _ReviewSection extends StatelessWidget {
               TextButton.icon(
                 onPressed: onEdit,
                 icon: const Icon(Icons.edit_outlined, size: 17),
-                label: const Text('Editar'),
+                label: Text(AppLocalizations.of(context).legacyUiText('edit')),
               ),
             ],
           ),
@@ -3135,7 +3242,7 @@ final class _ScenarioSlider extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  Money.fromCents(cents).format(),
+                  _localizedMoney(context, Money.fromCents(cents)),
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 16,
@@ -3148,7 +3255,7 @@ final class _ScenarioSlider extends StatelessWidget {
               min: 0,
               max: safeMax.toDouble(),
               divisions: safeMax == 0 ? null : 50,
-              label: Money.fromCents(cents).format(),
+              label: _localizedMoney(context, Money.fromCents(cents)),
               onChanged: safeMax == 0
                   ? null
                   : (value) => onChanged((value ~/ 10000) * 10000),
@@ -3180,14 +3287,17 @@ final class _ScenarioCard extends StatelessWidget {
           Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 10),
           Text(
-            'PPR ${ppr.format()}',
+            'PPR ${_localizedMoney(context, ppr)}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 18),
           Text(result.isRefund ? 'Reembolso' : 'A pagar'),
           const SizedBox(height: 4),
           Text(
-            (result.isRefund ? result.balance : -result.balance).format(),
+            _localizedMoney(
+              context,
+              result.isRefund ? result.balance : -result.balance,
+            ),
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
           ),
         ],
@@ -3220,100 +3330,104 @@ final class _PreviewCard extends StatelessWidget {
   const _PreviewCard();
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: _taxyInk,
-      borderRadius: BorderRadius.circular(28),
-      boxShadow: [
-        BoxShadow(
-          color: _taxyViolet.withValues(alpha: .18),
-          blurRadius: 30,
-          offset: const Offset(0, 14),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'A tua estimativa',
-                maxLines: 2,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w700,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final highlights = <(String, IconData)>[
+      ('5 min', Icons.timer_outlined),
+      (l10n.privateLabel, Icons.lock_outline_rounded),
+      (l10n.explainedLabel, Icons.lightbulb_outline_rounded),
+    ];
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _taxyInk,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: _taxyViolet.withValues(alpha: .18),
+            blurRadius: 30,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.legacyUiText('estimateTitle'),
+                  maxLines: 2,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: _taxyMint.withValues(alpha: .16),
-                borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 8),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: _taxyMint.withValues(alpha: .16),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.auto_graph_rounded,
+                  color: _taxyMint,
+                  size: 20,
+                ),
               ),
-              child: const Icon(
-                Icons.auto_graph_rounded,
-                color: _taxyMint,
-                size: 20,
-              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.previewClearAnswer,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -.5,
             ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          'Uma resposta clara,',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -.5,
           ),
-        ),
-        const Text(
-          'contas transparentes.',
-          style: TextStyle(
-            color: _taxyMint,
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -.5,
+          Text(
+            l10n.previewTransparentAccounts,
+            style: TextStyle(
+              color: _taxyMint,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -.5,
+            ),
           ),
-        ),
-        const SizedBox(height: 18),
-        Row(
-          children: [
-            for (final item in const [
-              ('5 min', Icons.timer_outlined),
-              ('Privado', Icons.lock_outline_rounded),
-              ('Explicado', Icons.lightbulb_outline_rounded),
-            ])
-              Expanded(
-                child: Row(
-                  children: [
-                    Icon(item.$2, size: 15, color: Colors.white54),
-                    const SizedBox(width: 5),
-                    Flexible(
-                      child: Text(
-                        item.$1,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              for (final item in highlights)
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(item.$2, size: 15, color: Colors.white54),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          item.$1,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-          ],
-        ),
-      ],
-    ),
-  );
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 final class _QuickAction extends StatelessWidget {
@@ -3363,6 +3477,7 @@ final class _InsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final difference = result.withholding - result.taxDue;
     return Container(
       padding: const EdgeInsets.all(18),
@@ -3391,15 +3506,15 @@ final class _InsightCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'O que isto significa',
-                  style: TextStyle(fontWeight: FontWeight.w900),
+                Text(
+                  l10n.whatEstimateMeans,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 5),
                 Text(
                   difference.cents >= 0
-                      ? 'Retiveste mais IRS ao longo do ano do que o imposto estimado nesta simulação.'
-                      : 'As retenções feitas durante o ano ficam abaixo do imposto estimado.',
+                      ? l10n.refundEstimateMeaning
+                      : l10n.taxDueEstimateMeaning,
                   style: const TextStyle(height: 1.35, fontSize: 13),
                 ),
               ],
@@ -3515,12 +3630,17 @@ final class _Brand extends StatelessWidget {
         ),
       ),
       SizedBox(width: compact ? 8 : 10),
-      Text(
-        'taxy.pt',
-        style: TextStyle(
-          fontSize: compact ? 17 : 21,
-          fontWeight: FontWeight.w900,
-          letterSpacing: -.5,
+      Flexible(
+        child: Text(
+          'taxy.pt',
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.fade,
+          style: TextStyle(
+            fontSize: compact ? 17 : 21,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -.5,
+          ),
         ),
       ),
     ],

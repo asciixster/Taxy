@@ -15,13 +15,13 @@ import 'package:taxy_pt/screens/settings_screen.dart';
 import 'package:taxy_pt/state/providers.dart';
 
 void main() {
-  test('0.7.14 release identity is consistent', () {
+  test('0.7.15 release identity is consistent', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
     final diagnostics = File('lib/core/internal_beta_build_info.dart')
         .readAsStringSync();
-    expect(pubspec, contains('version: 0.7.14+14'));
-    expect(diagnostics, contains("defaultValue: '0.7.14'"));
-    expect(diagnostics, contains("defaultValue: '14'"));
+    expect(pubspec, contains('version: 0.7.15+15'));
+    expect(diagnostics, contains("defaultValue: '0.7.15'"));
+    expect(diagnostics, contains("defaultValue: '15'"));
   });
 
   test('production Android registers no direct FactIntWS bridge', () {
