@@ -6,11 +6,23 @@ import '../l10n/app_localizations.dart';
 import '../state/providers.dart';
 import 'product_models.dart';
 
-final class IncomeScreen extends ConsumerWidget {
+final class IncomeScreen extends ConsumerStatefulWidget {
   const IncomeScreen({super.key});
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) =>
-      _LedgerScaffold(isIncome: true, state: ref.watch(productStateProvider));
+  ConsumerState<IncomeScreen> createState() => _IncomeScreenState();
+}
+
+final class _IncomeScreenState extends ConsumerState<IncomeScreen> {
+  EntryProvenance? _filter;
+
+  @override
+  Widget build(BuildContext context) => _LedgerScaffold(
+    isIncome: true,
+    state: ref.watch(productStateProvider),
+    provenanceFilter: _filter,
+    onProvenanceFilterChanged: (value) => setState(() => _filter = value),
+  );
 }
 
 final class ExpensesScreen extends ConsumerWidget {
@@ -21,9 +33,16 @@ final class ExpensesScreen extends ConsumerWidget {
 }
 
 final class _LedgerScaffold extends ConsumerWidget {
-  const _LedgerScaffold({required this.isIncome, required this.state});
+  const _LedgerScaffold({
+    required this.isIncome,
+    required this.state,
+    this.provenanceFilter,
+    this.onProvenanceFilterChanged,
+  });
   final bool isIncome;
   final AsyncValue<ProductState> state;
+  final EntryProvenance? provenanceFilter;
+  final ValueChanged<EntryProvenance?>? onProvenanceFilterChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,9 +67,16 @@ final class _LedgerScaffold extends ConsumerWidget {
   Widget _body(BuildContext context, WidgetRef ref, ProductState value) {
     final l10n = AppLocalizations.of(context);
     final year = value.profile.activeTaxYear;
-    final entries = isIncome
+    var entries = isIncome
         ? value.incomes.where((entry) => entry.year == year).toList()
         : value.expenses.where((entry) => entry.year == year).toList();
+    if (isIncome && provenanceFilter != null) {
+      entries = entries
+          .where(
+            (entry) => (entry as IncomeEntry).provenance == provenanceFilter,
+          )
+          .toList();
+    }
     final total = isIncome ? value.incomeTotal : value.expenseTotal;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
@@ -79,6 +105,30 @@ final class _LedgerScaffold extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (isIncome) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                ChoiceChip(
+                  label: Text(l10n.all),
+                  selected: provenanceFilter == null,
+                  onSelected: (_) => onProvenanceFilterChanged?.call(null),
+                ),
+                const SizedBox(width: 8),
+                for (final source in EntryProvenance.values) ...[
+                  ChoiceChip(
+                    label: Text(_provenance(context, source)),
+                    selected: provenanceFilter == source,
+                    onSelected: (_) => onProvenanceFilterChanged?.call(source),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (entries.isEmpty)
           _EmptyLedger(
             message: isIncome

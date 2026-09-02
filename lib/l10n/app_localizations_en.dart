@@ -608,4 +608,167 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get edit => 'Edit';
+
+  @override
+  String get profileChecklist => 'Fiscal checklist';
+
+  @override
+  String completedEssential(int completed, int total) {
+    return '$completed of $total essential items completed';
+  }
+
+  @override
+  String get checkActiveYear => 'Active tax year';
+
+  @override
+  String get checkResidence => 'Tax residence';
+
+  @override
+  String get checkCivilStatus => 'Civil status';
+
+  @override
+  String get checkHousehold => 'Household';
+
+  @override
+  String get checkWorkContext => 'Work situation';
+
+  @override
+  String get checkIncome => 'Income for the active year';
+
+  @override
+  String get impactResidence =>
+      'Residence determines which supported regional rules apply.';
+
+  @override
+  String get impactCivilStatus =>
+      'Civil status is needed to choose an applicable calculation mode.';
+
+  @override
+  String get impactHousehold =>
+      'Household information can affect supported deductions and tax credits.';
+
+  @override
+  String get impactWorkContext =>
+      'Work context identifies whether the current model supports your income.';
+
+  @override
+  String get impactIncome =>
+      'Income and withholding are needed to estimate the final IRS balance.';
+
+  @override
+  String get scenarioComparison => 'Compare scenarios';
+
+  @override
+  String get scenarioIntro =>
+      'Test hypothetical changes without changing your base information.';
+
+  @override
+  String get currentScenario => 'Current scenario';
+
+  @override
+  String get alternativeScenario => 'Alternative scenario';
+
+  @override
+  String get resultDifference => 'Result difference';
+
+  @override
+  String get whatChanged => 'What changed';
+
+  @override
+  String get noScenarioChanges => 'No hypothetical changes yet.';
+
+  @override
+  String get scenarioOverrideNotice =>
+      'Alternative values are scenario overrides, not confirmed profile data.';
+
+  @override
+  String get savedEstimates => 'Saved estimates';
+
+  @override
+  String get saveEstimate => 'Save estimate';
+
+  @override
+  String get estimateSaved => 'Estimate saved on this device.';
+
+  @override
+  String get savedEstimate => 'Saved estimate';
+
+  @override
+  String get noSavedEstimates => 'No saved estimates';
+
+  @override
+  String get deleteSavedEstimate => 'Delete saved estimate';
+
+  @override
+  String get duplicateAsScenario => 'Duplicate as scenario';
+
+  @override
+  String get invoiceExplorer => 'Invoice explorer';
+
+  @override
+  String get searchInvoices => 'Search issuer';
+
+  @override
+  String get documentTotal => 'Document total';
+
+  @override
+  String get monthlySummary => 'Monthly summary';
+
+  @override
+  String get averageDocument => 'Average document';
+
+  @override
+  String get sortNewest => 'Newest first';
+
+  @override
+  String get sortOldest => 'Oldest first';
+
+  @override
+  String get sortHighest => 'Highest value';
+
+  @override
+  String get sortLowest => 'Lowest value';
+
+  @override
+  String get sortIssuer => 'Issuer name';
+
+  @override
+  String filteredInvoiceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count matching invoices',
+      one: '1 matching invoice',
+      zero: 'No matching invoices',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastUpdatedThisSession(String time) {
+    return 'Last updated this session: $time';
+  }
+
+  @override
+  String get offlineUnavailable =>
+      'This area needs a connection. Check your network and try again.';
+
+  @override
+  String get tryAgain => 'Try again';
+
+  @override
+  String get dateFilter => 'Date range';
+
+  @override
+  String get minimumAmount => 'Minimum amount';
+
+  @override
+  String get maximumAmount => 'Maximum amount';
+
+  @override
+  String get privacySnapshots =>
+      'Saved IRS estimates remain only on this device. They contain normalized calculation inputs and results, never credentials or raw e-Fatura responses.';
+
+  @override
+  String get all => 'All';
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/internal_beta_build_info.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/language_controller.dart';
 import '../l10n/theme_controller.dart';
+import '../state/providers.dart';
 
 import 'package:flutter/services.dart';
 
@@ -125,6 +127,8 @@ final class SettingsScreen extends StatelessWidget {
                   Text(l10n.privacyIntro),
                   const SizedBox(height: 10),
                   Text(l10n.privacyEfatura),
+                  const SizedBox(height: 10),
+                  Text(l10n.privacySnapshots),
                 ],
               ),
             ),
@@ -195,11 +199,23 @@ final class SettingsScreen extends StatelessWidget {
 
   Future<void> _copyDiagnostics(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
+    int? activeYear;
+    try {
+      activeYear = (await ProviderScope.containerOf(
+        context,
+      ).read(productStateProvider.future)).profile.activeTaxYear;
+    } on Object {
+      activeYear = null;
+    }
     final value = <String>[
       'Taxy ${InternalBetaBuildInfo.appVersion}+${InternalBetaBuildInfo.buildNumber}',
       'revision=${InternalBetaBuildInfo.gitShortSha}',
       'environment=${InternalBetaBuildInfo.environment}',
       'api=${InternalBetaBuildInfo.apiHost}',
+      'activeTaxYear=${activeYear ?? 'unavailable'}',
+      'engine=rules-bundle-v1',
+      'apiHealth=not-probed',
+      'lastErrorCategory=unavailable',
     ].join('\n');
     await Clipboard.setData(ClipboardData(text: value));
     if (context.mounted) {

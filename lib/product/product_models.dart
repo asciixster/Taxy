@@ -1,5 +1,6 @@
 import '../domain/money.dart';
 import '../domain/models.dart';
+import 'irs_scenario_models.dart';
 
 enum DataAvailability { unknown, available }
 
@@ -16,6 +17,19 @@ enum ExpenseCategory {
   housing,
   professional,
   other,
+}
+
+enum ProfileChecklistTarget { profile, income, expenses, irs }
+
+final class ProfileChecklistItem {
+  const ProfileChecklistItem({
+    required this.id,
+    required this.complete,
+    required this.target,
+  });
+  final String id;
+  final bool complete;
+  final ProfileChecklistTarget target;
 }
 
 final class FiscalProfile {
@@ -190,6 +204,7 @@ final class ProductState {
     required this.profile,
     this.incomes = const [],
     this.expenses = const [],
+    this.snapshots = const [],
   });
 
   factory ProductState.initial([int year = 2026]) =>
@@ -198,6 +213,7 @@ final class ProductState {
   final FiscalProfile profile;
   final List<IncomeEntry> incomes;
   final List<ExpenseEntry> expenses;
+  final List<IrsSnapshot> snapshots;
 
   Money get incomeTotal => Money.fromCents(
     incomes
@@ -211,25 +227,66 @@ final class ProductState {
         .fold(0, (sum, entry) => sum + entry.amount.cents),
   );
 
+  List<ProfileChecklistItem> get checklist => [
+    const ProfileChecklistItem(
+      id: 'activeTaxYear',
+      complete: true,
+      target: ProfileChecklistTarget.profile,
+    ),
+    ProfileChecklistItem(
+      id: 'residence',
+      complete: profile.region != null,
+      target: ProfileChecklistTarget.profile,
+    ),
+    ProfileChecklistItem(
+      id: 'civilStatus',
+      complete: profile.civilStatus != null,
+      target: ProfileChecklistTarget.profile,
+    ),
+    ProfileChecklistItem(
+      id: 'household',
+      complete: profile.dependentCount != null,
+      target: ProfileChecklistTarget.profile,
+    ),
+    ProfileChecklistItem(
+      id: 'workContext',
+      complete:
+          profile.hasEmployment != null && profile.hasSelfEmployment != null,
+      target: ProfileChecklistTarget.profile,
+    ),
+    ProfileChecklistItem(
+      id: 'income',
+      complete: incomes.any((entry) => entry.year == profile.activeTaxYear),
+      target: ProfileChecklistTarget.income,
+    ),
+  ];
+
+  int get completedChecklistItems =>
+      checklist.where((item) => item.complete).length;
+
   ProductState copyWith({
     FiscalProfile? profile,
     List<IncomeEntry>? incomes,
     List<ExpenseEntry>? expenses,
+    List<IrsSnapshot>? snapshots,
   }) => ProductState(
     profile: profile ?? this.profile,
     incomes: incomes ?? this.incomes,
     expenses: expenses ?? this.expenses,
+    snapshots: snapshots ?? this.snapshots,
   );
 
   Map<String, Object?> toJson() => {
-    'schemaVersion': 1,
+    'schemaVersion': 2,
     'profile': profile.toJson(),
     'incomes': incomes.map((entry) => entry.toJson()).toList(),
     'expenses': expenses.map((entry) => entry.toJson()).toList(),
+    'snapshots': snapshots.map((entry) => entry.toJson()).toList(),
   };
 
   factory ProductState.fromJson(Map<String, Object?> json) {
-    if (json['schemaVersion'] != 1) throw const FormatException('schema');
+    final schema = json['schemaVersion'] as int?;
+    if (schema != 1 && schema != 2) throw const FormatException('schema');
     return ProductState(
       profile: FiscalProfile.fromJson(
         (json['profile'] as Map).cast<String, Object?>(),
@@ -239,6 +296,9 @@ final class ProductState {
           .toList(growable: false),
       expenses: (json['expenses'] as List? ?? const [])
           .map((value) => ExpenseEntry.fromJson((value as Map).cast()))
+          .toList(growable: false),
+      snapshots: (json['snapshots'] as List? ?? const [])
+          .map((value) => IrsSnapshot.fromJson((value as Map).cast()))
           .toList(growable: false),
     );
   }

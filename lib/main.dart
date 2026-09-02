@@ -29,6 +29,8 @@ import 'widgets/notice_card.dart';
 import 'product/profile_screen.dart';
 import 'product/ledger_screens.dart';
 import 'product/product_models.dart';
+import 'product/irs_scenario_models.dart';
+import 'product/snapshots_screen.dart';
 
 const _taxyViolet = Color(0xFF6557E8);
 const _taxyInk = Color(0xFF17172B);
@@ -230,6 +232,11 @@ Future<void> _openIncome(BuildContext context) => Navigator.push(
 Future<void> _openExpenses(BuildContext context) => Navigator.push(
   context,
   MaterialPageRoute(builder: (_) => const ExpensesScreen()),
+);
+
+Future<void> _openSnapshots(BuildContext context) => Navigator.push(
+  context,
+  MaterialPageRoute(builder: (_) => const SnapshotsScreen()),
 );
 
 final class HomeScreen extends ConsumerWidget {
@@ -595,6 +602,43 @@ final class _Dashboard extends ConsumerWidget {
                   ),
                 ],
                 const SizedBox(height: 22),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 18),
+                      label: Text(l10n.addIncome),
+                      onPressed: () => _openIncome(context),
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.add, size: 18),
+                      label: Text(l10n.addExpense),
+                      onPressed: () => _openExpenses(context),
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.compare_arrows, size: 18),
+                      label: Text(l10n.scenarioComparison),
+                      onPressed: result.available
+                          ? () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CompareScreen(
+                                  simulation: latest,
+                                  rules: rules,
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                    ActionChip(
+                      avatar: const Icon(Icons.bookmarks_outlined, size: 18),
+                      label: Text(l10n.savedEstimates),
+                      onPressed: () => _openSnapshots(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Card(
                   child: Column(
                     children: [
@@ -620,6 +664,13 @@ final class _Dashboard extends ConsumerWidget {
                         subtitle: Text(l10n.expensesModuleDescription),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => _openExpenses(context),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.bookmarks_outlined),
+                        title: Text(l10n.savedEstimates),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _openSnapshots(context),
                       ),
                     ],
                   ),
@@ -1718,7 +1769,7 @@ final class _WizardScreenState extends ConsumerState<WizardScreen> {
   };
 }
 
-final class ResultScreen extends StatelessWidget {
+final class ResultScreen extends ConsumerWidget {
   const ResultScreen({
     super.key,
     required this.simulation,
@@ -1728,7 +1779,7 @@ final class ResultScreen extends StatelessWidget {
   final TaxRuleSet rules;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final result = _calculateSimulation(simulation, rules);
     final jovemRequested =
@@ -2004,6 +2055,12 @@ final class ResultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             OutlinedButton.icon(
+              onPressed: () => _saveSnapshot(context, ref, result),
+              icon: const Icon(Icons.bookmark_add_outlined),
+              label: Text(l10n.saveEstimate),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -2094,6 +2151,37 @@ final class ResultScreen extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _saveSnapshot(
+    BuildContext context,
+    WidgetRef ref,
+    TaxResult result,
+  ) async {
+    final savedEstimateLabel = AppLocalizations.of(context).savedEstimate;
+    final now = DateTime.now();
+    final current = await ref.read(productStateProvider.future);
+    final snapshot = IrsSnapshot(
+      id: now.microsecondsSinceEpoch.toString(),
+      label: '$savedEstimateLabel ${simulation.profile.taxYear}',
+      createdAt: now,
+      taxYear: simulation.profile.taxYear,
+      calculationModelVersion: rules.rulesVersion,
+      inputSchemaVersion: 1,
+      simulation: simulation,
+      balanceCents: result.balance.cents,
+      grossIncomeCents: result.grossIncome.cents,
+      withholdingCents: result.withholding.cents,
+      taxCreditsCents: result.taxCredits.cents,
+    );
+    await ref
+        .read(productRepositoryProvider)
+        .save(current.copyWith(snapshots: [...current.snapshots, snapshot]));
+    ref.invalidate(productStateProvider);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).estimateSaved)),
+    );
+  }
 }
 
 final class CompareScreen extends ConsumerStatefulWidget {
@@ -2110,44 +2198,67 @@ final class CompareScreen extends ConsumerStatefulWidget {
 }
 
 final class _CompareScreenState extends ConsumerState<CompareScreen> {
+  late int grossIncomeCents = widget.simulation.income.gross.cents;
+  late int withholdingCents = widget.simulation.income.withholding.cents;
   late int pprCents = widget.simulation.deductions.ppr.cents;
   late int healthCents = widget.simulation.deductions.health.cents;
   late int educationCents = widget.simulation.deductions.education.cents;
   late int rentCents = widget.simulation.deductions.rent.cents;
   late int generalCents = widget.simulation.deductions.general.cents;
 
-  TaxSimulation get changedSimulation => widget.simulation.copyWith(
-    deductions: widget.simulation.deductions.copyWith(
-      ppr: Money.fromCents(pprCents),
-      health: Money.fromCents(healthCents),
-      education: Money.fromCents(educationCents),
-      rent: Money.fromCents(rentCents),
-      general: Money.fromCents(generalCents),
-    ),
+  ScenarioOverrides get overrides => ScenarioOverrides(
+    grossIncomeCents: grossIncomeCents,
+    withholdingCents: withholdingCents,
+    pprCents: pprCents,
+    healthExpensesCents: healthCents,
+    educationExpensesCents: educationCents,
+    rentExpensesCents: rentCents,
+    generalExpensesCents: generalCents,
   );
+
+  TaxSimulation get changedSimulation => overrides.applyTo(widget.simulation);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final original = _calculateSimulation(widget.simulation, widget.rules);
     final changed = _calculateSimulation(changedSimulation, widget.rules);
     final difference = changed.balance - original.balance;
     return Scaffold(
-      appBar: AppBar(title: const Text('Laboratório de cenários')),
+      appBar: AppBar(title: Text(l10n.scenarioComparison)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         children: [
           Text(
-            'Experimenta sem risco.',
+            l10n.scenarioComparison,
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 8),
           Text(
-            'Altera despesas e PPR. O resultado é recalculado instantaneamente pelo mesmo motor fiscal.',
+            l10n.scenarioIntro,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 22),
+          _ScenarioSlider(
+            label: l10n.incomeConsidered,
+            helper: l10n.scenarioOverrideNotice,
+            cents: grossIncomeCents,
+            maxCents: (widget.simulation.income.gross.cents * 2)
+                .clamp(100000, 50000000)
+                .toInt(),
+            onChanged: (v) => setState(() => grossIncomeCents = v),
+          ),
+          _ScenarioSlider(
+            label: l10n.withholdingConsidered,
+            helper: l10n.scenarioOverrideNotice,
+            cents: withholdingCents,
+            maxCents: (widget.simulation.income.withholding.cents * 2)
+                .clamp(100000, 10000000)
+                .toInt(),
+            onChanged: (v) => setState(() => withholdingCents = v),
+          ),
           _ScenarioSlider(
             label: 'PPR',
             helper: 'Valor aplicado durante o ano',
@@ -2188,7 +2299,7 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
             children: [
               Expanded(
                 child: _ScenarioCard(
-                  label: 'Cenário A',
+                  label: l10n.currentScenario,
                   ppr: widget.simulation.deductions.ppr,
                   result: original,
                 ),
@@ -2196,7 +2307,7 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _ScenarioCard(
-                  label: 'Cenário B',
+                  label: l10n.alternativeScenario,
                   ppr: Money.fromCents(pprCents),
                   result: changed,
                 ),
@@ -2212,9 +2323,9 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Diferença no resultado',
+                      l10n.resultDifference,
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -2224,6 +2335,39 @@ final class _CompareScreenState extends ConsumerState<CompareScreen> {
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.whatChanged,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  if (overrides.changesFrom(widget.simulation).isEmpty)
+                    Text(l10n.noScenarioChanges)
+                  else
+                    for (final change in overrides.changesFrom(
+                      widget.simulation,
+                    ))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          '• ${change.field}: ${Money.fromCents(change.differenceCents).format(signed: true)}',
+                        ),
+                      ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.scenarioOverrideNotice,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),

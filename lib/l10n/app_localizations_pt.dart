@@ -613,6 +613,169 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get edit => 'Editar';
+
+  @override
+  String get profileChecklist => 'Checklist fiscal';
+
+  @override
+  String completedEssential(int completed, int total) {
+    return '$completed de $total elementos essenciais preenchidos';
+  }
+
+  @override
+  String get checkActiveYear => 'Ano fiscal ativo';
+
+  @override
+  String get checkResidence => 'Residência fiscal';
+
+  @override
+  String get checkCivilStatus => 'Estado civil';
+
+  @override
+  String get checkHousehold => 'Agregado';
+
+  @override
+  String get checkWorkContext => 'Situação profissional';
+
+  @override
+  String get checkIncome => 'Rendimentos do ano ativo';
+
+  @override
+  String get impactResidence =>
+      'A residência determina as regras regionais suportadas aplicáveis.';
+
+  @override
+  String get impactCivilStatus =>
+      'O estado civil é necessário para escolher um modo de cálculo aplicável.';
+
+  @override
+  String get impactHousehold =>
+      'O agregado pode afetar deduções e benefícios suportados.';
+
+  @override
+  String get impactWorkContext =>
+      'A situação profissional permite saber se o modelo atual suporta os rendimentos.';
+
+  @override
+  String get impactIncome =>
+      'Os rendimentos e retenções são necessários para estimar o saldo final de IRS.';
+
+  @override
+  String get scenarioComparison => 'Comparar cenários';
+
+  @override
+  String get scenarioIntro =>
+      'Testa alterações hipotéticas sem mudar a informação base.';
+
+  @override
+  String get currentScenario => 'Cenário atual';
+
+  @override
+  String get alternativeScenario => 'Cenário alternativo';
+
+  @override
+  String get resultDifference => 'Diferença no resultado';
+
+  @override
+  String get whatChanged => 'O que mudou';
+
+  @override
+  String get noScenarioChanges => 'Ainda não existem alterações hipotéticas.';
+
+  @override
+  String get scenarioOverrideNotice =>
+      'Os valores alternativos são hipóteses do cenário, não dados confirmados do perfil.';
+
+  @override
+  String get savedEstimates => 'Estimativas guardadas';
+
+  @override
+  String get saveEstimate => 'Guardar estimativa';
+
+  @override
+  String get estimateSaved => 'Estimativa guardada neste dispositivo.';
+
+  @override
+  String get savedEstimate => 'Estimativa guardada';
+
+  @override
+  String get noSavedEstimates => 'Sem estimativas guardadas';
+
+  @override
+  String get deleteSavedEstimate => 'Apagar estimativa guardada';
+
+  @override
+  String get duplicateAsScenario => 'Duplicar como cenário';
+
+  @override
+  String get invoiceExplorer => 'Explorador de faturas';
+
+  @override
+  String get searchInvoices => 'Pesquisar emitente';
+
+  @override
+  String get documentTotal => 'Total dos documentos';
+
+  @override
+  String get monthlySummary => 'Resumo mensal';
+
+  @override
+  String get averageDocument => 'Média por documento';
+
+  @override
+  String get sortNewest => 'Mais recentes';
+
+  @override
+  String get sortOldest => 'Mais antigas';
+
+  @override
+  String get sortHighest => 'Maior valor';
+
+  @override
+  String get sortLowest => 'Menor valor';
+
+  @override
+  String get sortIssuer => 'Nome do emitente';
+
+  @override
+  String filteredInvoiceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count faturas correspondentes',
+      one: '1 fatura correspondente',
+      zero: 'Sem faturas correspondentes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastUpdatedThisSession(String time) {
+    return 'Última atualização nesta sessão: $time';
+  }
+
+  @override
+  String get offlineUnavailable =>
+      'Esta área precisa de ligação. Verifica a rede e tenta novamente.';
+
+  @override
+  String get tryAgain => 'Tentar novamente';
+
+  @override
+  String get dateFilter => 'Intervalo de datas';
+
+  @override
+  String get minimumAmount => 'Valor mínimo';
+
+  @override
+  String get maximumAmount => 'Valor máximo';
+
+  @override
+  String get privacySnapshots =>
+      'As estimativas IRS guardadas ficam apenas neste dispositivo. Contêm inputs e resultados normalizados, nunca credenciais ou respostas e-Fatura em bruto.';
+
+  @override
+  String get all => 'Todos';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1223,4 +1386,167 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get edit => 'Editar';
+
+  @override
+  String get profileChecklist => 'Checklist fiscal';
+
+  @override
+  String completedEssential(int completed, int total) {
+    return '$completed de $total elementos essenciais preenchidos';
+  }
+
+  @override
+  String get checkActiveYear => 'Ano fiscal ativo';
+
+  @override
+  String get checkResidence => 'Residência fiscal';
+
+  @override
+  String get checkCivilStatus => 'Estado civil';
+
+  @override
+  String get checkHousehold => 'Agregado';
+
+  @override
+  String get checkWorkContext => 'Situação profissional';
+
+  @override
+  String get checkIncome => 'Rendimentos do ano ativo';
+
+  @override
+  String get impactResidence =>
+      'A residência determina as regras regionais suportadas aplicáveis.';
+
+  @override
+  String get impactCivilStatus =>
+      'O estado civil é necessário para escolher um modo de cálculo aplicável.';
+
+  @override
+  String get impactHousehold =>
+      'O agregado pode afetar deduções e benefícios suportados.';
+
+  @override
+  String get impactWorkContext =>
+      'A situação profissional permite saber se o modelo atual suporta os rendimentos.';
+
+  @override
+  String get impactIncome =>
+      'Os rendimentos e retenções são necessários para estimar o saldo final de IRS.';
+
+  @override
+  String get scenarioComparison => 'Comparar cenários';
+
+  @override
+  String get scenarioIntro =>
+      'Testa alterações hipotéticas sem mudar a informação base.';
+
+  @override
+  String get currentScenario => 'Cenário atual';
+
+  @override
+  String get alternativeScenario => 'Cenário alternativo';
+
+  @override
+  String get resultDifference => 'Diferença no resultado';
+
+  @override
+  String get whatChanged => 'O que mudou';
+
+  @override
+  String get noScenarioChanges => 'Ainda não existem alterações hipotéticas.';
+
+  @override
+  String get scenarioOverrideNotice =>
+      'Os valores alternativos são hipóteses do cenário, não dados confirmados do perfil.';
+
+  @override
+  String get savedEstimates => 'Estimativas guardadas';
+
+  @override
+  String get saveEstimate => 'Guardar estimativa';
+
+  @override
+  String get estimateSaved => 'Estimativa guardada neste dispositivo.';
+
+  @override
+  String get savedEstimate => 'Estimativa guardada';
+
+  @override
+  String get noSavedEstimates => 'Sem estimativas guardadas';
+
+  @override
+  String get deleteSavedEstimate => 'Apagar estimativa guardada';
+
+  @override
+  String get duplicateAsScenario => 'Duplicar como cenário';
+
+  @override
+  String get invoiceExplorer => 'Explorador de faturas';
+
+  @override
+  String get searchInvoices => 'Pesquisar emitente';
+
+  @override
+  String get documentTotal => 'Total dos documentos';
+
+  @override
+  String get monthlySummary => 'Resumo mensal';
+
+  @override
+  String get averageDocument => 'Média por documento';
+
+  @override
+  String get sortNewest => 'Mais recentes';
+
+  @override
+  String get sortOldest => 'Mais antigas';
+
+  @override
+  String get sortHighest => 'Maior valor';
+
+  @override
+  String get sortLowest => 'Menor valor';
+
+  @override
+  String get sortIssuer => 'Nome do emitente';
+
+  @override
+  String filteredInvoiceCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count faturas correspondentes',
+      one: '1 fatura correspondente',
+      zero: 'Sem faturas correspondentes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastUpdatedThisSession(String time) {
+    return 'Última atualização nesta sessão: $time';
+  }
+
+  @override
+  String get offlineUnavailable =>
+      'Esta área precisa de ligação. Verifica a rede e tenta novamente.';
+
+  @override
+  String get tryAgain => 'Tentar novamente';
+
+  @override
+  String get dateFilter => 'Intervalo de datas';
+
+  @override
+  String get minimumAmount => 'Valor mínimo';
+
+  @override
+  String get maximumAmount => 'Valor máximo';
+
+  @override
+  String get privacySnapshots =>
+      'As estimativas IRS guardadas ficam apenas neste dispositivo. Contêm inputs e resultados normalizados, nunca credenciais ou respostas e-Fatura em bruto.';
+
+  @override
+  String get all => 'Todos';
 }

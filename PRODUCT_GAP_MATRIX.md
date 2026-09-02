@@ -1,34 +1,33 @@
-# Product gap matrix — 0.7.12
+# Product gap matrix — 0.7.13
 
-Statuses describe closure evidence, not marketing readiness.
+Statuses describe verified implementation evidence, not marketing readiness.
 
 | Capability | Product status | Gap | Evidence / remaining work |
 |---|---|---|---|
-| Global fiscal profile | BETA | CLOSED | One persisted profile represents active year, residence, household and work contexts; unknowns stay null. IRS saves synchronize facts. |
-| Active tax year | BETA | CLOSED | Selects initial rules and all local income/expense totals. Historical simulations retain their explicit year. |
-| IRS core estimate | BETA | PARTIAL | Deterministic supported scope unchanged; profile sync added. Remaining hardcoded copy prevents app-wide EN closure. |
-| IRS explainability | BETA | PARTIAL | Existing breakdown/trace preserved; formal assumptions and missing-input UI need a dedicated pass. |
-| Income ledger | BETA | CLOSED | Local add/list/remove, integer cents, year, provenance/status and cautious duplicate flagging. |
-| Expense ledger | BETA | CLOSED | Local add/list/remove, provenance, optional VAT/date and warning that entries are not automatic deductions. |
-| e-Fatura pending invoices | EXPERIMENTAL | CLOSED | Read-only public API path preserved; no protocol or write change. |
-| e-Fatura provisional benefit | INCOMPLETE | DEFERRED | No official semantically equivalent source; remains unavailable for external scope. |
-| e-Fatura sectors | INCOMPLETE | DEFERRED | Same provenance blocker; never reconstructed from document sums. |
-| Settings appearance/language | BETA | CLOSED | Persisted automatic/PT/EN language and system/light/dark theme switch immediately. |
-| Privacy centre | BETA | CLOSED | Plain-language local/backend/read-only/session boundary in Settings. |
-| Sanitized diagnostics/feedback | BETA | CLOSED | Version/build/revision/environment/API only; feedback template has no fiscal payload. |
-| Shared error taxonomy | BETA | PARTIAL | Stable global taxonomy exists; legacy IRS UI still needs full mapping. |
-| Offline semantics | BETA | PARTIAL | Local profile/ledgers/IRS work offline; e-Fatura has retry/errors. Freshness is not app-wide. |
-| PT/EN app-wide | INCOMPLETE | OPEN | New surfaces are localized, but legacy IRS/Home strings remain hardcoded. |
-| Accessibility/responsiveness | BETA | PARTIAL | New screens have 320×640/dark/200% test; real TalkBack/global pass outstanding. |
-| Documents | PLANNED | DEFERRED | No safe useful minimum beyond invoice view; no uploads added. |
-| Obligations/deadlines | PLANNED | DEFERRED | Contract documented; no unsourced deadlines produced. |
-| Production signing | BETA | PARTIAL | Fail-closed configuration exists; release credentials/artifact belong to 0.7.13. |
-| External release candidate | INCOMPLETE | OPEN | Cloudflare rotation proof, device smoke, full i18n/accessibility and signed artifact remain. |
+| Global fiscal profile and active year | BETA | CLOSED | One persisted profile; unknown values remain unknown; contextual checklist added. |
+| Fiscal profile checklist | BETA | CLOSED | Objective essential-item count, field impact and contextual income CTA. |
+| IRS core estimate | BETA | PARTIAL | Deterministic supported engine unchanged; remaining legacy copy is not fully localized. |
+| IRS scenario comparison | BETA | CLOSED | Explicit overlays preserve base data; supported income, withholding and deduction changes only. |
+| Saved IRS estimates | BETA | CLOSED | Versioned local-only snapshots; immutable stored result; delete and duplicate supported. |
+| IRS explainability | BETA | PARTIAL | Inputs, deductions, withholding, assumptions and missing information shown; legacy sections remain inconsistent. |
+| Income ledger | BETA | CLOSED | Local CRUD, source filter, provenance/status and cautious duplicate flagging. |
+| Expense ledger | BETA | CLOSED | Local CRUD, provenance and no automatic fiscal merging. |
+| e-Fatura invoices | EXPERIMENTAL | CLOSED | Read-only api.taxy.pt flow with local search, date/value filters, sorting and monthly document totals. |
+| e-Fatura provisional benefit | INCOMPLETE | DEFERRED | No semantically equivalent official source; remains unavailable. |
+| Settings, privacy and diagnostics | BETA | CLOSED | Language/theme, snapshot disclosure and sanitized year/engine/API diagnostics. |
+| Shared error taxonomy | BETA | PARTIAL | Stable contract and reusable AppErrorState exist; all legacy IRS branches are not migrated. |
+| Offline semantics | BETA | PARTIAL | Local profile, ledgers and snapshots work offline; e-Fatura fails explicitly. No app-wide connectivity smoke. |
+| PT/EN app-wide | INCOMPLETE | OPEN | New 0.7.13 surfaces are localized; legacy IRS strings remain hardcoded. |
+| Accessibility/responsiveness/dark mode | BETA | PARTIAL | New surfaces covered at 320×640, dark and 200% text; real TalkBack/global pass outstanding. |
+| Android real-device journey | INCOMPLETE | OPEN | No ADB device was attached during this pass. |
+| Documents | PLANNED | DEFERRED | No sensitive upload/storage introduced. |
+| Obligations/deadlines | PLANNED | DEFERRED | No unsourced deadlines introduced. |
+| Production signing | BETA | PARTIAL | Fail-closed; signed distribution belongs to release engineering. |
+| External release candidate | INCOMPLETE | OPEN | Requires global localization/accessibility/device smoke and Cloudflare rotation evidence. |
 
 ## Counts
 
-- CLOSED: 8
+- CLOSED: 9
 - PARTIAL: 6
-- OPEN: 2
-- DEFERRED: 4
-
+- OPEN: 3
+- DEFERRED: 3

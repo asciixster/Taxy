@@ -5,6 +5,9 @@ import '../domain/models.dart';
 import '../l10n/app_localizations.dart';
 import '../state/providers.dart';
 import 'product_models.dart';
+import 'ledger_screens.dart';
+import 'app_error_state.dart';
+import 'app_failure.dart';
 
 final class FiscalProfileScreen extends ConsumerWidget {
   const FiscalProfileScreen({super.key});
@@ -17,8 +20,10 @@ final class FiscalProfileScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.fiscalProfile)),
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) =>
-            _LoadError(onRetry: () => ref.invalidate(productStateProvider)),
+        error: (_, _) => AppErrorState(
+          failure: const AppFailure(AppFailureKind.malformedData),
+          onRetry: () => ref.invalidate(productStateProvider),
+        ),
         data: (value) => _ProfileForm(state: value),
       ),
     );
@@ -75,6 +80,52 @@ final class _ProfileFormState extends ConsumerState<_ProfileForm> {
               complete ? l10n.profileComplete : l10n.profileIncomplete,
             ),
             subtitle: Text(l10n.profilePurpose),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.profileChecklist,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.completedEssential(
+                    widget.state.completedChecklistItems,
+                    widget.state.checklist.length,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                for (final item in widget.state.checklist)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    minLeadingWidth: 24,
+                    leading: Icon(
+                      item.complete
+                          ? Icons.check_circle_outline
+                          : Icons.warning_amber_rounded,
+                      color: item.complete
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.tertiary,
+                    ),
+                    title: Text(_checklistTitle(l10n, item.id)),
+                    subtitle: item.complete
+                        ? null
+                        : Text(_checklistImpact(l10n, item.id)),
+                    trailing: item.complete
+                        ? null
+                        : const Icon(Icons.chevron_right),
+                    onTap: item.complete
+                        ? null
+                        : () => _openTarget(item.target),
+                  ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 20),
@@ -165,6 +216,15 @@ final class _ProfileFormState extends ConsumerState<_ProfileForm> {
     );
   }
 
+  void _openTarget(ProfileChecklistTarget target) {
+    if (target == ProfileChecklistTarget.income) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const IncomeScreen()),
+      );
+    }
+  }
+
   Future<void> _save() async {
     setState(() => _saving = true);
     final profile = FiscalProfile(
@@ -182,6 +242,25 @@ final class _ProfileFormState extends ConsumerState<_ProfileForm> {
     if (mounted) Navigator.pop(context);
   }
 }
+
+String _checklistTitle(AppLocalizations l10n, String id) => switch (id) {
+  'activeTaxYear' => l10n.checkActiveYear,
+  'residence' => l10n.checkResidence,
+  'civilStatus' => l10n.checkCivilStatus,
+  'household' => l10n.checkHousehold,
+  'workContext' => l10n.checkWorkContext,
+  'income' => l10n.checkIncome,
+  _ => id,
+};
+
+String _checklistImpact(AppLocalizations l10n, String id) => switch (id) {
+  'residence' => l10n.impactResidence,
+  'civilStatus' => l10n.impactCivilStatus,
+  'household' => l10n.impactHousehold,
+  'workContext' => l10n.impactWorkContext,
+  'income' => l10n.impactIncome,
+  _ => l10n.missingInformationImprove,
+};
 
 final class _NullableBoolField extends StatelessWidget {
   const _NullableBoolField({
@@ -207,29 +286,4 @@ final class _NullableBoolField extends StatelessWidget {
       onChanged: onChanged,
     );
   }
-}
-
-final class _LoadError extends StatelessWidget {
-  const _LoadError({required this.onRetry});
-  final VoidCallback onRetry;
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            AppLocalizations.of(context).localDataUnavailable,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: onRetry,
-            child: Text(AppLocalizations.of(context).retry),
-          ),
-        ],
-      ),
-    ),
-  );
 }
