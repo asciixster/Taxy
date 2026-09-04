@@ -18,14 +18,16 @@ void main() {
       ProviderScope(
         overrides: [
           repositoryProvider.overrideWithValue(MemorySimulationRepository()),
-          productRepositoryProvider.overrideWithValue(MemoryProductRepository()),
+          productRepositoryProvider.overrideWithValue(
+            MemoryProductRepository(),
+          ),
         ],
         child: const TaxyApp(),
       ),
     );
     await _pumpAsyncFrames(tester);
     expect(find.byType(TaxyApp), findsOneWidget);
-    expect(find.text('Começar simulação'), findsOneWidget);
+    expect(find.text('Começar análise guiada'), findsOneWidget);
   });
 
   testWidgets('home identifica e retoma um rascunho guardado', (tester) async {
@@ -53,7 +55,7 @@ void main() {
     );
     await _pumpAsyncFrames(tester);
 
-    expect(find.text('Retomar simulação'), findsOneWidget);
+    expect(find.text('Continuar de onde ficaste'), findsOneWidget);
   });
 
   testWidgets('wizard recupera o passo validado após reabrir', (tester) async {

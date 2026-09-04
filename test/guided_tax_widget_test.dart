@@ -1,0 +1,84 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:taxy_pt/guided_tax/guided_tax_screen.dart';
+import 'package:taxy_pt/guided_tax/tax_interview_repository.dart';
+import 'package:taxy_pt/l10n/app_localizations.dart';
+import 'package:taxy_pt/product/product_models.dart';
+import 'package:taxy_pt/product/product_repository.dart';
+import 'package:taxy_pt/state/providers.dart';
+
+void main() {
+  testWidgets('guided flow is localized and usable at 200% text scale', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(640, 1280);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          productRepositoryProvider.overrideWithValue(
+            MemoryProductRepository(ProductState.initial(2026)),
+          ),
+          taxInterviewRepositoryProvider.overrideWithValue(
+            MemoryTaxInterviewRepository(),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('pt', 'PT'),
+          localizationsDelegates: const [
+            ...AppLocalizations.localizationsDelegates,
+            GlobalMaterialLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: child!,
+          ),
+          home: const GuidedTaxScreen(taxYear: 2026),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'Foste residente fiscal em Portugal durante todo o ano de 2026?',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Porque perguntamos isto'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('English flow uses plain language and dark mode', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          productRepositoryProvider.overrideWithValue(
+            MemoryProductRepository(ProductState.initial(2026)),
+          ),
+          taxInterviewRepositoryProvider.overrideWithValue(
+            MemoryTaxInterviewRepository(),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('en'),
+          theme: ThemeData.dark(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const GuidedTaxScreen(taxYear: 2026),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Were you a Portuguese tax resident throughout 2026?'),
+      findsOneWidget,
+    );
+    expect(find.text('Why we ask this'), findsOneWidget);
+  });
+}

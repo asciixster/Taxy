@@ -967,4 +967,274 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get specialSituationsUnsupported =>
       'Disability, displaced students, shared custody and other special situations.';
+
+  @override
+  String get guidedTaxTitle => 'Your guided tax review';
+
+  @override
+  String get guidedTaxIntro =>
+      'Answer one simple question at a time. Taxy turns your answers into an organised tax profile.';
+
+  @override
+  String get guidedTaxStart => 'Start guided review';
+
+  @override
+  String get guidedTaxContinue => 'Continue your tax review';
+
+  @override
+  String get guidedTaxResume => 'Resume where you left off';
+
+  @override
+  String guidedTaxYear(int year) {
+    return 'Tax year $year';
+  }
+
+  @override
+  String guidedTaxProgress(int completed, int total) {
+    return '$completed of $total areas reviewed';
+  }
+
+  @override
+  String get guidedTaxWhy => 'Why we ask this';
+
+  @override
+  String get guidedTaxBack => 'Back';
+
+  @override
+  String get guidedTaxNext => 'Continue';
+
+  @override
+  String get guidedTaxReviewAnswers => 'Review your answers';
+
+  @override
+  String get guidedTaxEdit => 'Edit';
+
+  @override
+  String get guidedTaxFinish => 'See estimate';
+
+  @override
+  String get guidedTaxEstimate => 'IRS estimate';
+
+  @override
+  String get guidedTaxProvisionalEstimate => 'Provisional IRS estimate';
+
+  @override
+  String get guidedTaxEstimateGood => 'Good-quality estimate';
+
+  @override
+  String get guidedTaxEstimateIncomplete => 'Some information is still missing';
+
+  @override
+  String get guidedTaxHowResult => 'How we arrived at this result';
+
+  @override
+  String get guidedTaxIncome => 'Income';
+
+  @override
+  String get guidedTaxWithholding => 'Tax withheld';
+
+  @override
+  String get guidedTaxDeductions => 'Deductions considered';
+
+  @override
+  String get guidedTaxResult => 'Estimated result';
+
+  @override
+  String get guidedTaxNextAction => 'What to do next';
+
+  @override
+  String get guidedTaxUnsupported =>
+      'We recorded this situation, but the current tax engine cannot calculate it safely yet.';
+
+  @override
+  String get guidedTaxSaved => 'Your progress is saved on this device.';
+
+  @override
+  String get guidedTaxMissingRequired => 'Required before we can estimate';
+
+  @override
+  String get guidedTaxMissingRecommended =>
+      'Recommended to improve the estimate';
+
+  @override
+  String get guidedTaxNoAnswer => 'Not answered';
+
+  @override
+  String get guidedTaxYes => 'Yes';
+
+  @override
+  String get guidedTaxNo => 'No';
+
+  @override
+  String get guidedTaxInvalidNumber => 'Enter a valid value.';
+
+  @override
+  String get guidedTaxHomeReady => 'Your estimate is ready';
+
+  @override
+  String guidedTaxHomeAreas(int count) {
+    return '$count areas still need review';
+  }
+
+  @override
+  String get guidedTaxFoundEfatura => 'We found information in e-Fatura.';
+
+  @override
+  String guidedTaxPendingEfatura(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count invoices need validation',
+      one: '1 invoice needs validation',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aboutYou => 'About you';
+
+  @override
+  String get family => 'Family';
+
+  @override
+  String get workAndIncome => 'Work and income';
+
+  @override
+  String get otherIncome => 'Other income';
+
+  @override
+  String get withholdingAndPayments => 'Withholding and payments';
+
+  @override
+  String get review => 'Review';
+
+  @override
+  String qResidentPortugal(int year) {
+    return 'Were you a Portuguese tax resident throughout $year?';
+  }
+
+  @override
+  String get whyResidentPortugal =>
+      'The current Taxy engine supports full-year Portuguese tax residents.';
+
+  @override
+  String get qRegion => 'Where was your tax residence?';
+
+  @override
+  String get whyRegion =>
+      'Mainland Portugal, Madeira and the Azores may use different tax rules.';
+
+  @override
+  String qAge(int year) {
+    return 'How old were you at the end of $year?';
+  }
+
+  @override
+  String get whyAge => 'Age can affect some deductions and benefits.';
+
+  @override
+  String qCivilStatus(int year) {
+    return 'What was your family situation at the end of $year?';
+  }
+
+  @override
+  String get whyCivilStatus =>
+      'Couples can compare joint and separate taxation.';
+
+  @override
+  String get qJointTaxation => 'Would you like to see joint taxation first?';
+
+  @override
+  String get whyJointTaxation =>
+      'Taxy can compare joint and separate taxation without changing your official choice.';
+
+  @override
+  String get qDependents => 'How many dependants were in your household?';
+
+  @override
+  String get whyDependents => 'Dependants can affect household deductions.';
+
+  @override
+  String qEmployment(int year) {
+    return 'Did you work for an employer in $year?';
+  }
+
+  @override
+  String get whyEmployment =>
+      'This helps us ask only for the income information that applies to you.';
+
+  @override
+  String get qEmploymentGross => 'What was your total gross employment income?';
+
+  @override
+  String get whyEmploymentGross =>
+      'Use the annual amount before IRS and Social Security deductions.';
+
+  @override
+  String get qSelfEmployment => 'Did you also work for yourself?';
+
+  @override
+  String get whySelfEmployment =>
+      'Self-employment is recorded separately because its tax treatment differs.';
+
+  @override
+  String get qPension => 'Did you receive a pension?';
+
+  @override
+  String get whyPension => 'Pensions have their own tax treatment.';
+
+  @override
+  String get qForeignIncome => 'Did you receive income from outside Portugal?';
+
+  @override
+  String get whyForeignIncome =>
+      'We identify foreign income but do not approximate unsupported calculations.';
+
+  @override
+  String get qRentalIncome => 'Did you receive rental income?';
+
+  @override
+  String get whyRentalIncome =>
+      'Rental income needs separate treatment in the Portuguese return.';
+
+  @override
+  String get qExpensesReviewed =>
+      'Have you reviewed your expenses and e-Fatura information?';
+
+  @override
+  String get whyExpensesReviewed =>
+      'Complete expense information can improve the estimate. Unavailable official totals are never treated as zero.';
+
+  @override
+  String get qWithholding => 'How much IRS was withheld during the year?';
+
+  @override
+  String get whyWithholding =>
+      'Withholding is tax already paid and is needed to estimate the final balance.';
+
+  @override
+  String get qSocialSecurity =>
+      'How much did you pay in mandatory Social Security contributions?';
+
+  @override
+  String get whySocialSecurity =>
+      'Mandatory contributions can affect taxable employment income.';
+
+  @override
+  String get qReview => 'Are these answers ready for calculation?';
+
+  @override
+  String get whyReview =>
+      'You can go back and edit any answer. Dependent answers are removed when they no longer apply.';
+
+  @override
+  String get guidedTaxNotCalculation =>
+      'This situation is saved, but no estimate is shown because the current engine does not support it safely.';
+
+  @override
+  String get guidedTaxDocumentsFoundation => 'Supporting documents';
+
+  @override
+  String get guidedTaxDocumentsHint =>
+      'Document capture is prepared for future confirmed imports; no value is applied without your confirmation.';
 }
