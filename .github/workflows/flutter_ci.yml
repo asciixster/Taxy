@@ -23,8 +23,8 @@ jobs:
         run: flutter test
       - name: Test AT connector (offline unit tests only)
         run: node --test "tools/at_connector/test/**/*.test.mjs"
+      - name: Build Android debug APK
+        run: flutter build apk --debug
       - name: Test Android native code
         working-directory: android
         run: ./gradlew testDebugUnitTest
-      - name: Build Android debug APK
-        run: flutter build apk --debug
