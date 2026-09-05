@@ -62,5 +62,8 @@ tools/at_connector/.env.*
 tools/at_connector/local/
 tools/at_connector/output/
 
+# Local GitHub CLI credentials used by isolated Codex sessions
+.gh-auth-*/
+
 # Widget Preview related
 .widget_preview/
