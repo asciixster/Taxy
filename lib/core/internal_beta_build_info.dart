@@ -1,7 +1,7 @@
 abstract final class InternalBetaBuildInfo {
   static const appVersion = String.fromEnvironment(
     'TAXY_APP_VERSION',
-    defaultValue: '0.8.2',
+    defaultValue: '0.8.3',
   );
   static const buildNumber = String.fromEnvironment(
     'TAXY_BUILD_NUMBER',

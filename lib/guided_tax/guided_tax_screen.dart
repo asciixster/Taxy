@@ -11,17 +11,13 @@ import '../state/providers.dart';
 import '../tax_engine/tax_engine.dart';
 import 'tax_interview_engine.dart';
 import 'tax_interview_models.dart';
-import 'tax_interview_repository.dart';
 import 'document_evidence.dart';
 import 'document_evidence_screen.dart';
+import 'guided_tax_providers.dart';
+import 'guided_tax_review_screen.dart';
+import 'guided_tax_simulation.dart';
 
-final taxInterviewRepositoryProvider = Provider<TaxInterviewRepository>(
-  (_) => LocalTaxInterviewRepository(),
-);
-
-final taxInterviewForYearProvider = FutureProvider.family<TaxInterview?, int>(
-  (ref, year) => ref.watch(taxInterviewRepositoryProvider).load(year),
-);
+export 'guided_tax_providers.dart';
 
 final class GuidedTaxScreen extends ConsumerStatefulWidget {
   const GuidedTaxScreen({super.key, required this.taxYear});
@@ -384,7 +380,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
         );
     await ref.read(taxInterviewRepositoryProvider).save(completed);
     ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
-    final simulation = _simulation(completed);
+    final simulation = simulationFromInterview(completed, now: DateTime.now());
     if (_engine.result(completed).canEstimate && simulation != null) {
       await ref.read(repositoryProvider).save(simulation);
       ref.invalidate(simulationsProvider);
@@ -412,8 +408,27 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
   }
 
   Widget _result(AppLocalizations l10n) {
+    final interview = _interview;
+    if (interview != null) {
+      return GuidedTaxReviewScreen(
+        taxYear: widget.taxYear,
+        interview: interview,
+        onEditQuestion: (questionId) => setState(() {
+          _editingCompletedInterview = true;
+          _showResult = false;
+          _interview = _interview!.copyWith(
+            currentQuestionId: questionId,
+            completed: false,
+          );
+        }),
+        onOpenDocuments: _openDocumentEvidence,
+      );
+    }
     final result = _engine.result(_interview!);
-    final simulation = _simulation(_interview!);
+    final simulation = simulationFromInterview(
+      _interview!,
+      now: DateTime.now(),
+    );
     final complexIncome = _complexIncomeLabels(l10n);
     final region = switch (_interview!.answers['region']?.value) {
       'madeira' => TaxRegion.madeira,
@@ -667,7 +682,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
           ),
         );
     await ref.read(taxInterviewRepositoryProvider).save(updated);
-    final simulation = _simulation(updated);
+    final simulation = simulationFromInterview(updated, now: DateTime.now());
     if (updated.completed &&
         _engine.result(updated).canEstimate &&
         simulation != null) {
@@ -727,64 +742,6 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
       _interview = _prefill(reset);
       _showResult = false;
     });
-  }
-
-  TaxSimulation? _simulation(TaxInterview interview) {
-    Object? value(String id) => interview.answers[id]?.value;
-    if (value('employmentIncome') != true ||
-        value('selfEmploymentIncome') == true ||
-        value('pensionIncome') == true ||
-        value('foreignIncome') == true ||
-        value('rentalIncome') == true ||
-        value('civilStatus') != 'single') {
-      return null;
-    }
-    final gross = value('employmentGrossCents');
-    final withholding = value('withholdingCents');
-    final socialSecurity = value('socialSecurityCents');
-    final age = value('age');
-    if (gross is! int ||
-        withholding is! int ||
-        socialSecurity is! int ||
-        age is! int) {
-      return null;
-    }
-    final now = DateTime.now();
-    final dependents = value('dependentCount') is int
-        ? value('dependentCount') as int
-        : 0;
-    final region = switch (value('region')) {
-      'madeira' => TaxRegion.madeira,
-      'azores' => TaxRegion.azores,
-      _ => TaxRegion.continent,
-    };
-    return TaxSimulation(
-      id: 'guided-${widget.taxYear}',
-      name: 'Guided ${widget.taxYear}',
-      createdAt: now,
-      updatedAt: now,
-      profile: TaxpayerProfile(
-        taxYear: widget.taxYear,
-        age: age,
-        civilStatus: CivilStatus.single,
-        dependentAges: List.filled(dependents, 10),
-        fullYearResident: value('residentPortugal') == true,
-        region: region,
-        filingMode: FilingMode.separate,
-        isSingleParentHousehold: dependents > 0,
-      ),
-      income: EmploymentIncome(
-        entryMode: IncomeEntryMode.annual,
-        gross: Money.fromCents(gross),
-        withholding: Money.fromCents(withholding),
-        socialSecurity: Money.fromCents(socialSecurity),
-      ),
-      deductions: const DeductionInput(),
-      dependents: List.generate(
-        dependents,
-        (index) => Dependent(id: 'guided-$index', ageAtYearEnd: 10),
-      ),
-    );
   }
 
   String _sectionLabel(AppLocalizations l10n, TaxInterviewSectionId id) =>

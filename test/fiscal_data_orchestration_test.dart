@@ -78,36 +78,38 @@ void main() {
     },
   );
 
-  test(
-    'explicit user override wins but original conflict remains auditable',
-    () {
-      final conflict = FiscalDataConflict(
-        id: 'dependentCount',
-        current: const FiscalDataPoint(
-          id: 'dependentCount',
-          value: 2,
-          source: FiscalDataSource.official,
-          confidence: FiscalDataConfidence.confirmed,
-          taxYear: 2026,
-        ),
-        candidate: const FiscalDataPoint(
-          id: 'dependentCount',
-          value: 1,
-          source: FiscalDataSource.imported,
-          confidence: FiscalDataConfidence.likely,
-          taxYear: 2026,
-        ),
-      );
-      final result = orchestrator.resolveConflict(
-        product: ProductState(profile: completeProfile),
-        interview: interview(),
-        conflict: conflict,
-        selectedValue: 2,
-      );
-      expect(result.facts['dependentCount']?.value, 2);
-      expect(result.facts['dependentCount']?.isUserOverride, isTrue);
-    },
-  );
+  test('explicit conflict choice preserves source and audit semantics', () {
+    const candidate = FiscalDataPoint(
+      id: 'dependentCount',
+      value: 1,
+      source: FiscalDataSource.imported,
+      confidence: FiscalDataConfidence.confirmed,
+      taxYear: 2026,
+    );
+    final initial = orchestrator.consolidate(
+      product: ProductState(profile: completeProfile),
+      interview: interview(),
+      candidates: const [candidate],
+    );
+    final updated = orchestrator.applyConflictResolution(
+      interview: interview(),
+      conflict: initial.conflicts.single,
+      selected: candidate,
+      resolvedAt: DateTime.utc(2026, 9, 1),
+    );
+    expect(
+      updated.answers['dependentCount']?.provenance,
+      TaxFactProvenance.imported,
+    );
+    expect(updated.conflictResolutions, contains('dependentCount'));
+    final result = orchestrator.consolidate(
+      product: ProductState(profile: completeProfile),
+      interview: updated,
+      candidates: const [candidate],
+    );
+    expect(result.facts['dependentCount']?.value, 1);
+    expect(result.conflicts, isEmpty);
+  });
 
   test('tax-year mismatch fails closed', () {
     expect(

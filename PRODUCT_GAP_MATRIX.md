@@ -1,4 +1,18 @@
-# Product gap matrix — 0.8.2
+# Product gap matrix — 0.8.3
+
+## Guided review and explainability
+
+| Capability | Status | Notes |
+|---|---|---|
+| Guided Tax Review | IMPLEMENTED | Human-first synthesis available after interview and from Home |
+| Completeness | IMPLEMENTED | Ready, needs review, incomplete, and unsupported are derived centrally |
+| Conflict center | IMPLEMENTED | Choice is persisted with provenance; changed evidence reopens the conflict |
+| Calculation inclusion | IMPLEMENTED | Included, missing, conflicted, unsupported, and irrelevant states |
+| Estimate presentation policy | IMPLEMENTED | Complete, explicitly partial, or hidden; no widget-level formula |
+| Explainability | IMPLEMENTED | Breakdown comes from actual `TaxResult` output |
+| One next action | IMPLEMENTED | Deterministic priority; e-Fatura pending remains advisory/read-only |
+| Complex-income calculation | PLANNED | Identified and visibly excluded, never approximated |
+| IRS submission | OUT OF SCOPE | No filing or AT write operation |
 
 ## Taxy 0.8.1 — integrated fiscal companion
 

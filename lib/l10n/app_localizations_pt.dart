@@ -1393,6 +1393,110 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get complexIncomeRental => 'Rendimentos de imóveis';
+
+  @override
+  String get taxReviewTitle => 'Revisão fiscal';
+
+  @override
+  String get taxReviewReady => 'Pronta para rever';
+
+  @override
+  String get taxReviewNeedsReview => 'Precisa da tua revisão';
+
+  @override
+  String get taxReviewIncomplete => 'Falta informação';
+
+  @override
+  String get taxReviewUnsupported => 'Inclui situações ainda não suportadas';
+
+  @override
+  String taxReviewRefund(String amount) {
+    return '$amount a receber';
+  }
+
+  @override
+  String taxReviewPayable(String amount) {
+    return '$amount a pagar';
+  }
+
+  @override
+  String get taxReviewEstimateHidden => 'Estimativa ainda indisponível';
+
+  @override
+  String get taxReviewEstimateDisclaimer =>
+      'Baseada na informação disponível e nas situações atualmente suportadas pela Taxy. Não é um resultado oficial.';
+
+  @override
+  String get taxReviewConflictsTitle => 'Informação para confirmar';
+
+  @override
+  String get taxReviewConflictSemantics =>
+      'Conflito de informação. Escolhe o valor correto ou revê mais tarde.';
+
+  @override
+  String get taxReviewLater => 'Rever mais tarde';
+
+  @override
+  String get taxReviewMissingTitle => 'Falta informação';
+
+  @override
+  String get taxReviewRequired => 'Necessária para calcular';
+
+  @override
+  String get taxReviewRecommended => 'Recomendada para melhorar a estimativa';
+
+  @override
+  String get taxReviewOptional => 'Opcional';
+
+  @override
+  String get taxReviewSituationsTitle => 'Situações identificadas';
+
+  @override
+  String get taxReviewUnsupportedBody =>
+      'Identificámos informação que ainda não entra na estimativa atual.';
+
+  @override
+  String get taxReviewNotIncluded => 'Não incluído na estimativa atual';
+
+  @override
+  String get taxReviewBreakdownSubtitle =>
+      'Valores produzidos pelo motor IRS da Taxy';
+
+  @override
+  String get taxReviewIncludedTitle => 'O que está incluído nesta estimativa';
+
+  @override
+  String get taxReviewSourceDocument => 'Documento confirmado';
+
+  @override
+  String get taxReviewSocialSecurity => 'Contribuições para a Segurança Social';
+
+  @override
+  String get taxReviewInformation => 'Informação fiscal';
+
+  @override
+  String get taxReviewIncomeConsidered => 'Rendimentos considerados';
+
+  @override
+  String get taxReviewDeductionsConsidered => 'Deduções consideradas';
+
+  @override
+  String get taxReviewEstimatedTax => 'Imposto estimado';
+
+  @override
+  String get taxReviewWithholdingConsidered => 'Retenções consideradas';
+
+  @override
+  String get taxReviewActionConflict => 'Resolver diferença na informação';
+
+  @override
+  String get taxReviewActionMissing => 'Completar informação necessária';
+
+  @override
+  String get taxReviewActionUnsupported => 'Rever situações não incluídas';
+
+  @override
+  String get taxReviewActionEstimate => 'Rever estimativa';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -2783,4 +2887,108 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get complexIncomeRental => 'Rendimentos de imóveis';
+
+  @override
+  String get taxReviewTitle => 'Revisão fiscal';
+
+  @override
+  String get taxReviewReady => 'Pronta para rever';
+
+  @override
+  String get taxReviewNeedsReview => 'Precisa da tua revisão';
+
+  @override
+  String get taxReviewIncomplete => 'Falta informação';
+
+  @override
+  String get taxReviewUnsupported => 'Inclui situações ainda não suportadas';
+
+  @override
+  String taxReviewRefund(String amount) {
+    return '$amount a receber';
+  }
+
+  @override
+  String taxReviewPayable(String amount) {
+    return '$amount a pagar';
+  }
+
+  @override
+  String get taxReviewEstimateHidden => 'Estimativa ainda indisponível';
+
+  @override
+  String get taxReviewEstimateDisclaimer =>
+      'Baseada na informação disponível e nas situações atualmente suportadas pela Taxy. Não é um resultado oficial.';
+
+  @override
+  String get taxReviewConflictsTitle => 'Informação para confirmar';
+
+  @override
+  String get taxReviewConflictSemantics =>
+      'Conflito de informação. Escolhe o valor correto ou revê mais tarde.';
+
+  @override
+  String get taxReviewLater => 'Rever mais tarde';
+
+  @override
+  String get taxReviewMissingTitle => 'Falta informação';
+
+  @override
+  String get taxReviewRequired => 'Necessária para calcular';
+
+  @override
+  String get taxReviewRecommended => 'Recomendada para melhorar a estimativa';
+
+  @override
+  String get taxReviewOptional => 'Opcional';
+
+  @override
+  String get taxReviewSituationsTitle => 'Situações identificadas';
+
+  @override
+  String get taxReviewUnsupportedBody =>
+      'Identificámos informação que ainda não entra na estimativa atual.';
+
+  @override
+  String get taxReviewNotIncluded => 'Não incluído na estimativa atual';
+
+  @override
+  String get taxReviewBreakdownSubtitle =>
+      'Valores produzidos pelo motor IRS da Taxy';
+
+  @override
+  String get taxReviewIncludedTitle => 'O que está incluído nesta estimativa';
+
+  @override
+  String get taxReviewSourceDocument => 'Documento confirmado';
+
+  @override
+  String get taxReviewSocialSecurity => 'Contribuições para a Segurança Social';
+
+  @override
+  String get taxReviewInformation => 'Informação fiscal';
+
+  @override
+  String get taxReviewIncomeConsidered => 'Rendimentos considerados';
+
+  @override
+  String get taxReviewDeductionsConsidered => 'Deduções consideradas';
+
+  @override
+  String get taxReviewEstimatedTax => 'Imposto estimado';
+
+  @override
+  String get taxReviewWithholdingConsidered => 'Retenções consideradas';
+
+  @override
+  String get taxReviewActionConflict => 'Resolver diferença na informação';
+
+  @override
+  String get taxReviewActionMissing => 'Completar informação necessária';
+
+  @override
+  String get taxReviewActionUnsupported => 'Rever situações não incluídas';
+
+  @override
+  String get taxReviewActionEstimate => 'Rever estimativa';
 }

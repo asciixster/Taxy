@@ -1382,4 +1382,108 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get complexIncomeRental => 'Rental income';
+
+  @override
+  String get taxReviewTitle => 'Tax review';
+
+  @override
+  String get taxReviewReady => 'Ready to review';
+
+  @override
+  String get taxReviewNeedsReview => 'Needs your review';
+
+  @override
+  String get taxReviewIncomplete => 'Information is missing';
+
+  @override
+  String get taxReviewUnsupported => 'Includes situations not yet supported';
+
+  @override
+  String taxReviewRefund(String amount) {
+    return '$amount estimated refund';
+  }
+
+  @override
+  String taxReviewPayable(String amount) {
+    return '$amount estimated to pay';
+  }
+
+  @override
+  String get taxReviewEstimateHidden => 'Estimate not available yet';
+
+  @override
+  String get taxReviewEstimateDisclaimer =>
+      'Based on the information available and the situations Taxy currently supports. This is not an official result.';
+
+  @override
+  String get taxReviewConflictsTitle => 'Information to confirm';
+
+  @override
+  String get taxReviewConflictSemantics =>
+      'Information conflict. Choose the correct value or review it later.';
+
+  @override
+  String get taxReviewLater => 'Review later';
+
+  @override
+  String get taxReviewMissingTitle => 'Information is missing';
+
+  @override
+  String get taxReviewRequired => 'Required before we can calculate';
+
+  @override
+  String get taxReviewRecommended => 'Recommended to improve the estimate';
+
+  @override
+  String get taxReviewOptional => 'Optional';
+
+  @override
+  String get taxReviewSituationsTitle => 'Situations identified';
+
+  @override
+  String get taxReviewUnsupportedBody =>
+      'We found information that is not yet included in the current estimate.';
+
+  @override
+  String get taxReviewNotIncluded => 'Not included in the current estimate';
+
+  @override
+  String get taxReviewBreakdownSubtitle =>
+      'Values produced by Taxy\'s IRS engine';
+
+  @override
+  String get taxReviewIncludedTitle => 'What is included in this estimate';
+
+  @override
+  String get taxReviewSourceDocument => 'Confirmed document';
+
+  @override
+  String get taxReviewSocialSecurity => 'Social Security contributions';
+
+  @override
+  String get taxReviewInformation => 'Tax information';
+
+  @override
+  String get taxReviewIncomeConsidered => 'Income considered';
+
+  @override
+  String get taxReviewDeductionsConsidered => 'Deductions considered';
+
+  @override
+  String get taxReviewEstimatedTax => 'Estimated tax';
+
+  @override
+  String get taxReviewWithholdingConsidered => 'Tax withheld considered';
+
+  @override
+  String get taxReviewActionConflict => 'Resolve the difference in information';
+
+  @override
+  String get taxReviewActionMissing => 'Complete required information';
+
+  @override
+  String get taxReviewActionUnsupported => 'Review information not included';
+
+  @override
+  String get taxReviewActionEstimate => 'Review estimate';
 }

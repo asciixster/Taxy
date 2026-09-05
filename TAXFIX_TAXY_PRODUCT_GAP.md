@@ -19,6 +19,34 @@ Date: 2026-09-04. This audit uses only public Taxfix pages, public support
 material and public store descriptions. No application binary, private asset,
 copy or proprietary implementation was inspected or reproduced.
 
+## 0.8.3 review and next-action benchmark
+
+Rechecked on 2026-09-05 against Taxfix's public product and support pages. The
+public experience still emphasizes a simple question flow, completion by area,
+an estimated result with calculation detail, contextual explanations, document
+guidance, and review before submission. Taxy adopts those general product
+principles only; its wording, interface, Portuguese domain model, and code are
+original.
+
+| Dimension | TAXFIX_HAS | TAXY 0.8.3 | Remaining Taxy boundary |
+|---|---|---|---|
+| Guided completion | Questions relevant to the case and category completion | Rule-driven interview plus a single review synthesis | Broader Portuguese tax-engine coverage |
+| Review | Review before filing and plausibility checks | Year-scoped human summary, conflicts, missing data, and edit routes | Filing is intentionally absent |
+| Estimate | Early estimated result and calculation detail | Central policy prevents false precision; refund/payable semantics come from the engine | Unsupported cases show no conclusive amount |
+| Explanation | Contextual help and calculation detail | Engine-derived breakdown plus included/not-included facts | No generative tax advice |
+| Next step | Submission or a personalized document task | One safe primary action across conflicts, missing data, unsupported facts, interview, and e-Fatura | No invented obligations or deadlines |
+
+Public evidence:
+
+- [Taxfix — How it works](https://taxfix.de/en/how-it-works/)
+- [Taxfix Support — Your tax return with the Taxfix app](https://support.taxfix.de/hc/en-us/articles/28595920662301-Your-tax-return-with-the-Taxfix-app-How-it-works)
+- [Taxfix Support — What does the app do?](https://support.taxfix.de/hc/en-us/articles/28259701093405-What-does-the-app-do)
+
+Acceptance answer: **YES** for the simple employment scenario supported by the
+current Taxy engine. A user can see the estimated direction and amount, whether
+the result is complete, which data entered the calculation, what is missing or
+excluded, and the next useful action without knowing IRS form terminology.
+
 | Element | TAXFIX_HAS | TAXY_HAS | TAXY_GAP | TAXY_OPPORTUNITY |
 |---|---|---|---|---|
 | Onboarding | A short route into a guided return | A clear product welcome and year selection | The legacy simulator still exposes fiscal structure early | Start with the year and one human question |

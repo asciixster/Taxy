@@ -20,6 +20,7 @@ import 'modules/efatura/infrastructure/efatura_session_token_store.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'guided_tax/guided_tax_screen.dart';
+import 'guided_tax/guided_tax_review_screen.dart';
 import 'guided_tax/document_evidence.dart';
 import 'guided_tax/tax_interview_models.dart';
 import 'fiscal_data/fiscal_data_orchestrator.dart';
@@ -252,6 +253,23 @@ Future<void> _openGuidedTax(BuildContext context, int taxYear) =>
       MaterialPageRoute(builder: (_) => GuidedTaxScreen(taxYear: taxYear)),
     );
 
+Future<void> _openGuidedReview(
+  BuildContext context,
+  WidgetRef ref,
+  int taxYear,
+) => Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (reviewContext) => GuidedTaxReviewScreen(
+      taxYear: taxYear,
+      onEditQuestion: (_) => _openGuidedTax(reviewContext, taxYear),
+      onOpenEfatura: EfaturaFeatureFlags.experimental
+          ? () => _openEfatura(reviewContext, ref, taxYear)
+          : null,
+    ),
+  ),
+);
+
 final class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -405,11 +423,16 @@ final class _FiscalCompanionCard extends ConsumerWidget {
             EstimateCompleteness.incomplete => l10n.fiscalCompanionIncomplete,
             EstimateCompleteness.unavailable => l10n.fiscalCompanionIncomplete,
           };
-    final action = switch (consolidated.nextAction) {
-      FiscalCompanionAction.reviewEfatura => l10n.fiscalCompanionReviewEfatura,
-      FiscalCompanionAction.noAction => l10n.fiscalCompanionNoAction,
-      _ => l10n.fiscalCompanionContinue,
-    };
+    final action = consolidated.conflicts.isNotEmpty
+        ? l10n.taxReviewActionConflict
+        : consolidated.estimateCompleteness == EstimateCompleteness.ready
+        ? l10n.taxReviewActionEstimate
+        : switch (consolidated.nextAction) {
+            FiscalCompanionAction.reviewEfatura =>
+              l10n.fiscalCompanionReviewEfatura,
+            FiscalCompanionAction.noAction => l10n.fiscalCompanionNoAction,
+            _ => l10n.fiscalCompanionContinue,
+          };
     return Semantics(
       container: true,
       label: '${l10n.fiscalCompanionTitle}. $status. $action',
@@ -465,12 +488,7 @@ final class _FiscalCompanionCard extends ConsumerWidget {
                 OutlinedButton(
                   onPressed: interview.value == null
                       ? null
-                      : () => _resolveFiscalConflict(
-                          context,
-                          ref,
-                          interview.value!,
-                          consolidated.conflicts.first,
-                        ),
+                      : () => _openGuidedReview(context, ref, taxYear),
                   child: Text(l10n.dataConflictResolve),
                 ),
               ],
@@ -527,6 +545,10 @@ final class _FiscalCompanionCard extends ConsumerWidget {
                             FiscalCompanionAction.reviewEfatura &&
                         EfaturaFeatureFlags.experimental
                     ? () => _openEfatura(context, ref, taxYear)
+                    : consolidated.conflicts.isNotEmpty ||
+                          consolidated.estimateCompleteness ==
+                              EstimateCompleteness.ready
+                    ? () => _openGuidedReview(context, ref, taxYear)
                     : () => _openGuidedTax(context, taxYear),
                 icon: const Icon(Icons.arrow_forward_rounded),
                 label: Text(action),
@@ -539,6 +561,7 @@ final class _FiscalCompanionCard extends ConsumerWidget {
   }
 }
 
+// ignore: unused_element
 Future<void> _resolveFiscalConflict(
   BuildContext context,
   WidgetRef ref,

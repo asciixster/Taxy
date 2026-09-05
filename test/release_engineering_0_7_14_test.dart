@@ -19,8 +19,8 @@ void main() {
     final pubspec = File('pubspec.yaml').readAsStringSync();
     final diagnostics = File('lib/core/internal_beta_build_info.dart')
         .readAsStringSync();
-    expect(pubspec, contains('version: 0.8.2+18'));
-    expect(diagnostics, contains("defaultValue: '0.8.2'"));
+    expect(pubspec, contains('version: 0.8.3+19'));
+    expect(diagnostics, contains("defaultValue: '0.8.3'"));
     expect(diagnostics, contains("defaultValue: '18'"));
   });
 

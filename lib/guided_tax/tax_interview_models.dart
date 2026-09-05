@@ -98,6 +98,48 @@ final class TaxAnswer {
   );
 }
 
+final class TaxConflictResolution {
+  const TaxConflictResolution({
+    required this.factId,
+    required this.selectedValue,
+    required this.competingValue,
+    required this.selectedProvenance,
+    required this.resolvedAt,
+  });
+
+  final String factId;
+  final Object? selectedValue;
+  final Object? competingValue;
+  final TaxFactProvenance selectedProvenance;
+  final DateTime resolvedAt;
+
+  bool matches(Object? first, Object? second) =>
+      (selectedValue == first && competingValue == second) ||
+      (selectedValue == second && competingValue == first);
+
+  Map<String, Object?> toJson() => {
+    'factId': factId,
+    'selectedValue': selectedValue,
+    'competingValue': competingValue,
+    'selectedProvenance': selectedProvenance.name,
+    'resolvedAt': resolvedAt.toUtc().toIso8601String(),
+  };
+
+  factory TaxConflictResolution.fromJson(Map<String, Object?> json) {
+    final resolvedAt = DateTime.tryParse(json['resolvedAt'] as String? ?? '');
+    if (resolvedAt == null) throw const FormatException('resolvedAt');
+    return TaxConflictResolution(
+      factId: json['factId'] as String,
+      selectedValue: json['selectedValue'],
+      competingValue: json['competingValue'],
+      selectedProvenance: TaxFactProvenance.values.byName(
+        json['selectedProvenance'] as String,
+      ),
+      resolvedAt: resolvedAt.toUtc(),
+    );
+  }
+}
+
 final class TaxFact {
   const TaxFact({
     required this.id,
@@ -154,22 +196,26 @@ final class TaxInterview {
     required this.answers,
     this.currentQuestionId,
     this.completed = false,
+    this.conflictResolutions = const {},
   });
 
   final int taxYear;
   final Map<String, TaxAnswer> answers;
   final String? currentQuestionId;
   final bool completed;
+  final Map<String, TaxConflictResolution> conflictResolutions;
 
   TaxInterview copyWith({
     Map<String, TaxAnswer>? answers,
     String? currentQuestionId,
     bool? completed,
+    Map<String, TaxConflictResolution>? conflictResolutions,
   }) => TaxInterview(
     taxYear: taxYear,
     answers: answers ?? this.answers,
     currentQuestionId: currentQuestionId ?? this.currentQuestionId,
     completed: completed ?? this.completed,
+    conflictResolutions: conflictResolutions ?? this.conflictResolutions,
   );
 
   Map<String, Object?> toJson() => {
@@ -178,6 +224,9 @@ final class TaxInterview {
     'answers': answers.values.map((answer) => answer.toJson()).toList(),
     'currentQuestionId': currentQuestionId,
     'completed': completed,
+    'conflictResolutions': conflictResolutions.values
+        .map((resolution) => resolution.toJson())
+        .toList(),
   };
 
   factory TaxInterview.fromJson(Map<String, Object?> json) {
@@ -185,11 +234,21 @@ final class TaxInterview {
     final answers = (json['answers'] as List? ?? const [])
         .map((value) => TaxAnswer.fromJson((value as Map).cast()))
         .toList();
+    final resolutions = (json['conflictResolutions'] as List? ?? const [])
+        .map(
+          (value) => TaxConflictResolution.fromJson(
+            (value as Map).cast<String, Object?>(),
+          ),
+        )
+        .toList();
     return TaxInterview(
       taxYear: json['taxYear'] as int,
       answers: {for (final answer in answers) answer.questionId: answer},
       currentQuestionId: json['currentQuestionId'] as String?,
       completed: json['completed'] as bool? ?? false,
+      conflictResolutions: {
+        for (final resolution in resolutions) resolution.factId: resolution,
+      },
     );
   }
 }
