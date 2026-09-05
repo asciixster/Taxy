@@ -81,4 +81,41 @@ void main() {
     );
     expect(find.text('Why we ask this'), findsOneWidget);
   });
+
+  testWidgets('numeric input keeps every typed character across rebuilds', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          productRepositoryProvider.overrideWithValue(
+            MemoryProductRepository(ProductState.initial(2026)),
+          ),
+          taxInterviewRepositoryProvider.overrideWithValue(
+            MemoryTaxInterviewRepository(),
+          ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('pt', 'PT'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const GuidedTaxScreen(taxYear: 2026),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sim'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Portugal continental'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), '35');
+    await tester.pump();
+
+    expect(find.text('35'), findsOneWidget);
+  });
 }

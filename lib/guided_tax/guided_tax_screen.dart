@@ -258,7 +258,9 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
                 : '$value')
           : '';
       return TextFormField(
-        key: ValueKey('${question.id}-$initial'),
+        // Keep the field identity stable while typing. Re-keying it with the
+        // parsed value recreates the editable state after every character.
+        key: ValueKey(question.id),
         initialValue: initial,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         textInputAction: TextInputAction.done,
