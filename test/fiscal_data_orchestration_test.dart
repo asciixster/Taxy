@@ -340,6 +340,43 @@ void main() {
     );
   });
 
+  test(
+    'document amount conflict dirties work section, not profile section',
+    () {
+      final withIncome = interview().copyWith(
+        answers: {
+          ...interview().answers,
+          'employmentGrossCents': const TaxAnswer(
+            questionId: 'employmentGrossCents',
+            value: 3000000,
+          ),
+        },
+      );
+      final result = orchestrator.consolidate(
+        product: ProductState(profile: completeProfile),
+        interview: withIncome,
+        candidates: const [
+          FiscalDataPoint(
+            id: 'employmentGrossCents',
+            value: 3200000,
+            source: FiscalDataSource.imported,
+            confidence: FiscalDataConfidence.confirmed,
+            taxYear: 2026,
+          ),
+        ],
+      );
+      expect(result.conflicts.single.id, 'employmentGrossCents');
+      expect(
+        result.sections[TaxInterviewSectionId.workAndIncome],
+        InterviewSectionState.needsReview,
+      );
+      expect(
+        result.sections[TaxInterviewSectionId.aboutYou],
+        InterviewSectionState.clean,
+      );
+    },
+  );
+
   test('year reset removes manual data but preserves imported evidence', () {
     final product = ProductState(
       profile: completeProfile,

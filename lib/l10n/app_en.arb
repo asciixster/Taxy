@@ -409,4 +409,23 @@
   ,"resetTaxYearBody": "This removes interview answers and manual income and expenses for this year. Your e-Fatura connection is not removed."
   ,"resetTaxYearConfirm": "Reset year"
   ,"estimateUpdated": "The estimate was updated."
+  ,"guidedDocumentsTitle": "Document evidence"
+  ,"guidedDocumentsIntro": "Confirm values from documents that the current estimate can use."
+  ,"guidedDocumentsPrivacy": "The document file is not uploaded or stored. Only the amount you confirm is saved on this device."
+  ,"guidedDocumentsEntryHint": "Review confirmed income, withholding and contribution values"
+  ,"guidedDocumentEmployment": "Employment income statement"
+  ,"guidedDocumentWithholding": "IRS withholding proof"
+  ,"guidedDocumentSocialSecurity": "Social Security contributions proof"
+  ,"guidedDocumentsConfirmValue": "Check the document and enter the annual total you want to confirm."
+  ,"guidedDocumentsNotConfirmed": "No value confirmed"
+  ,"guidedDocumentsConfirmedAmount": "Confirmed: {amount}"
+  ,"@guidedDocumentsConfirmedAmount": {"placeholders": {"amount": {"type": "String"}}}
+  ,"guidedDocumentsCount": "{count, plural, =1{1 confirmed} other{{count} confirmed}}"
+  ,"@guidedDocumentsCount": {"placeholders": {"count": {"type": "int"}}}
+  ,"complexIncomeTitle": "Identified situations needing review"
+  ,"complexIncomeHint": "These situations are recorded but are not included in the estimate until the tax engine supports them safely."
+  ,"complexIncomeSelfEmployment": "Self-employment income"
+  ,"complexIncomePension": "Pension income"
+  ,"complexIncomeForeign": "Income received outside Portugal"
+  ,"complexIncomeRental": "Rental income"
 }

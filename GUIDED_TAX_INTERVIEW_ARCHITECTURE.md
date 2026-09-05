@@ -91,3 +91,10 @@ event properties.
 `TaxEvent` and `TaxDeadline` exist as neutral types. No legal deadline is
 populated without a validated source. Multi-year support reuses the same
 question/rule graph with year-specific tax rules.
+
+## 0.8.2 document evidence
+
+Confirmed employment, withholding and Social Security document values enter the orchestration
+layer as year-scoped imported candidates. Missing values may prefill the interview; divergent
+values create a user-resolved conflict. Raw documents and filenames are not retained. Complex
+income flags remain visible, explicit and excluded from the estimate until supported.

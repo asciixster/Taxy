@@ -20,6 +20,7 @@ import 'modules/efatura/infrastructure/efatura_session_token_store.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'guided_tax/guided_tax_screen.dart';
+import 'guided_tax/document_evidence.dart';
 import 'guided_tax/tax_interview_models.dart';
 import 'fiscal_data/fiscal_data_orchestrator.dart';
 import 'screens/how_we_calculate_screen.dart';
@@ -346,7 +347,11 @@ final class _FiscalCompanionCard extends ConsumerWidget {
     final product = ref.watch(productStateProvider);
     final interview = ref.watch(taxInterviewForYearProvider(taxYear));
     final efatura = ref.watch(efaturaEvidenceForYearProvider(taxYear));
-    if (product.isLoading || interview.isLoading || efatura.isLoading) {
+    final documents = ref.watch(documentEvidenceForYearProvider(taxYear));
+    if (product.isLoading ||
+        interview.isLoading ||
+        efatura.isLoading ||
+        documents.isLoading) {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(20),
@@ -369,6 +374,27 @@ final class _FiscalCompanionCard extends ConsumerWidget {
       product: product.requireValue,
       interview: interview.value,
       efatura: efatura.value,
+      candidates: [
+        for (final evidence in documents.value ?? const [])
+          FiscalDataPoint(
+            id: evidence.factId,
+            value: evidence.amountCents,
+            source: FiscalDataSource.imported,
+            confidence: FiscalDataConfidence.confirmed,
+            taxYear: evidence.taxYear,
+            lastUpdatedAt: evidence.confirmedAt,
+          ),
+        for (final evidence in documents.value ?? const [])
+          if (evidence.type == GuidedDocumentType.employmentIncomeStatement)
+            FiscalDataPoint(
+              id: 'employmentIncome',
+              value: true,
+              source: FiscalDataSource.imported,
+              confidence: FiscalDataConfidence.confirmed,
+              taxYear: evidence.taxYear,
+              lastUpdatedAt: evidence.confirmedAt,
+            ),
+      ],
     );
     final efaturaEvidence = efatura.value;
     final status = consolidated.conflicts.isNotEmpty
@@ -479,6 +505,20 @@ final class _FiscalCompanionCard extends ConsumerWidget {
                       ),
                     ),
                   ),
+              ],
+              if ((documents.value ?? const []).isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.description_outlined, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(l10n.guidedDocumentsTitle)),
+                    Text(
+                      l10n.guidedDocumentsCount(documents.value!.length),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
               ],
               const SizedBox(height: 14),
               FilledButton.tonalIcon(

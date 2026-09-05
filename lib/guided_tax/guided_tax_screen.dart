@@ -12,6 +12,8 @@ import '../tax_engine/tax_engine.dart';
 import 'tax_interview_engine.dart';
 import 'tax_interview_models.dart';
 import 'tax_interview_repository.dart';
+import 'document_evidence.dart';
+import 'document_evidence_screen.dart';
 
 final taxInterviewRepositoryProvider = Provider<TaxInterviewRepository>(
   (_) => LocalTaxInterviewRepository(),
@@ -412,6 +414,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
   Widget _result(AppLocalizations l10n) {
     final result = _engine.result(_interview!);
     final simulation = _simulation(_interview!);
+    final complexIncome = _complexIncomeLabels(l10n);
     final region = switch (_interview!.answers['region']?.value) {
       'madeira' => TaxRegion.madeira,
       'azores' => TaxRegion.azores,
@@ -497,6 +500,47 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          if (complexIncome.isNotEmpty) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.complexIncomeTitle,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(l10n.complexIncomeHint),
+                    const SizedBox(height: 10),
+                    for (final label in complexIncome)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(label)),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: Text(l10n.guidedDocumentsTitle),
+              subtitle: Text(l10n.guidedDocumentsEntryHint),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: _openDocumentEvidence,
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             l10n.guidedTaxReviewAnswers,
             style: Theme.of(context).textTheme.titleLarge,
@@ -579,6 +623,78 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     ],
   );
 
+  List<String> _complexIncomeLabels(AppLocalizations l10n) => [
+    if (_interview!.answers['selfEmploymentIncome']?.value == true)
+      l10n.complexIncomeSelfEmployment,
+    if (_interview!.answers['pensionIncome']?.value == true)
+      l10n.complexIncomePension,
+    if (_interview!.answers['foreignIncome']?.value == true)
+      l10n.complexIncomeForeign,
+    if (_interview!.answers['rentalIncome']?.value == true)
+      l10n.complexIncomeRental,
+  ];
+
+  Future<void> _openDocumentEvidence() async {
+    final repository = ref.read(documentEvidenceRepositoryProvider);
+    final before = await repository.load(widget.taxYear);
+    if (!mounted) return;
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DocumentEvidenceScreen(
+          taxYear: widget.taxYear,
+          repository: repository,
+        ),
+      ),
+    );
+    final evidence = await repository.load(widget.taxYear);
+    if (!mounted || _interview == null) return;
+    final answers = reconcileDocumentEvidenceAnswers(
+      current: _interview!.answers,
+      before: before,
+      after: evidence,
+    );
+    final changed = !_sameAnswers(_interview!.answers, answers);
+    ref.invalidate(documentEvidenceForYearProvider(widget.taxYear));
+    if (!changed) return;
+    final updated = _interview!.copyWith(answers: answers);
+    final product = await ref.read(productStateProvider.future);
+    await ref
+        .read(productRepositoryProvider)
+        .save(
+          product.copyWith(
+            profile: profileFromInterview(updated, product.profile),
+          ),
+        );
+    await ref.read(taxInterviewRepositoryProvider).save(updated);
+    final simulation = _simulation(updated);
+    if (updated.completed &&
+        _engine.result(updated).canEstimate &&
+        simulation != null) {
+      await ref.read(repositoryProvider).save(simulation);
+      ref.invalidate(simulationsProvider);
+    }
+    ref.invalidate(productStateProvider);
+    ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
+    if (!mounted) return;
+    setState(() {
+      _interview = updated;
+      _estimateChanged = true;
+    });
+  }
+
+  bool _sameAnswers(Map<String, TaxAnswer> left, Map<String, TaxAnswer> right) {
+    if (left.length != right.length) return false;
+    for (final entry in left.entries) {
+      final other = right[entry.key];
+      if (other?.value != entry.value.value ||
+          other?.provenance != entry.value.provenance) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   Future<void> _resetTaxYear(AppLocalizations l10n) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -602,8 +718,10 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     final reset = resetManualFiscalYear(product, widget.taxYear);
     await ref.read(productRepositoryProvider).save(reset);
     await ref.read(taxInterviewRepositoryProvider).clear(widget.taxYear);
+    await ref.read(documentEvidenceRepositoryProvider).clear(widget.taxYear);
     ref.invalidate(productStateProvider);
     ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
+    ref.invalidate(documentEvidenceForYearProvider(widget.taxYear));
     if (!mounted) return;
     setState(() {
       _interview = _prefill(reset);

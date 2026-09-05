@@ -482,8 +482,11 @@ final class FiscalDataOrchestrator {
   TaxInterviewSectionId _sectionForFact(String id) => switch (id) {
     'civilStatus' || 'dependentCount' => TaxInterviewSectionId.family,
     'employmentIncome' ||
+    'employmentGrossCents' ||
     'selfEmploymentIncome' => TaxInterviewSectionId.workAndIncome,
-    'foreignIncome' || 'rentalIncome' => TaxInterviewSectionId.otherIncome,
+    'pensionIncome' ||
+    'foreignIncome' ||
+    'rentalIncome' => TaxInterviewSectionId.otherIncome,
     'expensesReviewed' ||
     'efaturaInvoiceCount' ||
     'efaturaPendingCount' => TaxInterviewSectionId.expenses,

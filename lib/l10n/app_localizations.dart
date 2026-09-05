@@ -2390,6 +2390,108 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'A estimativa foi atualizada.'**
   String get estimateUpdated;
+
+  /// No description provided for @guidedDocumentsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Evidência documental'**
+  String get guidedDocumentsTitle;
+
+  /// No description provided for @guidedDocumentsIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirma valores de documentos que a estimativa atual já consegue utilizar.'**
+  String get guidedDocumentsIntro;
+
+  /// No description provided for @guidedDocumentsPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'O ficheiro não é enviado nem guardado. Apenas o valor que confirmares fica neste dispositivo.'**
+  String get guidedDocumentsPrivacy;
+
+  /// No description provided for @guidedDocumentsEntryHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rever rendimentos, retenções e contribuições confirmados'**
+  String get guidedDocumentsEntryHint;
+
+  /// No description provided for @guidedDocumentEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Declaração de rendimentos do trabalho'**
+  String get guidedDocumentEmployment;
+
+  /// No description provided for @guidedDocumentWithholding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprovativo de retenções de IRS'**
+  String get guidedDocumentWithholding;
+
+  /// No description provided for @guidedDocumentSocialSecurity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprovativo de contribuições para a Segurança Social'**
+  String get guidedDocumentSocialSecurity;
+
+  /// No description provided for @guidedDocumentsConfirmValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirma o documento e introduz o total anual que pretendes validar.'**
+  String get guidedDocumentsConfirmValue;
+
+  /// No description provided for @guidedDocumentsNotConfirmed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem valor confirmado'**
+  String get guidedDocumentsNotConfirmed;
+
+  /// No description provided for @guidedDocumentsConfirmedAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmado: {amount}'**
+  String guidedDocumentsConfirmedAmount(String amount);
+
+  /// No description provided for @guidedDocumentsCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 confirmado} other{{count} confirmados}}'**
+  String guidedDocumentsCount(int count);
+
+  /// No description provided for @complexIncomeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Situações identificadas para revisão'**
+  String get complexIncomeTitle;
+
+  /// No description provided for @complexIncomeHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estas situações ficam registadas, mas não entram na estimativa enquanto o motor fiscal não as suportar com segurança.'**
+  String get complexIncomeHint;
+
+  /// No description provided for @complexIncomeSelfEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos de trabalho independente'**
+  String get complexIncomeSelfEmployment;
+
+  /// No description provided for @complexIncomePension.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos de pensões'**
+  String get complexIncomePension;
+
+  /// No description provided for @complexIncomeForeign.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos recebidos fora de Portugal'**
+  String get complexIncomeForeign;
+
+  /// No description provided for @complexIncomeRental.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos de imóveis'**
+  String get complexIncomeRental;
 }
 
 class _AppLocalizationsDelegate

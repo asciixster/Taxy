@@ -8,6 +8,7 @@ import '../product/product_repository.dart';
 import '../product/product_models.dart';
 import '../fiscal_data/fiscal_data_orchestrator.dart';
 import '../fiscal_data/fiscal_evidence_repository.dart';
+import '../guided_tax/document_evidence.dart';
 
 final repositoryProvider = Provider<SimulationRepository>(
   (ref) => LocalSimulationRepository(),
@@ -58,4 +59,14 @@ final efaturaEvidenceForYearProvider =
     FutureProvider.family<EfaturaCompanionEvidence?, int>(
       (ref, year) =>
           ref.watch(fiscalEvidenceRepositoryProvider).loadEfatura(year),
+    );
+
+final documentEvidenceRepositoryProvider =
+    Provider<GuidedDocumentEvidenceRepository>(
+      (ref) => LocalGuidedDocumentEvidenceRepository(),
+    );
+
+final documentEvidenceForYearProvider =
+    FutureProvider.family<List<GuidedDocumentEvidence>, int>(
+      (ref, year) => ref.watch(documentEvidenceRepositoryProvider).load(year),
     );

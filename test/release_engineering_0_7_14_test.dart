@@ -19,9 +19,9 @@ void main() {
     final pubspec = File('pubspec.yaml').readAsStringSync();
     final diagnostics = File('lib/core/internal_beta_build_info.dart')
         .readAsStringSync();
-    expect(pubspec, contains('version: 0.8.1+17'));
-    expect(diagnostics, contains("defaultValue: '0.8.1'"));
-    expect(diagnostics, contains("defaultValue: '17'"));
+    expect(pubspec, contains('version: 0.8.2+18'));
+    expect(diagnostics, contains("defaultValue: '0.8.2'"));
+    expect(diagnostics, contains("defaultValue: '18'"));
   });
 
   test('production Android registers no direct FactIntWS bridge', () {
