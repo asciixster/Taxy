@@ -18,6 +18,7 @@ import 'modules/efatura/infrastructure/efatura_screen_protection.dart';
 import 'modules/efatura/infrastructure/efatura_session_token_store.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
+import 'guided_tax/guided_tax_screen.dart';
 import 'screens/how_we_calculate_screen.dart';
 import 'screens/settings_screen.dart';
 import 'state/providers.dart';
@@ -241,6 +242,12 @@ Future<void> _openSnapshots(BuildContext context) => Navigator.push(
   MaterialPageRoute(builder: (_) => const SnapshotsScreen()),
 );
 
+Future<void> _openGuidedTax(BuildContext context, int taxYear) =>
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => GuidedTaxScreen(taxYear: taxYear)),
+    );
+
 final class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -415,7 +422,7 @@ final class _Welcome extends StatelessWidget {
                   ),
                   const SizedBox(height: 26),
                   ModuleSection(
-                    onOpenIrs: () => _openWizard(context, rules),
+                    onOpenIrs: () => _openGuidedTax(context, rules.taxYear),
                     onOpenProfile: () => _openFiscalProfile(context),
                     onOpenIncome: () => _openIncome(context),
                     onOpenExpenses: () => _openExpenses(context),
@@ -424,10 +431,10 @@ final class _Welcome extends StatelessWidget {
                   ),
                   const SizedBox(height: 26),
                   FilledButton.icon(
-                    onPressed: () => _openWizard(context, rules),
+                    onPressed: () => _openGuidedTax(context, rules.taxYear),
                     icon: const Icon(Icons.arrow_forward_rounded),
                     label: Text(
-                      hasDraft ? l10n.resumeSimulation : l10n.startSimulation,
+                      hasDraft ? l10n.guidedTaxResume : l10n.guidedTaxStart,
                     ),
                   ),
                   Center(
@@ -542,6 +549,16 @@ final class _Dashboard extends ConsumerWidget {
                     label: Text(l10n.resumeDraft),
                   ),
                 ],
+                const SizedBox(height: 14),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.route_outlined),
+                    title: Text(l10n.guidedTaxContinue),
+                    subtitle: Text(l10n.guidedTaxIntro),
+                    trailing: const Icon(Icons.arrow_forward_rounded),
+                    onTap: () => _openGuidedTax(context, rules.taxYear),
+                  ),
+                ),
                 const SizedBox(height: 22),
                 _ResultHero(
                   result: result,

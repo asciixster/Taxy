@@ -1808,6 +1808,462 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Deficiência, estudante deslocado, guarda partilhada e outras situações especiais.'**
   String get specialSituationsUnsupported;
+
+  /// No description provided for @guidedTaxTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'A tua análise fiscal guiada'**
+  String get guidedTaxTitle;
+
+  /// No description provided for @guidedTaxIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Responde a uma pergunta simples de cada vez. A Taxy organiza as respostas no teu perfil fiscal.'**
+  String get guidedTaxIntro;
+
+  /// No description provided for @guidedTaxStart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Começar análise guiada'**
+  String get guidedTaxStart;
+
+  /// No description provided for @guidedTaxContinue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar análise fiscal'**
+  String get guidedTaxContinue;
+
+  /// No description provided for @guidedTaxResume.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar de onde ficaste'**
+  String get guidedTaxResume;
+
+  /// No description provided for @guidedTaxYear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ano fiscal {year}'**
+  String guidedTaxYear(int year);
+
+  /// No description provided for @guidedTaxProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{completed} de {total} áreas revistas'**
+  String guidedTaxProgress(int completed, int total);
+
+  /// No description provided for @guidedTaxWhy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Porque perguntamos isto'**
+  String get guidedTaxWhy;
+
+  /// No description provided for @guidedTaxBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar'**
+  String get guidedTaxBack;
+
+  /// No description provided for @guidedTaxNext.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get guidedTaxNext;
+
+  /// No description provided for @guidedTaxReviewAnswers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rever as tuas respostas'**
+  String get guidedTaxReviewAnswers;
+
+  /// No description provided for @guidedTaxEdit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar'**
+  String get guidedTaxEdit;
+
+  /// No description provided for @guidedTaxFinish.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver estimativa'**
+  String get guidedTaxFinish;
+
+  /// No description provided for @guidedTaxEstimate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativa de IRS'**
+  String get guidedTaxEstimate;
+
+  /// No description provided for @guidedTaxProvisionalEstimate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativa provisória de IRS'**
+  String get guidedTaxProvisionalEstimate;
+
+  /// No description provided for @guidedTaxEstimateGood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativa com boa qualidade'**
+  String get guidedTaxEstimateGood;
+
+  /// No description provided for @guidedTaxEstimateIncomplete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda faltam alguns dados'**
+  String get guidedTaxEstimateIncomplete;
+
+  /// No description provided for @guidedTaxHowResult.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como chegámos a este valor'**
+  String get guidedTaxHowResult;
+
+  /// No description provided for @guidedTaxIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos'**
+  String get guidedTaxIncome;
+
+  /// No description provided for @guidedTaxWithholding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retenções'**
+  String get guidedTaxWithholding;
+
+  /// No description provided for @guidedTaxDeductions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deduções consideradas'**
+  String get guidedTaxDeductions;
+
+  /// No description provided for @guidedTaxResult.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resultado estimado'**
+  String get guidedTaxResult;
+
+  /// No description provided for @guidedTaxNextAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que fazer a seguir'**
+  String get guidedTaxNextAction;
+
+  /// No description provided for @guidedTaxUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registámos esta situação, mas o motor fiscal atual ainda não a consegue calcular com segurança.'**
+  String get guidedTaxUnsupported;
+
+  /// No description provided for @guidedTaxSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'O teu progresso fica guardado neste dispositivo.'**
+  String get guidedTaxSaved;
+
+  /// No description provided for @guidedTaxMissingRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Necessário antes de calcular'**
+  String get guidedTaxMissingRequired;
+
+  /// No description provided for @guidedTaxMissingRecommended.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recomendado para melhorar a estimativa'**
+  String get guidedTaxMissingRecommended;
+
+  /// No description provided for @guidedTaxNoAnswer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem resposta'**
+  String get guidedTaxNoAnswer;
+
+  /// No description provided for @guidedTaxYes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sim'**
+  String get guidedTaxYes;
+
+  /// No description provided for @guidedTaxNo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não'**
+  String get guidedTaxNo;
+
+  /// No description provided for @guidedTaxInvalidNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Introduz um valor válido.'**
+  String get guidedTaxInvalidNumber;
+
+  /// No description provided for @guidedTaxHomeReady.
+  ///
+  /// In pt, this message translates to:
+  /// **'A tua estimativa está pronta'**
+  String get guidedTaxHomeReady;
+
+  /// No description provided for @guidedTaxHomeAreas.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam rever {count} áreas'**
+  String guidedTaxHomeAreas(int count);
+
+  /// No description provided for @guidedTaxFoundEfatura.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrámos informação no e-Fatura.'**
+  String get guidedTaxFoundEfatura;
+
+  /// No description provided for @guidedTaxPendingEfatura.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{Existe 1 fatura por validar} other{Existem {count} faturas por validar}}'**
+  String guidedTaxPendingEfatura(int count);
+
+  /// No description provided for @aboutYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre ti'**
+  String get aboutYou;
+
+  /// No description provided for @family.
+  ///
+  /// In pt, this message translates to:
+  /// **'Família'**
+  String get family;
+
+  /// No description provided for @workAndIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trabalho e rendimentos'**
+  String get workAndIncome;
+
+  /// No description provided for @otherIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros rendimentos'**
+  String get otherIncome;
+
+  /// No description provided for @withholdingAndPayments.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retenções e pagamentos'**
+  String get withholdingAndPayments;
+
+  /// No description provided for @review.
+  ///
+  /// In pt, this message translates to:
+  /// **'Revisão'**
+  String get review;
+
+  /// No description provided for @qResidentPortugal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foste residente fiscal em Portugal durante todo o ano de {year}?'**
+  String qResidentPortugal(int year);
+
+  /// No description provided for @whyResidentPortugal.
+  ///
+  /// In pt, this message translates to:
+  /// **'O motor atual da Taxy suporta residentes fiscais em Portugal durante todo o ano.'**
+  String get whyResidentPortugal;
+
+  /// No description provided for @qRegion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Onde tiveste residência fiscal?'**
+  String get qRegion;
+
+  /// No description provided for @whyRegion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continente, Madeira e Açores podem aplicar regras fiscais diferentes.'**
+  String get whyRegion;
+
+  /// No description provided for @qAge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Que idade tinhas no final de {year}?'**
+  String qAge(int year);
+
+  /// No description provided for @whyAge.
+  ///
+  /// In pt, this message translates to:
+  /// **'A idade pode influenciar algumas deduções e benefícios.'**
+  String get whyAge;
+
+  /// No description provided for @qCivilStatus.
+  ///
+  /// In pt, this message translates to:
+  /// **'Qual era a tua situação familiar no final de {year}?'**
+  String qCivilStatus(int year);
+
+  /// No description provided for @whyCivilStatus.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os casais podem comparar tributação conjunta e separada.'**
+  String get whyCivilStatus;
+
+  /// No description provided for @qJointTaxation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Queres ver primeiro a tributação conjunta?'**
+  String get qJointTaxation;
+
+  /// No description provided for @whyJointTaxation.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Taxy pode comparar tributação conjunta e separada sem alterar a tua opção oficial.'**
+  String get whyJointTaxation;
+
+  /// No description provided for @qDependents.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quantos dependentes faziam parte do teu agregado?'**
+  String get qDependents;
+
+  /// No description provided for @whyDependents.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os dependentes podem influenciar as deduções do agregado.'**
+  String get whyDependents;
+
+  /// No description provided for @qEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trabalhaste por conta de outrem em {year}?'**
+  String qEmployment(int year);
+
+  /// No description provided for @whyEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assim só perguntamos pelos rendimentos que se aplicam ao teu caso.'**
+  String get whyEmployment;
+
+  /// No description provided for @qEmploymentGross.
+  ///
+  /// In pt, this message translates to:
+  /// **'Qual foi o teu rendimento bruto total do trabalho?'**
+  String get qEmploymentGross;
+
+  /// No description provided for @whyEmploymentGross.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usa o valor anual antes de IRS e Segurança Social.'**
+  String get whyEmploymentGross;
+
+  /// No description provided for @qSelfEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Também trabalhaste por conta própria?'**
+  String get qSelfEmployment;
+
+  /// No description provided for @whySelfEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'O trabalho independente fica identificado separadamente porque tem tratamento fiscal diferente.'**
+  String get whySelfEmployment;
+
+  /// No description provided for @qPension.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recebeste alguma pensão?'**
+  String get qPension;
+
+  /// No description provided for @whyPension.
+  ///
+  /// In pt, this message translates to:
+  /// **'As pensões têm tratamento fiscal próprio.'**
+  String get whyPension;
+
+  /// No description provided for @qForeignIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recebeste rendimentos fora de Portugal?'**
+  String get qForeignIncome;
+
+  /// No description provided for @whyForeignIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Identificamos rendimentos estrangeiros sem aproximar cálculos ainda não suportados.'**
+  String get whyForeignIncome;
+
+  /// No description provided for @qRentalIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recebeste rendas de imóveis?'**
+  String get qRentalIncome;
+
+  /// No description provided for @whyRentalIncome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os rendimentos prediais têm tratamento separado na declaração portuguesa.'**
+  String get whyRentalIncome;
+
+  /// No description provided for @qExpensesReviewed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Já reveste as tuas despesas e a informação do e-Fatura?'**
+  String get qExpensesReviewed;
+
+  /// No description provided for @whyExpensesReviewed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Despesas completas podem melhorar a estimativa. Totais oficiais indisponíveis nunca são tratados como zero.'**
+  String get whyExpensesReviewed;
+
+  /// No description provided for @qWithholding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quanto te foi retido em IRS durante o ano?'**
+  String get qWithholding;
+
+  /// No description provided for @whyWithholding.
+  ///
+  /// In pt, this message translates to:
+  /// **'As retenções são imposto já pago e permitem estimar o saldo final.'**
+  String get whyWithholding;
+
+  /// No description provided for @qSocialSecurity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quanto pagaste em contribuições obrigatórias para a Segurança Social?'**
+  String get qSocialSecurity;
+
+  /// No description provided for @whySocialSecurity.
+  ///
+  /// In pt, this message translates to:
+  /// **'As contribuições obrigatórias podem reduzir o rendimento tributável do trabalho.'**
+  String get whySocialSecurity;
+
+  /// No description provided for @qReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estas respostas estão prontas para calcular?'**
+  String get qReview;
+
+  /// No description provided for @whyReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Podes voltar atrás e editar qualquer resposta. Respostas dependentes deixam de contar quando já não se aplicam.'**
+  String get whyReview;
+
+  /// No description provided for @guidedTaxNotCalculation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta situação ficou guardada, mas não mostramos estimativa porque o motor atual ainda não a suporta com segurança.'**
+  String get guidedTaxNotCalculation;
+
+  /// No description provided for @guidedTaxDocumentsFoundation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Documentos de apoio'**
+  String get guidedTaxDocumentsFoundation;
+
+  /// No description provided for @guidedTaxDocumentsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'A captura de documentos fica preparada para futuras importações confirmadas; nenhum valor é aplicado sem a tua confirmação.'**
+  String get guidedTaxDocumentsHint;
 }
 
 class _AppLocalizationsDelegate

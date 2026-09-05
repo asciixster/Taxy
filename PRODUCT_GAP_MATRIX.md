@@ -31,3 +31,10 @@ Statuses describe verified implementation evidence, not marketing readiness.
 - PARTIAL: 6
 - OPEN: 3
 - DEFERRED: 3
+# 0.8.0 guided tax experience
+
+The product now includes a reusable, year-scoped guided interview with
+conditional branching, normalized facts, provenance, deterministic dependency
+cleanup, local resume and fail-closed IRS integration. See
+`TAXFIX_TAXY_PRODUCT_GAP.md` for the public-product comparison and
+`GUIDED_TAX_INTERVIEW_ARCHITECTURE.md` for implementation boundaries.
