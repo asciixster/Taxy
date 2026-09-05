@@ -1,15 +1,23 @@
 package pt.taxy.app
 
 import android.view.WindowManager
+import android.os.Bundle
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity : FlutterActivity() {
     private var screenProtectionChannel: MethodChannel? = null
+    private lateinit var documentCaptureBridge: SecureDocumentCaptureBridge
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        documentCaptureBridge = SecureDocumentCaptureBridge(this)
+        super.onCreate(savedInstanceState)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        documentCaptureBridge.attach(flutterEngine.dartExecutor.binaryMessenger)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pt.taxy.app/storage")
             .setMethodCallHandler { call, result ->
                 if (call.method == "getAppDataPath") {
@@ -39,6 +47,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        documentCaptureBridge.detach()
         screenProtectionChannel?.setMethodCallHandler(null)
         screenProtectionChannel = null
         super.onDestroy()

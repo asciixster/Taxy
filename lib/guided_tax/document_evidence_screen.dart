@@ -1,41 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/taxy_formatters.dart';
 import 'document_evidence.dart';
+import 'document_extraction_review_screen.dart';
+import 'secure_document_capture.dart';
 
 final class DocumentEvidenceScreen extends StatefulWidget {
   const DocumentEvidenceScreen({
     super.key,
     required this.taxYear,
     required this.repository,
+    this.captureGateway,
+    this.captureRepository,
+    this.extractor,
   });
 
   final int taxYear;
   final GuidedDocumentEvidenceRepository repository;
+  final TaxDocumentCaptureGateway? captureGateway;
+  final CapturedTaxDocumentRepository? captureRepository;
+  final TaxDocumentExtractor? extractor;
 
   @override
   State<DocumentEvidenceScreen> createState() => _DocumentEvidenceScreenState();
 }
 
 final class _DocumentEvidenceScreenState extends State<DocumentEvidenceScreen> {
+  static const _screenChannel = MethodChannel('pt.taxy.app/efatura');
   List<GuidedDocumentEvidence> _items = const [];
+  List<CapturedTaxDocument> _pending = const [];
   bool _loading = true;
   bool _saving = false;
+  bool _processing = false;
   String? _error;
+  late final TaxDocumentCaptureGateway _captureGateway;
+  late final CapturedTaxDocumentRepository _captureRepository;
+  late final TaxDocumentExtractor _extractor;
 
   @override
   void initState() {
     super.initState();
+    _captureGateway =
+        widget.captureGateway ?? AndroidTaxDocumentCaptureGateway();
+    _captureRepository =
+        widget.captureRepository ?? LocalCapturedTaxDocumentRepository();
+    _extractor =
+        widget.extractor ?? const PortugueseEmploymentDocumentExtractor();
+    _screenChannel
+        .invokeMethod<void>('setScreenSecure', true)
+        .catchError((_) {});
+    _captureGateway.cleanupExpired().catchError((_) => 0);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _screenChannel
+        .invokeMethod<void>('setScreenSecure', false)
+        .catchError((_) {});
+    super.dispose();
   }
 
   Future<void> _load() async {
     try {
       final values = await widget.repository.load(widget.taxYear);
+      final pending = (await _captureRepository.load())
+          .where(
+            (document) =>
+                document.taxYear == widget.taxYear &&
+                document.state == CapturedDocumentState.reviewRequired &&
+                document.extraction != null,
+          )
+          .toList(growable: false);
       if (!mounted) return;
       setState(() {
         _items = values;
+        _pending = pending;
         _loading = false;
         _error = null;
       });
@@ -58,13 +100,25 @@ final class _DocumentEvidenceScreenState extends State<DocumentEvidenceScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               children: [
+                _CaptureActions(
+                  processing: _processing,
+                  onTakePhoto: () => _capture(true),
+                  onChooseFile: () => _capture(false),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.documentCaptureLimits,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 18),
                 Text(
                   l10n.guidedDocumentsIntro,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  l10n.guidedDocumentsPrivacy,
+                  l10n.documentCapturePrivacyLocal,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -75,11 +129,50 @@ final class _DocumentEvidenceScreenState extends State<DocumentEvidenceScreen> {
                     color: Theme.of(context).colorScheme.errorContainer,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text(l10n.savedDataLoadError),
+                      child: Text(_captureError(l10n, _error!)),
+                    ),
+                  ),
+                ],
+                if (_processing) ...[
+                  const SizedBox(height: 16),
+                  Semantics(
+                    liveRegion: true,
+                    label: l10n.documentProcessing,
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            const SizedBox.square(
+                              dimension: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(child: Text(l10n.documentProcessing)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                for (final document in _pending) ...[
+                  const SizedBox(height: 10),
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.fact_check_outlined),
+                      title: Text(l10n.documentFoundValues),
+                      subtitle: Text(l10n.taxReviewNeedsReview),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _processing ? null : () => _review(document),
                     ),
                   ),
                 ],
                 const SizedBox(height: 18),
+                Text(
+                  l10n.documentManualEntry,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
                 for (final type in GuidedDocumentType.values) ...[
                   _DocumentTile(
                     type: type,
@@ -95,6 +188,63 @@ final class _DocumentEvidenceScreenState extends State<DocumentEvidenceScreen> {
               ],
             ),
     );
+  }
+
+  Future<void> _capture(bool camera) async {
+    setState(() {
+      _processing = true;
+      _error = null;
+    });
+    try {
+      final result = camera
+          ? await _captureGateway.takePhoto(widget.taxYear)
+          : await _captureGateway.chooseFile(widget.taxYear);
+      if (result == null || !mounted) return;
+      final extraction = _extractor.extract(result.recognizedText);
+      // OCR text is deliberately discarded here. Only normalized candidates
+      // and stable warning categories can be persisted.
+      final document = result.document.copyWith(
+        state: CapturedDocumentState.reviewRequired,
+        extraction: extraction,
+      );
+      await _captureRepository.save(document);
+      if (!mounted) return;
+      await _review(document);
+    } on MissingPluginException {
+      if (mounted) setState(() => _error = 'MissingPluginException');
+    } on PlatformException catch (error) {
+      if (mounted) setState(() => _error = error.code);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'processing_failed');
+    } finally {
+      if (mounted) {
+        setState(() => _processing = false);
+        await _load();
+      }
+    }
+  }
+
+  Future<void> _review(CapturedTaxDocument document) async {
+    final confirmed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DocumentExtractionReviewScreen(
+          document: document,
+          captureGateway: _captureGateway,
+          captureRepository: _captureRepository,
+          evidenceRepository: widget.repository,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (confirmed == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).documentSavedAndDeleted),
+        ),
+      );
+    }
+    await _load();
   }
 
   GuidedDocumentEvidence? _forType(GuidedDocumentType type) {
@@ -145,6 +295,52 @@ final class _DocumentEvidenceScreenState extends State<DocumentEvidenceScreen> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+final class _CaptureActions extends StatelessWidget {
+  const _CaptureActions({
+    required this.processing,
+    required this.onTakePhoto,
+    required this.onChooseFile,
+  });
+
+  final bool processing;
+  final VoidCallback onTakePhoto;
+  final VoidCallback onChooseFile;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final vertical = constraints.maxWidth < 380;
+        final photo = FilledButton.icon(
+          key: const Key('document-capture-photo'),
+          onPressed: processing ? null : onTakePhoto,
+          icon: const Icon(Icons.photo_camera_outlined),
+          label: Text(l10n.documentTakePhoto),
+        );
+        final file = OutlinedButton.icon(
+          key: const Key('document-capture-file'),
+          onPressed: processing ? null : onChooseFile,
+          icon: const Icon(Icons.upload_file_outlined),
+          label: Text(l10n.documentChooseFile),
+        );
+        return vertical
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [photo, const SizedBox(height: 8), file],
+              )
+            : Row(
+                children: [
+                  Expanded(child: photo),
+                  const SizedBox(width: 10),
+                  Expanded(child: file),
+                ],
+              );
+      },
+    );
   }
 }
 
@@ -270,4 +466,14 @@ String _label(AppLocalizations l10n, GuidedDocumentType type) => switch (type) {
   GuidedDocumentType.employmentIncomeStatement => l10n.guidedDocumentEmployment,
   GuidedDocumentType.withholdingProof => l10n.guidedDocumentWithholding,
   GuidedDocumentType.socialSecurityProof => l10n.guidedDocumentSocialSecurity,
+};
+
+String _captureError(AppLocalizations l10n, String code) => switch (code) {
+  'FILE_TOO_LARGE' => l10n.documentTooLarge,
+  'PAGE_LIMIT' => l10n.documentTooManyPages,
+  'UNSUPPORTED_FILE' ||
+  'MIME_MISMATCH' ||
+  'INVALID_IMAGE' => l10n.documentUnsupportedFile,
+  'MissingPluginException' => l10n.documentCaptureUnavailable,
+  _ => l10n.documentReadFailure,
 };

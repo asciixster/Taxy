@@ -2406,7 +2406,7 @@ abstract class AppLocalizations {
   /// No description provided for @guidedDocumentsPrivacy.
   ///
   /// In pt, this message translates to:
-  /// **'O ficheiro não é enviado nem guardado. Apenas o valor que confirmares fica neste dispositivo.'**
+  /// **'Os ficheiros capturados ficam temporariamente cifrados neste dispositivo e são eliminados após confirmação ou cancelamento. Só permanecem valores confirmados.'**
   String get guidedDocumentsPrivacy;
 
   /// No description provided for @guidedDocumentsEntryHint.
@@ -2684,6 +2684,240 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Rever estimativa'**
   String get taxReviewActionEstimate;
+
+  /// No description provided for @documentTakePhoto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fotografar documento'**
+  String get documentTakePhoto;
+
+  /// No description provided for @documentChooseFile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher ficheiro'**
+  String get documentChooseFile;
+
+  /// No description provided for @documentManualEntry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Introduzir valores manualmente'**
+  String get documentManualEntry;
+
+  /// No description provided for @documentProcessing.
+  ///
+  /// In pt, this message translates to:
+  /// **'A ler o documento…'**
+  String get documentProcessing;
+
+  /// No description provided for @documentCapturePrivacyLocal.
+  ///
+  /// In pt, this message translates to:
+  /// **'O documento é processado neste dispositivo. Guardamos apenas os valores que confirmares.'**
+  String get documentCapturePrivacyLocal;
+
+  /// No description provided for @documentCaptureLimits.
+  ///
+  /// In pt, this message translates to:
+  /// **'PDF, JPG ou PNG · até 10 MB e 10 páginas'**
+  String get documentCaptureLimits;
+
+  /// No description provided for @documentReadFailure.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não conseguimos ler este documento com segurança.'**
+  String get documentReadFailure;
+
+  /// No description provided for @documentTryAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get documentTryAgain;
+
+  /// No description provided for @documentDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Eliminar documento'**
+  String get documentDelete;
+
+  /// No description provided for @documentDeleteTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Eliminar este documento?'**
+  String get documentDeleteTitle;
+
+  /// No description provided for @documentDeleteBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'O documento temporário e os valores não confirmados serão eliminados.'**
+  String get documentDeleteBody;
+
+  /// No description provided for @documentFoundValues.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrámos estes valores'**
+  String get documentFoundValues;
+
+  /// No description provided for @documentReviewIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compara com o documento e seleciona apenas os valores que queres confirmar.'**
+  String get documentReviewIntro;
+
+  /// No description provided for @documentConfirmValues.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar valores'**
+  String get documentConfirmValues;
+
+  /// No description provided for @documentConfirmExplanation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só os valores que confirmares serão usados pela Taxy.'**
+  String get documentConfirmExplanation;
+
+  /// No description provided for @documentPartialHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Podes confirmar alguns valores e deixar os restantes de fora.'**
+  String get documentPartialHint;
+
+  /// No description provided for @documentPreview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pré-visualização do documento'**
+  String get documentPreview;
+
+  /// No description provided for @documentPreviewUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'A pré-visualização não está disponível.'**
+  String get documentPreviewUnavailable;
+
+  /// No description provided for @documentType.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipo de documento'**
+  String get documentType;
+
+  /// No description provided for @documentTypeEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Declaração de rendimentos do trabalho'**
+  String get documentTypeEmployment;
+
+  /// No description provided for @documentTypeWithholding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprovativo de retenção de IRS'**
+  String get documentTypeWithholding;
+
+  /// No description provided for @documentTypeSocialSecurity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprovativo de contribuições para a Segurança Social'**
+  String get documentTypeSocialSecurity;
+
+  /// No description provided for @documentTypeCombined.
+  ///
+  /// In pt, this message translates to:
+  /// **'Declaração anual de rendimentos'**
+  String get documentTypeCombined;
+
+  /// No description provided for @documentTypeUnknown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Documento não reconhecido'**
+  String get documentTypeUnknown;
+
+  /// No description provided for @documentTypeUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este tipo de documento ainda não entra na estimativa da Taxy.'**
+  String get documentTypeUnsupported;
+
+  /// No description provided for @documentConfidenceHigh.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confiança de extração elevada'**
+  String get documentConfidenceHigh;
+
+  /// No description provided for @documentConfidenceMedium.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirma este valor extraído'**
+  String get documentConfidenceMedium;
+
+  /// No description provided for @documentConfidenceLow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confiança baixa — revisão obrigatória'**
+  String get documentConfidenceLow;
+
+  /// No description provided for @documentValueEmployment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos do trabalho'**
+  String get documentValueEmployment;
+
+  /// No description provided for @documentValueWithholding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retenção de IRS'**
+  String get documentValueWithholding;
+
+  /// No description provided for @documentValueSocialSecurity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contribuições para a Segurança Social'**
+  String get documentValueSocialSecurity;
+
+  /// No description provided for @documentValueTaxYear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ano fiscal'**
+  String get documentValueTaxYear;
+
+  /// No description provided for @documentYearMismatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este documento parece ser de {year}. Não pode ser aplicado ao ano fiscal ativo.'**
+  String documentYearMismatch(int year);
+
+  /// No description provided for @documentCaptureUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'A captura de documentos está disponível em Android. Podes continuar a introduzir valores manualmente.'**
+  String get documentCaptureUnavailable;
+
+  /// No description provided for @documentTooLarge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este ficheiro ultrapassa o limite de 10 MB.'**
+  String get documentTooLarge;
+
+  /// No description provided for @documentTooManyPages.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este PDF tem mais de 10 páginas.'**
+  String get documentTooManyPages;
+
+  /// No description provided for @documentUnsupportedFile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolhe um ficheiro PDF, JPG ou PNG válido.'**
+  String get documentUnsupportedFile;
+
+  /// No description provided for @documentSavedAndDeleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valores confirmados. O documento temporário foi eliminado.'**
+  String get documentSavedAndDeleted;
+
+  /// No description provided for @documentOriginalNotStored.
+  ///
+  /// In pt, this message translates to:
+  /// **'O documento original não é guardado depois da confirmação.'**
+  String get documentOriginalNotStored;
 }
 
 class _AppLocalizationsDelegate

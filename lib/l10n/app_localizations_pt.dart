@@ -1334,7 +1334,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get guidedDocumentsPrivacy =>
-      'O ficheiro não é enviado nem guardado. Apenas o valor que confirmares fica neste dispositivo.';
+      'Os ficheiros capturados ficam temporariamente cifrados neste dispositivo e são eliminados após confirmação ou cancelamento. Só permanecem valores confirmados.';
 
   @override
   String get guidedDocumentsEntryHint =>
@@ -1497,6 +1497,140 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get taxReviewActionEstimate => 'Rever estimativa';
+
+  @override
+  String get documentTakePhoto => 'Fotografar documento';
+
+  @override
+  String get documentChooseFile => 'Escolher ficheiro';
+
+  @override
+  String get documentManualEntry => 'Introduzir valores manualmente';
+
+  @override
+  String get documentProcessing => 'A ler o documento…';
+
+  @override
+  String get documentCapturePrivacyLocal =>
+      'O documento é processado neste dispositivo. Guardamos apenas os valores que confirmares.';
+
+  @override
+  String get documentCaptureLimits =>
+      'PDF, JPG ou PNG · até 10 MB e 10 páginas';
+
+  @override
+  String get documentReadFailure =>
+      'Não conseguimos ler este documento com segurança.';
+
+  @override
+  String get documentTryAgain => 'Tentar novamente';
+
+  @override
+  String get documentDelete => 'Eliminar documento';
+
+  @override
+  String get documentDeleteTitle => 'Eliminar este documento?';
+
+  @override
+  String get documentDeleteBody =>
+      'O documento temporário e os valores não confirmados serão eliminados.';
+
+  @override
+  String get documentFoundValues => 'Encontrámos estes valores';
+
+  @override
+  String get documentReviewIntro =>
+      'Compara com o documento e seleciona apenas os valores que queres confirmar.';
+
+  @override
+  String get documentConfirmValues => 'Confirmar valores';
+
+  @override
+  String get documentConfirmExplanation =>
+      'Só os valores que confirmares serão usados pela Taxy.';
+
+  @override
+  String get documentPartialHint =>
+      'Podes confirmar alguns valores e deixar os restantes de fora.';
+
+  @override
+  String get documentPreview => 'Pré-visualização do documento';
+
+  @override
+  String get documentPreviewUnavailable =>
+      'A pré-visualização não está disponível.';
+
+  @override
+  String get documentType => 'Tipo de documento';
+
+  @override
+  String get documentTypeEmployment => 'Declaração de rendimentos do trabalho';
+
+  @override
+  String get documentTypeWithholding => 'Comprovativo de retenção de IRS';
+
+  @override
+  String get documentTypeSocialSecurity =>
+      'Comprovativo de contribuições para a Segurança Social';
+
+  @override
+  String get documentTypeCombined => 'Declaração anual de rendimentos';
+
+  @override
+  String get documentTypeUnknown => 'Documento não reconhecido';
+
+  @override
+  String get documentTypeUnsupported =>
+      'Este tipo de documento ainda não entra na estimativa da Taxy.';
+
+  @override
+  String get documentConfidenceHigh => 'Confiança de extração elevada';
+
+  @override
+  String get documentConfidenceMedium => 'Confirma este valor extraído';
+
+  @override
+  String get documentConfidenceLow => 'Confiança baixa — revisão obrigatória';
+
+  @override
+  String get documentValueEmployment => 'Rendimentos do trabalho';
+
+  @override
+  String get documentValueWithholding => 'Retenção de IRS';
+
+  @override
+  String get documentValueSocialSecurity =>
+      'Contribuições para a Segurança Social';
+
+  @override
+  String get documentValueTaxYear => 'Ano fiscal';
+
+  @override
+  String documentYearMismatch(int year) {
+    return 'Este documento parece ser de $year. Não pode ser aplicado ao ano fiscal ativo.';
+  }
+
+  @override
+  String get documentCaptureUnavailable =>
+      'A captura de documentos está disponível em Android. Podes continuar a introduzir valores manualmente.';
+
+  @override
+  String get documentTooLarge => 'Este ficheiro ultrapassa o limite de 10 MB.';
+
+  @override
+  String get documentTooManyPages => 'Este PDF tem mais de 10 páginas.';
+
+  @override
+  String get documentUnsupportedFile =>
+      'Escolhe um ficheiro PDF, JPG ou PNG válido.';
+
+  @override
+  String get documentSavedAndDeleted =>
+      'Valores confirmados. O documento temporário foi eliminado.';
+
+  @override
+  String get documentOriginalNotStored =>
+      'O documento original não é guardado depois da confirmação.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -2828,7 +2962,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get guidedDocumentsPrivacy =>
-      'O ficheiro não é enviado nem guardado. Apenas o valor que confirmares fica neste dispositivo.';
+      'Os ficheiros capturados ficam temporariamente cifrados neste dispositivo e são eliminados após confirmação ou cancelamento. Só permanecem valores confirmados.';
 
   @override
   String get guidedDocumentsEntryHint =>
@@ -2991,4 +3125,138 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get taxReviewActionEstimate => 'Rever estimativa';
+
+  @override
+  String get documentTakePhoto => 'Fotografar documento';
+
+  @override
+  String get documentChooseFile => 'Escolher ficheiro';
+
+  @override
+  String get documentManualEntry => 'Introduzir valores manualmente';
+
+  @override
+  String get documentProcessing => 'A ler o documento…';
+
+  @override
+  String get documentCapturePrivacyLocal =>
+      'O documento é processado neste dispositivo. Guardamos apenas os valores que confirmares.';
+
+  @override
+  String get documentCaptureLimits =>
+      'PDF, JPG ou PNG · até 10 MB e 10 páginas';
+
+  @override
+  String get documentReadFailure =>
+      'Não conseguimos ler este documento com segurança.';
+
+  @override
+  String get documentTryAgain => 'Tentar novamente';
+
+  @override
+  String get documentDelete => 'Eliminar documento';
+
+  @override
+  String get documentDeleteTitle => 'Eliminar este documento?';
+
+  @override
+  String get documentDeleteBody =>
+      'O documento temporário e os valores não confirmados serão eliminados.';
+
+  @override
+  String get documentFoundValues => 'Encontrámos estes valores';
+
+  @override
+  String get documentReviewIntro =>
+      'Compara com o documento e seleciona apenas os valores que queres confirmar.';
+
+  @override
+  String get documentConfirmValues => 'Confirmar valores';
+
+  @override
+  String get documentConfirmExplanation =>
+      'Só os valores que confirmares serão usados pela Taxy.';
+
+  @override
+  String get documentPartialHint =>
+      'Podes confirmar alguns valores e deixar os restantes de fora.';
+
+  @override
+  String get documentPreview => 'Pré-visualização do documento';
+
+  @override
+  String get documentPreviewUnavailable =>
+      'A pré-visualização não está disponível.';
+
+  @override
+  String get documentType => 'Tipo de documento';
+
+  @override
+  String get documentTypeEmployment => 'Declaração de rendimentos do trabalho';
+
+  @override
+  String get documentTypeWithholding => 'Comprovativo de retenção de IRS';
+
+  @override
+  String get documentTypeSocialSecurity =>
+      'Comprovativo de contribuições para a Segurança Social';
+
+  @override
+  String get documentTypeCombined => 'Declaração anual de rendimentos';
+
+  @override
+  String get documentTypeUnknown => 'Documento não reconhecido';
+
+  @override
+  String get documentTypeUnsupported =>
+      'Este tipo de documento ainda não entra na estimativa da Taxy.';
+
+  @override
+  String get documentConfidenceHigh => 'Confiança de extração elevada';
+
+  @override
+  String get documentConfidenceMedium => 'Confirma este valor extraído';
+
+  @override
+  String get documentConfidenceLow => 'Confiança baixa — revisão obrigatória';
+
+  @override
+  String get documentValueEmployment => 'Rendimentos do trabalho';
+
+  @override
+  String get documentValueWithholding => 'Retenção de IRS';
+
+  @override
+  String get documentValueSocialSecurity =>
+      'Contribuições para a Segurança Social';
+
+  @override
+  String get documentValueTaxYear => 'Ano fiscal';
+
+  @override
+  String documentYearMismatch(int year) {
+    return 'Este documento parece ser de $year. Não pode ser aplicado ao ano fiscal ativo.';
+  }
+
+  @override
+  String get documentCaptureUnavailable =>
+      'A captura de documentos está disponível em Android. Podes continuar a introduzir valores manualmente.';
+
+  @override
+  String get documentTooLarge => 'Este ficheiro ultrapassa o limite de 10 MB.';
+
+  @override
+  String get documentTooManyPages => 'Este PDF tem mais de 10 páginas.';
+
+  @override
+  String get documentUnsupportedFile =>
+      'Escolhe um ficheiro PDF, JPG ou PNG válido.';
+
+  @override
+  String get documentSavedAndDeleted =>
+      'Valores confirmados. O documento temporário foi eliminado.';
+
+  @override
+  String get documentOriginalNotStored =>
+      'O documento original não é guardado depois da confirmação.';
 }

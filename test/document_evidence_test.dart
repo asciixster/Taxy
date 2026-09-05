@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taxy_pt/guided_tax/document_evidence.dart';
 import 'package:taxy_pt/guided_tax/document_evidence_screen.dart';
+import 'package:taxy_pt/guided_tax/secure_document_capture.dart';
 import 'package:taxy_pt/guided_tax/tax_interview_models.dart';
 import 'package:taxy_pt/l10n/app_localizations.dart';
 
@@ -129,14 +130,15 @@ void main() {
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: DocumentEvidenceScreen(taxYear: 2026, repository: repository),
+        home: DocumentEvidenceScreen(
+          taxYear: 2026,
+          repository: repository,
+          captureRepository: MemoryCapturedTaxDocumentRepository(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
-    expect(
-      find.textContaining('The document file is not uploaded or stored'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('processed on this device'), findsOneWidget);
     await tester.tap(find.text('Employment income statement'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '1234.56');
@@ -165,6 +167,7 @@ void main() {
         home: DocumentEvidenceScreen(
           taxYear: 2026,
           repository: MemoryGuidedDocumentEvidenceRepository(),
+          captureRepository: MemoryCapturedTaxDocumentRepository(),
         ),
       ),
     );

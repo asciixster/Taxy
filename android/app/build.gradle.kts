@@ -82,6 +82,10 @@ flutter {
 }
 
 dependencies {
+    // Bundled Latin model: document text never leaves the device and OCR also
+    // works offline. Version follows Google's current ML Kit documentation.
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("androidx.core:core-ktx:1.15.0")
     testImplementation(kotlin("test"))
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

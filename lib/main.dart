@@ -22,6 +22,7 @@ import 'question_engine/question_engine.dart';
 import 'guided_tax/guided_tax_screen.dart';
 import 'guided_tax/guided_tax_review_screen.dart';
 import 'guided_tax/document_evidence.dart';
+import 'guided_tax/secure_document_capture.dart';
 import 'guided_tax/tax_interview_models.dart';
 import 'fiscal_data/fiscal_data_orchestrator.dart';
 import 'screens/how_we_calculate_screen.dart';
@@ -106,6 +107,17 @@ final class _TaxyAppState extends State<TaxyApp> {
   late final ThemeController _themeController =
       widget.themeController ?? ThemeController(MemoryThemePreferenceStore());
   late final bool _ownsTheme = widget.themeController == null;
+
+  @override
+  void initState() {
+    super.initState();
+    // Best-effort privacy cleanup. Failures remain silent and sanitized; no
+    // document metadata is emitted to logs or analytics.
+    AndroidTaxDocumentCaptureGateway().cleanupExpired().catchError((_) => 0);
+    LocalCapturedTaxDocumentRepository()
+        .purgeExpired(DateTime.now())
+        .catchError((_) => 0);
+  }
 
   @override
   void dispose() {

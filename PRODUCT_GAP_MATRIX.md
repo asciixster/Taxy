@@ -1,4 +1,15 @@
-# Product gap matrix — 0.8.3
+# Product gap matrix — 0.8.4
+
+## Secure document capture and reviewed extraction
+
+| Capability | Status | Notes |
+|---|---|---|
+| Android photo/file capture | BETA | Camera intent and SAF; no broad permission |
+| Local extraction | BETA | Bundled Latin OCR; supported employment facts only |
+| Reviewed confirmation | IMPLEMENTED | Partial correction/confirmation before evidence |
+| Encrypted temporary lifecycle | IMPLEMENTED | Keystore AES-GCM, secure preview, TTL and delete-after-confirmation |
+| Extraction/TaxFact separation | IMPLEMENTED | Candidate has zero engine impact |
+| Universal fiscal OCR | OUT OF SCOPE | Unsupported documents remain excluded |
 
 ## Guided review and explainability
 
@@ -26,7 +37,7 @@
 | e-Fatura next action | IMPLEMENTED | Pending count only; strictly read-only |
 | Official benefit/sector totals | UNAVAILABLE | Never represented as zero |
 | Complex-income calculation | PLANNED | Identified and fail-closed |
-| Broad document ingestion/OCR | PLANNED | Confirmation-first foundation only |
+| Broad document ingestion/OCR | BETA | Narrow local extraction for three supported facts; universal OCR remains out of scope |
 
 Statuses describe verified implementation evidence, not marketing readiness.
 
@@ -48,7 +59,7 @@ Statuses describe verified implementation evidence, not marketing readiness.
 | PT/EN app-wide | INCOMPLETE | OPEN | New 0.7.13 surfaces are localized; legacy IRS strings remain hardcoded. |
 | Accessibility/responsiveness/dark mode | BETA | PARTIAL | New surfaces covered at 320×640, dark and 200% text; real TalkBack/global pass outstanding. |
 | Android real-device journey | INCOMPLETE | OPEN | No ADB device was attached during this pass. |
-| Documents | PLANNED | DEFERRED | No sensitive upload/storage introduced. |
+| Documents | BETA | PARTIAL | Secure local capture and reviewed extraction for supported employment evidence. |
 | Obligations/deadlines | PLANNED | DEFERRED | No unsourced deadlines introduced. |
 | Production signing | BETA | PARTIAL | Fail-closed; signed distribution belongs to release engineering. |
 | External release candidate | INCOMPLETE | OPEN | Requires global localization/accessibility/device smoke and Cloudflare rotation evidence. |

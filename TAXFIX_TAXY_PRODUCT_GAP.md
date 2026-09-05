@@ -92,3 +92,7 @@ become year-scoped imported candidates only after explicit confirmation. Existin
 user answers are never overwritten; disagreement becomes a review conflict. This
 closes the confirmation boundary, but not the remaining secure file capture and
 reviewed OCR gap.
+
+## Reassessment after 0.8.4
+
+Public Taxfix material places document capture inside a low-effort guided journey. Taxy now reaches that product objective for a deliberately narrower Portuguese scope: photo/file selection leads to local extraction, editable review and confirmed evidence. Taxy's boundary is explicit: extraction is not a TaxFact, unsupported documents are excluded, and raw material is deleted after confirmation. No Taxfix code, assets, wording or pixel-level design were used.

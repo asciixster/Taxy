@@ -16,6 +16,7 @@ import 'document_evidence_screen.dart';
 import 'guided_tax_providers.dart';
 import 'guided_tax_review_screen.dart';
 import 'guided_tax_simulation.dart';
+import 'secure_document_capture.dart';
 
 export 'guided_tax_providers.dart';
 
@@ -734,6 +735,10 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     await ref.read(productRepositoryProvider).save(reset);
     await ref.read(taxInterviewRepositoryProvider).clear(widget.taxYear);
     await ref.read(documentEvidenceRepositoryProvider).clear(widget.taxYear);
+    await AndroidTaxDocumentCaptureGateway().clearTemporary().catchError(
+      (_) {},
+    );
+    await LocalCapturedTaxDocumentRepository().clearUnconfirmed();
     ref.invalidate(productStateProvider);
     ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
     ref.invalidate(documentEvidenceForYearProvider(widget.taxYear));
