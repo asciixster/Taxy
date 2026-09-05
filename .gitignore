@@ -64,6 +64,8 @@ tools/at_connector/output/
 
 # Local GitHub CLI credentials used by isolated Codex sessions
 .gh-auth-*/
+.audit-artifacts-*/
+.audit-extracted-*/
 
 # Widget Preview related
 .widget_preview/

@@ -23,4 +23,12 @@ size for offline availability and prevents raw fiscal documents from being sent
 to a backend. The Google operational-metrics disclosure remains a release-store
 privacy declaration requirement, not document-content egress.
 
+The measured universal debug APK grew from 163,958,140 bytes (156.36 MiB) to
+196,987,901 bytes (187.86 MiB): +33,029,761 bytes (+31.50 MiB, +20.15%). The
+largest unpacked additions are ML Kit OCR native pipelines for x86_64, arm64-v8a
+and armeabi-v7a, followed by the OCR Java/Dex code and bundled Latin models.
+This is material but expected for a universal debug APK; release ABI splitting
+should be assessed separately before store publication. The dependency is not
+replaced in this quality-closure task.
+
 `DEPENDENCY_AUDIT_PASS = YES`
