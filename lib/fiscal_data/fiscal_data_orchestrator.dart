@@ -258,9 +258,13 @@ final class FiscalDataOrchestrator {
             (answer) => FiscalDataPoint(
               id: answer.questionId,
               value: answer.value,
-              source: answer.provenance == TaxFactProvenance.userEntered
-                  ? FiscalDataSource.interview
-                  : FiscalDataSource.imported,
+              source: switch (answer.provenance) {
+                TaxFactProvenance.userEntered => FiscalDataSource.interview,
+                TaxFactProvenance.official => FiscalDataSource.official,
+                TaxFactProvenance.imported => FiscalDataSource.imported,
+                TaxFactProvenance.calculated => FiscalDataSource.calculated,
+                TaxFactProvenance.inferred => FiscalDataSource.inferred,
+              },
               confidence: FiscalDataConfidence.confirmed,
               taxYear: year,
               isUserOverride:
@@ -306,6 +310,14 @@ final class FiscalDataOrchestrator {
       }
       if (current.value == point.value) {
         if (_priority(point) > _priority(current)) facts[point.id] = point;
+        continue;
+      }
+      final resolution = interview?.conflictResolutions[point.id];
+      if (resolution != null &&
+          resolution.matches(current.value, point.value)) {
+        facts[point.id] = resolution.selectedValue == point.value
+            ? point
+            : current;
         continue;
       }
       conflicts.add(
@@ -361,17 +373,84 @@ final class FiscalDataOrchestrator {
     required FiscalDataConflict conflict,
     required Object? selectedValue,
   }) {
+    final selected = selectedValue == conflict.candidate.value
+        ? conflict.candidate
+        : conflict.current;
+    final competing = identical(selected, conflict.current)
+        ? conflict.candidate
+        : conflict.current;
+    final provenance = switch (selected.source) {
+      FiscalDataSource.official => TaxFactProvenance.official,
+      FiscalDataSource.imported => TaxFactProvenance.imported,
+      FiscalDataSource.calculated => TaxFactProvenance.calculated,
+      FiscalDataSource.inferred => TaxFactProvenance.inferred,
+      FiscalDataSource.userEntered ||
+      FiscalDataSource.interview => TaxFactProvenance.userEntered,
+    };
     final updated = interview.copyWith(
       answers: {
         ...interview.answers,
         conflict.id: TaxAnswer(
           questionId: conflict.id,
-          value: selectedValue,
-          provenance: TaxFactProvenance.userEntered,
+          value: selected.value,
+          provenance: provenance,
+        ),
+      },
+      conflictResolutions: {
+        ...interview.conflictResolutions,
+        conflict.id: TaxConflictResolution(
+          factId: conflict.id,
+          selectedValue: selected.value,
+          competingValue: competing.value,
+          selectedProvenance: provenance,
+          resolvedAt: DateTime.now().toUtc(),
         ),
       },
     );
     return consolidate(product: product, interview: updated);
+  }
+
+  TaxInterview applyConflictResolution({
+    required TaxInterview interview,
+    required FiscalDataConflict conflict,
+    required FiscalDataPoint selected,
+    DateTime? resolvedAt,
+  }) {
+    if (selected.value != conflict.current.value &&
+        selected.value != conflict.candidate.value) {
+      throw ArgumentError.value(selected.value, 'selected.value');
+    }
+    final competing = selected.value == conflict.current.value
+        ? conflict.candidate
+        : conflict.current;
+    final provenance = switch (selected.source) {
+      FiscalDataSource.official => TaxFactProvenance.official,
+      FiscalDataSource.imported => TaxFactProvenance.imported,
+      FiscalDataSource.calculated => TaxFactProvenance.calculated,
+      FiscalDataSource.inferred => TaxFactProvenance.inferred,
+      FiscalDataSource.userEntered ||
+      FiscalDataSource.interview => TaxFactProvenance.userEntered,
+    };
+    return interview.copyWith(
+      answers: {
+        ...interview.answers,
+        conflict.id: TaxAnswer(
+          questionId: conflict.id,
+          value: selected.value,
+          provenance: provenance,
+        ),
+      },
+      conflictResolutions: {
+        ...interview.conflictResolutions,
+        conflict.id: TaxConflictResolution(
+          factId: conflict.id,
+          selectedValue: selected.value,
+          competingValue: competing.value,
+          selectedProvenance: provenance,
+          resolvedAt: (resolvedAt ?? DateTime.now()).toUtc(),
+        ),
+      },
+    );
   }
 
   int _priority(FiscalDataPoint point) => point.isUserOverride

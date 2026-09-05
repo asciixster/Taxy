@@ -173,12 +173,19 @@ final class TaxInterviewEngine {
 
   TaxInterview answer(TaxInterview interview, TaxAnswer answer) {
     final updated = {...interview.answers, answer.questionId: answer};
+    final resolutions = {...interview.conflictResolutions}
+      ..remove(answer.questionId);
     final visible = questions
         .where((question) => _visible(question.id, updated))
         .map((question) => question.id)
         .toSet();
     updated.removeWhere((id, _) => !visible.contains(id));
-    final draft = TaxInterview(taxYear: interview.taxYear, answers: updated);
+    resolutions.removeWhere((id, _) => !visible.contains(id));
+    final draft = TaxInterview(
+      taxYear: interview.taxYear,
+      answers: updated,
+      conflictResolutions: resolutions,
+    );
     final list = visibleQuestions(draft);
     final current = list.indexWhere((q) => q.id == answer.questionId);
     return draft.copyWith(

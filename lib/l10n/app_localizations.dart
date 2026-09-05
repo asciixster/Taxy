@@ -2492,6 +2492,198 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Rendimentos de imóveis'**
   String get complexIncomeRental;
+
+  /// No description provided for @taxReviewTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Revisão fiscal'**
+  String get taxReviewTitle;
+
+  /// No description provided for @taxReviewReady.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pronta para rever'**
+  String get taxReviewReady;
+
+  /// No description provided for @taxReviewNeedsReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Precisa da tua revisão'**
+  String get taxReviewNeedsReview;
+
+  /// No description provided for @taxReviewIncomplete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta informação'**
+  String get taxReviewIncomplete;
+
+  /// No description provided for @taxReviewUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inclui situações ainda não suportadas'**
+  String get taxReviewUnsupported;
+
+  /// No description provided for @taxReviewRefund.
+  ///
+  /// In pt, this message translates to:
+  /// **'{amount} a receber'**
+  String taxReviewRefund(String amount);
+
+  /// No description provided for @taxReviewPayable.
+  ///
+  /// In pt, this message translates to:
+  /// **'{amount} a pagar'**
+  String taxReviewPayable(String amount);
+
+  /// No description provided for @taxReviewEstimateHidden.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estimativa ainda indisponível'**
+  String get taxReviewEstimateHidden;
+
+  /// No description provided for @taxReviewEstimateDisclaimer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Baseada na informação disponível e nas situações atualmente suportadas pela Taxy. Não é um resultado oficial.'**
+  String get taxReviewEstimateDisclaimer;
+
+  /// No description provided for @taxReviewConflictsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informação para confirmar'**
+  String get taxReviewConflictsTitle;
+
+  /// No description provided for @taxReviewConflictSemantics.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conflito de informação. Escolhe o valor correto ou revê mais tarde.'**
+  String get taxReviewConflictSemantics;
+
+  /// No description provided for @taxReviewLater.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rever mais tarde'**
+  String get taxReviewLater;
+
+  /// No description provided for @taxReviewMissingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta informação'**
+  String get taxReviewMissingTitle;
+
+  /// No description provided for @taxReviewRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Necessária para calcular'**
+  String get taxReviewRequired;
+
+  /// No description provided for @taxReviewRecommended.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recomendada para melhorar a estimativa'**
+  String get taxReviewRecommended;
+
+  /// No description provided for @taxReviewOptional.
+  ///
+  /// In pt, this message translates to:
+  /// **'Opcional'**
+  String get taxReviewOptional;
+
+  /// No description provided for @taxReviewSituationsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Situações identificadas'**
+  String get taxReviewSituationsTitle;
+
+  /// No description provided for @taxReviewUnsupportedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Identificámos informação que ainda não entra na estimativa atual.'**
+  String get taxReviewUnsupportedBody;
+
+  /// No description provided for @taxReviewNotIncluded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não incluído na estimativa atual'**
+  String get taxReviewNotIncluded;
+
+  /// No description provided for @taxReviewBreakdownSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valores produzidos pelo motor IRS da Taxy'**
+  String get taxReviewBreakdownSubtitle;
+
+  /// No description provided for @taxReviewIncludedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que está incluído nesta estimativa'**
+  String get taxReviewIncludedTitle;
+
+  /// No description provided for @taxReviewSourceDocument.
+  ///
+  /// In pt, this message translates to:
+  /// **'Documento confirmado'**
+  String get taxReviewSourceDocument;
+
+  /// No description provided for @taxReviewSocialSecurity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contribuições para a Segurança Social'**
+  String get taxReviewSocialSecurity;
+
+  /// No description provided for @taxReviewInformation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informação fiscal'**
+  String get taxReviewInformation;
+
+  /// No description provided for @taxReviewIncomeConsidered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos considerados'**
+  String get taxReviewIncomeConsidered;
+
+  /// No description provided for @taxReviewDeductionsConsidered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deduções consideradas'**
+  String get taxReviewDeductionsConsidered;
+
+  /// No description provided for @taxReviewEstimatedTax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Imposto estimado'**
+  String get taxReviewEstimatedTax;
+
+  /// No description provided for @taxReviewWithholdingConsidered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retenções consideradas'**
+  String get taxReviewWithholdingConsidered;
+
+  /// No description provided for @taxReviewActionConflict.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resolver diferença na informação'**
+  String get taxReviewActionConflict;
+
+  /// No description provided for @taxReviewActionMissing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Completar informação necessária'**
+  String get taxReviewActionMissing;
+
+  /// No description provided for @taxReviewActionUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rever situações não incluídas'**
+  String get taxReviewActionUnsupported;
+
+  /// No description provided for @taxReviewActionEstimate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rever estimativa'**
+  String get taxReviewActionEstimate;
 }
 
 class _AppLocalizationsDelegate

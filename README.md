@@ -1,4 +1,4 @@
-# Taxy 0.8.2 — guided document evidence and complex-income foundations
+# Taxy 0.8.3 — guided review, explainability and next action
 
 Taxy is a Portuguese personal tax assistant. IRS is its first beta-ready module;
 e-Fatura remains an experimental, read-only module. Product boundaries and

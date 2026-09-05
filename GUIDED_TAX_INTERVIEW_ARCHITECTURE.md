@@ -98,3 +98,12 @@ Confirmed employment, withholding and Social Security document values enter the 
 layer as year-scoped imported candidates. Missing values may prefill the interview; divergent
 values create a user-resolved conflict. Raw documents and filenames are not retained. Complex
 income flags remain visible, explicit and excluded from the estimate until supported.
+
+## 0.8.3 review boundary
+
+The interview now hands completed state to `GuidedTaxReview`. The review derives
+completeness, calculation inclusion, conflict presentation, engine explanation,
+and one next action without becoming another source of fiscal data. Explicit
+conflict resolutions are persisted in the same year-scoped interview and retain
+the chosen provenance. See `GUIDED_TAX_REVIEW_ARCHITECTURE.md` for the central
+presentation and false-precision policy.
