@@ -349,7 +349,6 @@ void main() {
 
   testWidgets('review is accessible at 200% text in dark mode', (tester) async {
     final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -375,6 +374,7 @@ void main() {
     final confirm = find.byKey(const Key('document-review-confirm'));
     await _scrollTo(tester, confirm);
     expect(confirm, findsOneWidget);
+    semantics.dispose();
   });
 
   testWidgets('capture to explicit review to confirmation deletes raw', (
