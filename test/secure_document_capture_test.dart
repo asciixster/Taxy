@@ -264,11 +264,15 @@ void main() {
     await captures.save(_capturedDocument());
     await _pumpReview(tester, gateway, captures, evidence);
 
-    await tester.tap(find.widgetWithText(CheckboxListTile, 'Retenção de IRS'));
-    final socialField = find.widgetWithText(
-      TextField,
-      'Contribuições para a Segurança Social',
+    final withholding = find.byKey(
+      const Key('document-field-irsWithholding-select'),
     );
+    await _scrollTo(tester, withholding);
+    await tester.tap(withholding);
+    final socialField = find.byKey(
+      const Key('document-field-socialSecurityContributions-input'),
+    );
+    await _scrollTo(tester, socialField);
     await tester.enterText(socialField, '2600,00');
     await _tapReviewConfirm(tester);
 
@@ -297,6 +301,7 @@ void main() {
     final captures = MemoryCapturedTaxDocumentRepository();
     final evidence = MemoryGuidedDocumentEvidenceRepository();
     await _pumpReview(tester, gateway, captures, evidence);
+    await _scrollTo(tester, find.byKey(const Key('document-review-confirm')));
     expect(
       find.textContaining('Este documento parece ser de 2025'),
       findsOneWidget,
@@ -359,9 +364,13 @@ void main() {
       themeMode: ThemeMode.dark,
     );
     expect(tester.takeException(), isNull);
+    final employmentSemantics = find.byKey(
+      const Key('document-field-employmentGross-semantics'),
+    );
+    await _scrollTo(tester, employmentSemantics);
     expect(
-      find.bySemanticsLabel(RegExp('Rendimentos do trabalho')),
-      findsWidgets,
+      tester.getSemantics(employmentSemantics).label,
+      contains('Rendimentos do trabalho'),
     );
     expect(find.byKey(const Key('document-review-confirm')), findsOneWidget);
   });
@@ -503,9 +512,17 @@ Future<void> _pumpReview(
 
 Future<void> _tapReviewConfirm(WidgetTester tester) async {
   final button = find.byKey(const Key('document-review-confirm'));
-  await tester.ensureVisible(button);
-  await tester.pumpAndSettle();
+  await _scrollTo(tester, button);
   await tester.tap(button);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
+  await tester.scrollUntilVisible(
+    finder,
+    300,
+    scrollable: find.byType(Scrollable).first,
+  );
   await tester.pumpAndSettle();
 }
 

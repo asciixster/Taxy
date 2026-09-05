@@ -353,6 +353,7 @@ final class _FieldReviewCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final confidence = _confidenceLabel(l10n, field.confidence);
     return Semantics(
+      key: Key('document-field-${field.type.name}-semantics'),
       label: '${_fieldLabel(l10n, field.type)}. $confidence',
       checked: onSelected == null ? null : selected,
       child: Card(
@@ -363,6 +364,7 @@ final class _FieldReviewCard extends StatelessWidget {
             children: [
               if (onSelected != null)
                 CheckboxListTile(
+                  key: Key('document-field-${field.type.name}-select'),
                   contentPadding: EdgeInsets.zero,
                   value: selected,
                   onChanged: (value) => onSelected?.call(value ?? false),
@@ -379,6 +381,7 @@ final class _FieldReviewCard extends StatelessWidget {
               ],
               const SizedBox(height: 8),
               TextField(
+                key: Key('document-field-${field.type.name}-input'),
                 controller: controller,
                 onChanged: (_) => onChanged(),
                 enabled: onSelected == null || selected,
