@@ -372,7 +372,9 @@ void main() {
       tester.getSemantics(employmentSemantics).label,
       contains('Rendimentos do trabalho'),
     );
-    expect(find.byKey(const Key('document-review-confirm')), findsOneWidget);
+    final confirm = find.byKey(const Key('document-review-confirm'));
+    await _scrollTo(tester, confirm);
+    expect(confirm, findsOneWidget);
   });
 
   testWidgets('capture to explicit review to confirmation deletes raw', (
