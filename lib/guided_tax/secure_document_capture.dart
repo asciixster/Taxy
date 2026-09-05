@@ -415,9 +415,14 @@ final class LocalCapturedTaxDocumentRepository
     if (directory == null || directory.isEmpty) {
       throw StateError('storage unavailable');
     }
-    return File(
+    final file = File(
       '$directory${Platform.pathSeparator}captured-tax-documents-v1.json',
     );
+    // A process kill can leave only the staging file behind. It is never a
+    // committed repository state, so recovery fails closed by discarding it.
+    final temporary = File('${file.path}.tmp');
+    if (await temporary.exists()) await temporary.delete();
+    return file;
   }
 
   @override
@@ -440,15 +445,19 @@ final class LocalCapturedTaxDocumentRepository
   Future<void> _write(List<CapturedTaxDocument> values) async {
     final file = await _file();
     final temporary = File('${file.path}.tmp');
-    await temporary.writeAsString(
-      jsonEncode({
-        'schemaVersion': 1,
-        'items': values.map((item) => item.toJson()).toList(),
-      }),
-      flush: true,
-    );
-    if (await file.exists()) await file.delete();
-    await temporary.rename(file.path);
+    try {
+      await temporary.writeAsString(
+        jsonEncode({
+          'schemaVersion': 1,
+          'items': values.map((item) => item.toJson()).toList(),
+        }),
+        flush: true,
+      );
+      if (await file.exists()) await file.delete();
+      await temporary.rename(file.path);
+    } finally {
+      if (await temporary.exists()) await temporary.delete();
+    }
   }
 
   @override

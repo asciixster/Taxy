@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taxy_pt/guided_tax/document_evidence.dart';
 import 'package:taxy_pt/guided_tax/document_evidence_screen.dart';
+import 'package:taxy_pt/guided_tax/document_extraction_review_screen.dart';
 import 'package:taxy_pt/guided_tax/secure_document_capture.dart';
 import 'package:taxy_pt/l10n/app_localizations.dart';
 
@@ -182,6 +183,50 @@ void main() {
     expect((await repository.load()).map((item) => item.id), hasLength(2));
   });
 
+  test(
+    'restart cleanup removes interrupted state but never confirmed state',
+    () async {
+      final repository = MemoryCapturedTaxDocumentRepository();
+      await repository.save(_capturedDocument());
+      await repository.save(
+        _capturedDocument(
+          id: '11111111111111111111111111111111',
+          state: CapturedDocumentState.confirmed,
+        ),
+      );
+      await repository.clearUnconfirmed();
+      final restored = await repository.load();
+      expect(restored, hasLength(1));
+      expect(restored.single.state, CapturedDocumentState.confirmed);
+    },
+  );
+
+  test('malicious and malformed persisted metadata fails closed', () {
+    Map<String, Object?> metadata(String id) => {
+      ..._capturedDocument().toJson(),
+      'id': id,
+    };
+    for (final id in [
+      '../document',
+      '/absolute/path',
+      r'..\document',
+      'abc∕def',
+      List.filled(4096, 'a').join(),
+    ]) {
+      expect(
+        () => CapturedTaxDocument.fromJson(metadata(id)),
+        throwsFormatException,
+      );
+    }
+    expect(
+      () => CapturedTaxDocument.fromJson({
+        ...metadata('0123456789abcdef0123456789abcdef'),
+        'pageCount': 11,
+      }),
+      throwsFormatException,
+    );
+  });
+
   test('Android boundary is local, encrypted, bounded and permission-minimal', () {
     final native = File(
       'android/app/src/main/kotlin/pt/taxy/app/SecureDocumentCaptureBridge.kt',
@@ -196,12 +241,129 @@ void main() {
     expect(native, contains('Re-encoding deliberately strips EXIF'));
     expect(native, contains('ExifInterface.TAG_ORIENTATION'));
     expect(native, contains('bitmap.eraseColor(Color.WHITE)'));
+    expect(native, contains('pending?.cameraFile?.delete()'));
+    expect(native, contains('request.cameraFile?.delete()'));
+    expect(native, contains('MIME_MISMATCH'));
+    expect(native, contains('UNSUPPORTED_FILE'));
+    expect(native, contains('FILE_TOO_LARGE'));
+    expect(native, contains('PAGE_LIMIT'));
     expect(native, isNot(contains('Log.')));
     expect(manifest, contains('android:allowBackup="false"'));
     expect(manifest, contains('android:exported="false"'));
     expect(manifest, isNot(contains('MANAGE_EXTERNAL_STORAGE')));
     expect(manifest, isNot(contains('READ_EXTERNAL_STORAGE')));
     expect(manifest, isNot(contains('android.permission.CAMERA')));
+  });
+
+  testWidgets('partial confirmation stores only selected corrected fields', (
+    tester,
+  ) async {
+    final gateway = _FakeCaptureGateway();
+    final captures = MemoryCapturedTaxDocumentRepository();
+    final evidence = MemoryGuidedDocumentEvidenceRepository();
+    await captures.save(_capturedDocument());
+    await _pumpReview(tester, gateway, captures, evidence);
+
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Retenção de IRS'));
+    final socialField = find.widgetWithText(
+      TextField,
+      'Contribuições para a Segurança Social',
+    );
+    await tester.enterText(socialField, '2600,00');
+    await _tapReviewConfirm(tester);
+
+    final confirmed = await evidence.load(2026);
+    expect(confirmed, hasLength(2));
+    expect(
+      confirmed.any((item) => item.type == GuidedDocumentType.withholdingProof),
+      isFalse,
+    );
+    expect(
+      confirmed
+          .singleWhere(
+            (item) => item.type == GuidedDocumentType.socialSecurityProof,
+          )
+          .amountCents,
+      260000,
+    );
+    expect(await captures.load(), isEmpty);
+    expect(gateway.deletedRaw, isTrue);
+  });
+
+  testWidgets('wrong-year document cannot create current-year evidence', (
+    tester,
+  ) async {
+    final gateway = _FakeCaptureGateway(documentYear: 2025);
+    final captures = MemoryCapturedTaxDocumentRepository();
+    final evidence = MemoryGuidedDocumentEvidenceRepository();
+    await _pumpReview(tester, gateway, captures, evidence);
+    expect(
+      find.textContaining('Este documento parece ser de 2025'),
+      findsOneWidget,
+    );
+    final confirm = tester.widget<FilledButton>(
+      find.byKey(const Key('document-review-confirm')),
+    );
+    expect(confirm.onPressed, isNull);
+    expect(await evidence.load(2026), isEmpty);
+  });
+
+  testWidgets('failed raw deletion rolls confirmed evidence back', (
+    tester,
+  ) async {
+    final gateway = _FakeCaptureGateway(failConfirm: true);
+    final captures = MemoryCapturedTaxDocumentRepository();
+    final evidence = MemoryGuidedDocumentEvidenceRepository();
+    await captures.save(_capturedDocument());
+    await _pumpReview(tester, gateway, captures, evidence);
+    await _tapReviewConfirm(tester);
+    expect(await evidence.load(2026), isEmpty);
+    expect(await captures.load(), hasLength(1));
+    expect(
+      find.text('Não conseguimos ler este documento com segurança.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('delete action removes raw and candidate metadata', (
+    tester,
+  ) async {
+    final gateway = _FakeCaptureGateway();
+    final captures = MemoryCapturedTaxDocumentRepository();
+    final evidence = MemoryGuidedDocumentEvidenceRepository();
+    await captures.save(_capturedDocument());
+    await _pumpReview(tester, gateway, captures, evidence);
+    await tester.tap(find.byTooltip('Eliminar documento'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Eliminar documento'));
+    await tester.pumpAndSettle();
+    expect(gateway.deletedRaw, isTrue);
+    expect(await captures.load(), isEmpty);
+    expect(await evidence.load(2026), isEmpty);
+  });
+
+  testWidgets('review is accessible at 200% text in dark mode', (tester) async {
+    final semantics = tester.ensureSemantics();
+    addTearDown(semantics.dispose);
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await _pumpReview(
+      tester,
+      _FakeCaptureGateway(),
+      MemoryCapturedTaxDocumentRepository(),
+      MemoryGuidedDocumentEvidenceRepository(),
+      themeMode: ThemeMode.dark,
+    );
+    expect(tester.takeException(), isNull);
+    expect(
+      find.bySemanticsLabel(RegExp('Rendimentos do trabalho')),
+      findsWidgets,
+    );
+    expect(find.byKey(const Key('document-review-confirm')), findsOneWidget);
   });
 
   testWidgets('capture to explicit review to confirmation deletes raw', (
@@ -274,19 +436,89 @@ void main() {
   });
 }
 
+CapturedTaxDocument _capturedDocument({
+  String id = '0123456789abcdef0123456789abcdef',
+  CapturedDocumentState state = CapturedDocumentState.reviewRequired,
+  int documentYear = 2026,
+}) => CapturedTaxDocument(
+  id: id,
+  taxYear: 2026,
+  mediaType: CapturedDocumentMediaType.jpeg,
+  pageCount: 1,
+  createdAt: DateTime.utc(2026, 9, 5),
+  state: state,
+  extraction: TaxDocumentExtraction(
+    documentTypeCandidate: TaxDocumentTypeCandidate.combinedEmploymentStatement,
+    fields: [
+      const TaxDocumentExtractedField(
+        type: TaxDocumentFieldType.employmentGross,
+        normalizedCandidate: 2450000,
+        confidence: ExtractionConfidence.high,
+      ),
+      const TaxDocumentExtractedField(
+        type: TaxDocumentFieldType.irsWithholding,
+        normalizedCandidate: 320000,
+        confidence: ExtractionConfidence.high,
+      ),
+      const TaxDocumentExtractedField(
+        type: TaxDocumentFieldType.socialSecurityContributions,
+        normalizedCandidate: 269500,
+        confidence: ExtractionConfidence.high,
+      ),
+      TaxDocumentExtractedField(
+        type: TaxDocumentFieldType.taxYear,
+        normalizedCandidate: documentYear,
+        confidence: ExtractionConfidence.high,
+      ),
+    ],
+    confidence: ExtractionConfidence.high,
+  ),
+);
+
+Future<void> _pumpReview(
+  WidgetTester tester,
+  _FakeCaptureGateway gateway,
+  CapturedTaxDocumentRepository captures,
+  GuidedDocumentEvidenceRepository evidence, {
+  ThemeMode themeMode = ThemeMode.light,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      locale: const Locale('pt', 'PT'),
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: themeMode,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      home: DocumentExtractionReviewScreen(
+        document: _capturedDocument(documentYear: gateway.documentYear),
+        captureGateway: gateway,
+        captureRepository: captures,
+        evidenceRepository: evidence,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _tapReviewConfirm(WidgetTester tester) async {
+  final button = find.byKey(const Key('document-review-confirm'));
+  await tester.ensureVisible(button);
+  await tester.pumpAndSettle();
+  await tester.tap(button);
+  await tester.pumpAndSettle();
+}
+
 final class _FakeCaptureGateway implements TaxDocumentCaptureGateway {
+  _FakeCaptureGateway({this.documentYear = 2026, this.failConfirm = false});
+
+  final int documentYear;
+  final bool failConfirm;
   bool confirmed = false;
   bool deletedRaw = false;
 
   NativeDocumentCaptureResult _result() => NativeDocumentCaptureResult(
-    document: CapturedTaxDocument(
-      id: '0123456789abcdef0123456789abcdef',
-      taxYear: 2026,
-      mediaType: CapturedDocumentMediaType.jpeg,
-      pageCount: 1,
-      createdAt: DateTime.utc(2026, 9, 5),
-      state: CapturedDocumentState.reviewRequired,
-    ),
+    document: _capturedDocument(documentYear: documentYear),
     recognizedText: '''
       Declaração anual de rendimentos 2026
       Rendimentos brutos: 24.500,00
@@ -308,6 +540,7 @@ final class _FakeCaptureGateway implements TaxDocumentCaptureGateway {
 
   @override
   Future<void> confirmAndDeleteRaw(String id) async {
+    if (failConfirm) throw StateError('sanitized confirmation failure');
     confirmed = true;
     deletedRaw = true;
   }

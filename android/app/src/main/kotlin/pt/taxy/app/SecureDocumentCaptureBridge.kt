@@ -78,6 +78,7 @@ internal class SecureDocumentCaptureBridge(private val activity: MainActivity) {
     fun detach() {
         channel?.setMethodCallHandler(null)
         channel = null
+        pending?.cameraFile?.delete()
         pending?.result?.error("CAPTURE_INTERRUPTED", "Document capture interrupted", null)
         pending = null
         executor.shutdownNow()
@@ -360,6 +361,7 @@ internal class SecureDocumentCaptureBridge(private val activity: MainActivity) {
     }
 
     private fun completeCancelled(request: PendingCapture) {
+        request.cameraFile?.delete()
         pending = null
         request.result.success(null)
     }
