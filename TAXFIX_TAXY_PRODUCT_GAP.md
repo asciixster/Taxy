@@ -1,14 +1,15 @@
 # Taxfix → Taxy: public product gap
 
-## 0.8.1 returning-user benchmark
+## 0.8.2 evidence benchmark
 
-| Measure | Taxfix public experience | Taxy 0.8.1 |
+| Measure | Taxfix public experience | Taxy 0.8.2 |
 |---|---|---|
 | Repeated input | Reuses available/prefilled information | Profile and same-year ledgers prefill and skip known answers |
 | Guided flow | Personalized question sequence | Rule-driven Portuguese sequence with deterministic cleanup |
 | Result clarity | Estimate with calculation detail | Explicit completeness plus engine-consistent breakdown |
 | Next action | Guided completion/submission | One action: missing data, interview, pending invoices or review |
 | Returning user | Continue an existing return | Annual companion, persisted interview and targeted section review |
+| Document evidence | Upload/photo with guided extraction | Three calculation-relevant annual values, explicitly confirmed without retaining the source file |
 
 Acceptance answer: a user is asked fewer questions when Taxy already has matching, trusted,
 same-year data. Conflicting evidence is never silently substituted and instead marks the
@@ -54,3 +55,12 @@ estimate, inspect why it changed and resume later without knowing the names of
 Portuguese tax categories or forms. Unsupported income is recorded but never
 silently approximated. Broader calculation coverage remains a tax-engine gap,
 not a reason to make the interview misleading.
+
+## Reassessment after 0.8.2
+
+Taxy now has a safe bridge between selected document evidence and the existing
+interview: employment income, IRS withholding and Social Security contributions
+become year-scoped imported candidates only after explicit confirmation. Existing
+user answers are never overwritten; disagreement becomes a review conflict. This
+closes the confirmation boundary, but not the remaining secure file capture and
+reviewed OCR gap.

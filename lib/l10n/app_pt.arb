@@ -409,4 +409,23 @@
   ,"resetTaxYearBody": "Isto remove as respostas da entrevista e os rendimentos e despesas manuais deste ano. A ligação ao e-Fatura não é removida."
   ,"resetTaxYearConfirm": "Repor ano"
   ,"estimateUpdated": "A estimativa foi atualizada."
+  ,"guidedDocumentsTitle": "Evidência documental"
+  ,"guidedDocumentsIntro": "Confirma valores de documentos que a estimativa atual já consegue utilizar."
+  ,"guidedDocumentsPrivacy": "O ficheiro não é enviado nem guardado. Apenas o valor que confirmares fica neste dispositivo."
+  ,"guidedDocumentsEntryHint": "Rever rendimentos, retenções e contribuições confirmados"
+  ,"guidedDocumentEmployment": "Declaração de rendimentos do trabalho"
+  ,"guidedDocumentWithholding": "Comprovativo de retenções de IRS"
+  ,"guidedDocumentSocialSecurity": "Comprovativo de contribuições para a Segurança Social"
+  ,"guidedDocumentsConfirmValue": "Confirma o documento e introduz o total anual que pretendes validar."
+  ,"guidedDocumentsNotConfirmed": "Sem valor confirmado"
+  ,"guidedDocumentsConfirmedAmount": "Confirmado: {amount}"
+  ,"@guidedDocumentsConfirmedAmount": {"placeholders": {"amount": {"type": "String"}}}
+  ,"guidedDocumentsCount": "{count, plural, =1{1 confirmado} other{{count} confirmados}}"
+  ,"@guidedDocumentsCount": {"placeholders": {"count": {"type": "int"}}}
+  ,"complexIncomeTitle": "Situações identificadas para revisão"
+  ,"complexIncomeHint": "Estas situações ficam registadas, mas não entram na estimativa enquanto o motor fiscal não as suportar com segurança."
+  ,"complexIncomeSelfEmployment": "Rendimentos de trabalho independente"
+  ,"complexIncomePension": "Rendimentos de pensões"
+  ,"complexIncomeForeign": "Rendimentos recebidos fora de Portugal"
+  ,"complexIncomeRental": "Rendimentos de imóveis"
 }

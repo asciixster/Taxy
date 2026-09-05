@@ -1315,4 +1315,71 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get estimateUpdated => 'The estimate was updated.';
+
+  @override
+  String get guidedDocumentsTitle => 'Document evidence';
+
+  @override
+  String get guidedDocumentsIntro =>
+      'Confirm values from documents that the current estimate can use.';
+
+  @override
+  String get guidedDocumentsPrivacy =>
+      'The document file is not uploaded or stored. Only the amount you confirm is saved on this device.';
+
+  @override
+  String get guidedDocumentsEntryHint =>
+      'Review confirmed income, withholding and contribution values';
+
+  @override
+  String get guidedDocumentEmployment => 'Employment income statement';
+
+  @override
+  String get guidedDocumentWithholding => 'IRS withholding proof';
+
+  @override
+  String get guidedDocumentSocialSecurity =>
+      'Social Security contributions proof';
+
+  @override
+  String get guidedDocumentsConfirmValue =>
+      'Check the document and enter the annual total you want to confirm.';
+
+  @override
+  String get guidedDocumentsNotConfirmed => 'No value confirmed';
+
+  @override
+  String guidedDocumentsConfirmedAmount(String amount) {
+    return 'Confirmed: $amount';
+  }
+
+  @override
+  String guidedDocumentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count confirmed',
+      one: '1 confirmed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get complexIncomeTitle => 'Identified situations needing review';
+
+  @override
+  String get complexIncomeHint =>
+      'These situations are recorded but are not included in the estimate until the tax engine supports them safely.';
+
+  @override
+  String get complexIncomeSelfEmployment => 'Self-employment income';
+
+  @override
+  String get complexIncomePension => 'Pension income';
+
+  @override
+  String get complexIncomeForeign => 'Income received outside Portugal';
+
+  @override
+  String get complexIncomeRental => 'Rental income';
 }

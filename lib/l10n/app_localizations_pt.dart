@@ -1324,6 +1324,75 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get estimateUpdated => 'A estimativa foi atualizada.';
+
+  @override
+  String get guidedDocumentsTitle => 'Evidência documental';
+
+  @override
+  String get guidedDocumentsIntro =>
+      'Confirma valores de documentos que a estimativa atual já consegue utilizar.';
+
+  @override
+  String get guidedDocumentsPrivacy =>
+      'O ficheiro não é enviado nem guardado. Apenas o valor que confirmares fica neste dispositivo.';
+
+  @override
+  String get guidedDocumentsEntryHint =>
+      'Rever rendimentos, retenções e contribuições confirmados';
+
+  @override
+  String get guidedDocumentEmployment =>
+      'Declaração de rendimentos do trabalho';
+
+  @override
+  String get guidedDocumentWithholding => 'Comprovativo de retenções de IRS';
+
+  @override
+  String get guidedDocumentSocialSecurity =>
+      'Comprovativo de contribuições para a Segurança Social';
+
+  @override
+  String get guidedDocumentsConfirmValue =>
+      'Confirma o documento e introduz o total anual que pretendes validar.';
+
+  @override
+  String get guidedDocumentsNotConfirmed => 'Sem valor confirmado';
+
+  @override
+  String guidedDocumentsConfirmedAmount(String amount) {
+    return 'Confirmado: $amount';
+  }
+
+  @override
+  String guidedDocumentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count confirmados',
+      one: '1 confirmado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get complexIncomeTitle => 'Situações identificadas para revisão';
+
+  @override
+  String get complexIncomeHint =>
+      'Estas situações ficam registadas, mas não entram na estimativa enquanto o motor fiscal não as suportar com segurança.';
+
+  @override
+  String get complexIncomeSelfEmployment =>
+      'Rendimentos de trabalho independente';
+
+  @override
+  String get complexIncomePension => 'Rendimentos de pensões';
+
+  @override
+  String get complexIncomeForeign => 'Rendimentos recebidos fora de Portugal';
+
+  @override
+  String get complexIncomeRental => 'Rendimentos de imóveis';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -2645,4 +2714,73 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get estimateUpdated => 'A estimativa foi atualizada.';
+
+  @override
+  String get guidedDocumentsTitle => 'Evidência documental';
+
+  @override
+  String get guidedDocumentsIntro =>
+      'Confirma valores de documentos que a estimativa atual já consegue utilizar.';
+
+  @override
+  String get guidedDocumentsPrivacy =>
+      'O ficheiro não é enviado nem guardado. Apenas o valor que confirmares fica neste dispositivo.';
+
+  @override
+  String get guidedDocumentsEntryHint =>
+      'Rever rendimentos, retenções e contribuições confirmados';
+
+  @override
+  String get guidedDocumentEmployment =>
+      'Declaração de rendimentos do trabalho';
+
+  @override
+  String get guidedDocumentWithholding => 'Comprovativo de retenções de IRS';
+
+  @override
+  String get guidedDocumentSocialSecurity =>
+      'Comprovativo de contribuições para a Segurança Social';
+
+  @override
+  String get guidedDocumentsConfirmValue =>
+      'Confirma o documento e introduz o total anual que pretendes validar.';
+
+  @override
+  String get guidedDocumentsNotConfirmed => 'Sem valor confirmado';
+
+  @override
+  String guidedDocumentsConfirmedAmount(String amount) {
+    return 'Confirmado: $amount';
+  }
+
+  @override
+  String guidedDocumentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count confirmados',
+      one: '1 confirmado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get complexIncomeTitle => 'Situações identificadas para revisão';
+
+  @override
+  String get complexIncomeHint =>
+      'Estas situações ficam registadas, mas não entram na estimativa enquanto o motor fiscal não as suportar com segurança.';
+
+  @override
+  String get complexIncomeSelfEmployment =>
+      'Rendimentos de trabalho independente';
+
+  @override
+  String get complexIncomePension => 'Rendimentos de pensões';
+
+  @override
+  String get complexIncomeForeign => 'Rendimentos recebidos fora de Portugal';
+
+  @override
+  String get complexIncomeRental => 'Rendimentos de imóveis';
 }

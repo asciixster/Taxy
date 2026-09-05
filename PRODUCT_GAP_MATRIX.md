@@ -1,4 +1,4 @@
-# Product gap matrix — 0.7.13
+# Product gap matrix — 0.8.2
 
 ## Taxy 0.8.1 — integrated fiscal companion
 
@@ -52,3 +52,12 @@ conditional branching, normalized facts, provenance, deterministic dependency
 cleanup, local resume and fail-closed IRS integration. See
 `TAXFIX_TAXY_PRODUCT_GAP.md` for the public-product comparison and
 `GUIDED_TAX_INTERVIEW_ARCHITECTURE.md` for implementation boundaries.
+
+## 0.8.2 evidence and complex-income boundary
+
+| Area | Taxy 0.8.2 | Remaining gap |
+|---|---|---|
+| Document evidence | Explicit confirmation for three engine-supported annual values; local metadata only | Secure file capture and reviewed OCR |
+| Complex income | Self-employment, pensions, foreign and rental income identified and visibly excluded | Validated calculation rules and detailed evidence models |
+| Conflict safety | Document candidates use existing conflict resolution instead of overwriting | Richer field-specific comparison language |
+| Privacy | No document file, path, filename or identifier persisted | Encrypted lifecycle required before raw capture |
