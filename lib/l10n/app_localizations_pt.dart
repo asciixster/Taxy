@@ -496,7 +496,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sourceExternal => 'Fonte externa';
 
   @override
-  String get sourceCalculated => 'Calculado';
+  String get sourceCalculated => 'Calculado pela Taxy';
 
   @override
   String get statusConfirmed => 'Confirmado';
@@ -1208,7 +1208,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get qExpensesReviewed =>
-      'Já reveste as tuas despesas e a informação do e-Fatura?';
+      'Já reviste as tuas despesas e a informação do e-Fatura?';
 
   @override
   String get whyExpensesReviewed =>
@@ -1246,6 +1246,84 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get guidedTaxDocumentsHint =>
       'A captura de documentos fica preparada para futuras importações confirmadas; nenhum valor é aplicado sem a tua confirmação.';
+
+  @override
+  String get guidedTaxPrefilled =>
+      'Já encontrámos esta informação. Podes revê-la.';
+
+  @override
+  String get fiscalCompanionTitle => 'O teu acompanhamento fiscal';
+
+  @override
+  String get fiscalCompanionIncomplete => 'Ainda falta alguma informação';
+
+  @override
+  String get fiscalCompanionReady => 'A tua estimativa está pronta para rever';
+
+  @override
+  String get fiscalCompanionProvisional => 'A tua estimativa é provisória';
+
+  @override
+  String get fiscalCompanionNoAction => 'Está tudo atualizado por agora.';
+
+  @override
+  String get fiscalCompanionContinue => 'Continuar a tua análise';
+
+  @override
+  String get fiscalCompanionReviewEfatura => 'Revê as tuas faturas pendentes';
+
+  @override
+  String fiscalCompanionMissingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count áreas precisam de atenção',
+      one: '1 área precisa de atenção',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dataConflictTitle => 'Encontrámos informação diferente';
+
+  @override
+  String get dataConflictBody =>
+      'Escolhe a informação que devemos usar. Nada é alterado silenciosamente.';
+
+  @override
+  String get dataConflictResolve => 'Escolher informação';
+
+  @override
+  String dataConflictUseOption(String source, String value) {
+    return 'Usar $source: $value';
+  }
+
+  @override
+  String get sourceUser => 'Introduzido por ti';
+
+  @override
+  String get sourceEfatura => 'e-Fatura';
+
+  @override
+  String get updatedToday => 'Atualizado hoje';
+
+  @override
+  String get resetTaxYear => 'Repor este ano fiscal';
+
+  @override
+  String resetTaxYearTitle(int year) {
+    return 'Repor $year?';
+  }
+
+  @override
+  String get resetTaxYearBody =>
+      'Isto remove as respostas da entrevista e os rendimentos e despesas manuais deste ano. A ligação ao e-Fatura não é removida.';
+
+  @override
+  String get resetTaxYearConfirm => 'Repor ano';
+
+  @override
+  String get estimateUpdated => 'A estimativa foi atualizada.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -1739,7 +1817,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   String get sourceExternal => 'Fonte externa';
 
   @override
-  String get sourceCalculated => 'Calculado';
+  String get sourceCalculated => 'Calculado pela Taxy';
 
   @override
   String get statusConfirmed => 'Confirmado';
@@ -2451,7 +2529,7 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get qExpensesReviewed =>
-      'Já reveste as tuas despesas e a informação do e-Fatura?';
+      'Já reviste as tuas despesas e a informação do e-Fatura?';
 
   @override
   String get whyExpensesReviewed =>
@@ -2489,4 +2567,82 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get guidedTaxDocumentsHint =>
       'A captura de documentos fica preparada para futuras importações confirmadas; nenhum valor é aplicado sem a tua confirmação.';
+
+  @override
+  String get guidedTaxPrefilled =>
+      'Já encontrámos esta informação. Podes revê-la.';
+
+  @override
+  String get fiscalCompanionTitle => 'O teu acompanhamento fiscal';
+
+  @override
+  String get fiscalCompanionIncomplete => 'Ainda falta alguma informação';
+
+  @override
+  String get fiscalCompanionReady => 'A tua estimativa está pronta para rever';
+
+  @override
+  String get fiscalCompanionProvisional => 'A tua estimativa é provisória';
+
+  @override
+  String get fiscalCompanionNoAction => 'Está tudo atualizado por agora.';
+
+  @override
+  String get fiscalCompanionContinue => 'Continuar a tua análise';
+
+  @override
+  String get fiscalCompanionReviewEfatura => 'Revê as tuas faturas pendentes';
+
+  @override
+  String fiscalCompanionMissingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count áreas precisam de atenção',
+      one: '1 área precisa de atenção',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dataConflictTitle => 'Encontrámos informação diferente';
+
+  @override
+  String get dataConflictBody =>
+      'Escolhe a informação que devemos usar. Nada é alterado silenciosamente.';
+
+  @override
+  String get dataConflictResolve => 'Escolher informação';
+
+  @override
+  String dataConflictUseOption(String source, String value) {
+    return 'Usar $source: $value';
+  }
+
+  @override
+  String get sourceUser => 'Introduzido por ti';
+
+  @override
+  String get sourceEfatura => 'e-Fatura';
+
+  @override
+  String get updatedToday => 'Atualizado hoje';
+
+  @override
+  String get resetTaxYear => 'Repor este ano fiscal';
+
+  @override
+  String resetTaxYearTitle(int year) {
+    return 'Repor $year?';
+  }
+
+  @override
+  String get resetTaxYearBody =>
+      'Isto remove as respostas da entrevista e os rendimentos e despesas manuais deste ano. A ligação ao e-Fatura não é removida.';
+
+  @override
+  String get resetTaxYearConfirm => 'Repor ano';
+
+  @override
+  String get estimateUpdated => 'A estimativa foi atualizada.';
 }

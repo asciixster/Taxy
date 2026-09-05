@@ -1,4 +1,4 @@
-# Taxy 0.8.0 — guided tax experience
+# Taxy 0.8.1 — guided data integration and fiscal companion
 
 Taxy is a Portuguese personal tax assistant. IRS is its first beta-ready module;
 e-Fatura remains an experimental, read-only module. Product boundaries and

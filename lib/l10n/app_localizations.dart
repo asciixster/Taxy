@@ -984,7 +984,7 @@ abstract class AppLocalizations {
   /// No description provided for @sourceCalculated.
   ///
   /// In pt, this message translates to:
-  /// **'Calculado'**
+  /// **'Calculado pela Taxy'**
   String get sourceCalculated;
 
   /// No description provided for @statusConfirmed.
@@ -2202,7 +2202,7 @@ abstract class AppLocalizations {
   /// No description provided for @qExpensesReviewed.
   ///
   /// In pt, this message translates to:
-  /// **'Já reveste as tuas despesas e a informação do e-Fatura?'**
+  /// **'Já reviste as tuas despesas e a informação do e-Fatura?'**
   String get qExpensesReviewed;
 
   /// No description provided for @whyExpensesReviewed.
@@ -2264,6 +2264,132 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'A captura de documentos fica preparada para futuras importações confirmadas; nenhum valor é aplicado sem a tua confirmação.'**
   String get guidedTaxDocumentsHint;
+
+  /// No description provided for @guidedTaxPrefilled.
+  ///
+  /// In pt, this message translates to:
+  /// **'Já encontrámos esta informação. Podes revê-la.'**
+  String get guidedTaxPrefilled;
+
+  /// No description provided for @fiscalCompanionTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O teu acompanhamento fiscal'**
+  String get fiscalCompanionTitle;
+
+  /// No description provided for @fiscalCompanionIncomplete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda falta alguma informação'**
+  String get fiscalCompanionIncomplete;
+
+  /// No description provided for @fiscalCompanionReady.
+  ///
+  /// In pt, this message translates to:
+  /// **'A tua estimativa está pronta para rever'**
+  String get fiscalCompanionReady;
+
+  /// No description provided for @fiscalCompanionProvisional.
+  ///
+  /// In pt, this message translates to:
+  /// **'A tua estimativa é provisória'**
+  String get fiscalCompanionProvisional;
+
+  /// No description provided for @fiscalCompanionNoAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Está tudo atualizado por agora.'**
+  String get fiscalCompanionNoAction;
+
+  /// No description provided for @fiscalCompanionContinue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar a tua análise'**
+  String get fiscalCompanionContinue;
+
+  /// No description provided for @fiscalCompanionReviewEfatura.
+  ///
+  /// In pt, this message translates to:
+  /// **'Revê as tuas faturas pendentes'**
+  String get fiscalCompanionReviewEfatura;
+
+  /// No description provided for @fiscalCompanionMissingCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 área precisa de atenção} other{{count} áreas precisam de atenção}}'**
+  String fiscalCompanionMissingCount(int count);
+
+  /// No description provided for @dataConflictTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrámos informação diferente'**
+  String get dataConflictTitle;
+
+  /// No description provided for @dataConflictBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolhe a informação que devemos usar. Nada é alterado silenciosamente.'**
+  String get dataConflictBody;
+
+  /// No description provided for @dataConflictResolve.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher informação'**
+  String get dataConflictResolve;
+
+  /// No description provided for @dataConflictUseOption.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar {source}: {value}'**
+  String dataConflictUseOption(String source, String value);
+
+  /// No description provided for @sourceUser.
+  ///
+  /// In pt, this message translates to:
+  /// **'Introduzido por ti'**
+  String get sourceUser;
+
+  /// No description provided for @sourceEfatura.
+  ///
+  /// In pt, this message translates to:
+  /// **'e-Fatura'**
+  String get sourceEfatura;
+
+  /// No description provided for @updatedToday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atualizado hoje'**
+  String get updatedToday;
+
+  /// No description provided for @resetTaxYear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repor este ano fiscal'**
+  String get resetTaxYear;
+
+  /// No description provided for @resetTaxYearTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repor {year}?'**
+  String resetTaxYearTitle(int year);
+
+  /// No description provided for @resetTaxYearBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Isto remove as respostas da entrevista e os rendimentos e despesas manuais deste ano. A ligação ao e-Fatura não é removida.'**
+  String get resetTaxYearBody;
+
+  /// No description provided for @resetTaxYearConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repor ano'**
+  String get resetTaxYearConfirm;
+
+  /// No description provided for @estimateUpdated.
+  ///
+  /// In pt, this message translates to:
+  /// **'A estimativa foi atualizada.'**
+  String get estimateUpdated;
 }
 
 class _AppLocalizationsDelegate

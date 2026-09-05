@@ -10,10 +10,20 @@ import '../domain/invoice_explorer.dart';
 import '../infrastructure/efatura_runtime_bridge.dart';
 
 final class EfaturaScreen extends StatefulWidget {
-  const EfaturaScreen({super.key, required this.service, this.provisioning});
+  const EfaturaScreen({
+    super.key,
+    required this.service,
+    this.provisioning,
+    this.onOverviewChanged,
+    this.onInvoiceCountChanged,
+    this.onDisconnected,
+  });
 
   final EfaturaReadOnlyService service;
   final EfaturaRuntimeProvisioning? provisioning;
+  final Future<void> Function(EfaturaOverview overview)? onOverviewChanged;
+  final Future<void> Function(int invoiceCount)? onInvoiceCountChanged;
+  final Future<void> Function()? onDisconnected;
 
   @override
   State<EfaturaScreen> createState() => _EfaturaScreenState();
@@ -105,6 +115,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
     );
     try {
       final overview = await widget.service.connect(credentials);
+      await _notifyOverview(overview);
       if (!mounted) return;
       _nifController.clear();
       setState(() {
@@ -137,6 +148,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
     });
     try {
       final overview = await widget.service.loadOverview();
+      await _notifyOverview(overview);
       if (!mounted) return;
       setState(() {
         _overview = overview;
@@ -185,6 +197,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
     _requestInFlight = true;
     try {
       await widget.service.disconnect();
+      await _notifyDisconnected();
       if (!mounted) return;
       _passwordController.clear();
       _nifController.clear();
@@ -229,6 +242,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
     });
     try {
       final invoices = await widget.service.loadPendingInvoices();
+      await _notifyInvoiceCount(invoices.length);
       if (!mounted) return;
       setState(() {
         _invoices = invoices;
@@ -253,6 +267,7 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
     });
     try {
       final invoices = await widget.service.loadSectorInvoices(sector);
+      await _notifyInvoiceCount(invoices.length);
       if (!mounted) return;
       setState(() {
         _invoices = invoices;
@@ -265,6 +280,30 @@ final class _EfaturaScreenState extends State<EfaturaScreen> {
       _applyFailure(error);
     } finally {
       _requestInFlight = false;
+    }
+  }
+
+  Future<void> _notifyOverview(EfaturaOverview overview) async {
+    try {
+      await widget.onOverviewChanged?.call(overview);
+    } catch (_) {
+      // Companion persistence is isolated from the read-only source result.
+    }
+  }
+
+  Future<void> _notifyInvoiceCount(int count) async {
+    try {
+      await widget.onInvoiceCountChanged?.call(count);
+    } catch (_) {
+      // A local companion cache failure cannot invalidate fetched invoices.
+    }
+  }
+
+  Future<void> _notifyDisconnected() async {
+    try {
+      await widget.onDisconnected?.call();
+    } catch (_) {
+      // The backend session is already cleared; local fiscal state is separate.
     }
   }
 

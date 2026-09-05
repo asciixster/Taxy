@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/models.dart';
 import '../domain/money.dart';
+import '../fiscal_data/fiscal_data_orchestrator.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/taxy_formatters.dart';
 import '../product/product_models.dart';
@@ -14,6 +15,10 @@ import 'tax_interview_repository.dart';
 
 final taxInterviewRepositoryProvider = Provider<TaxInterviewRepository>(
   (_) => LocalTaxInterviewRepository(),
+);
+
+final taxInterviewForYearProvider = FutureProvider.family<TaxInterview?, int>(
+  (ref, year) => ref.watch(taxInterviewRepositoryProvider).load(year),
 );
 
 final class GuidedTaxScreen extends ConsumerStatefulWidget {
@@ -29,6 +34,8 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
   TaxInterview? _interview;
   bool _loading = true;
   bool _showResult = false;
+  bool _editingCompletedInterview = false;
+  bool _estimateChanged = false;
   String? _error;
 
   @override
@@ -43,7 +50,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
           .read(taxInterviewRepositoryProvider)
           .load(widget.taxYear);
       final product = await ref.read(productStateProvider.future);
-      final interview = stored ?? _prefill(product.profile);
+      final interview = stored ?? _prefill(product);
       if (!mounted) return;
       setState(() {
         _interview = interview;
@@ -59,7 +66,8 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     }
   }
 
-  TaxInterview _prefill(FiscalProfile profile) {
+  TaxInterview _prefill(ProductState product) {
+    final profile = product.profile;
     final answers = <String, TaxAnswer>{};
     void imported(String id, Object? value) {
       if (value != null) {
@@ -76,6 +84,23 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     imported('dependentCount', profile.dependentCount);
     imported('employmentIncome', profile.hasEmployment);
     imported('selfEmploymentIncome', profile.hasSelfEmployment);
+    final yearIncomes = product.incomes
+        .where(
+          (entry) =>
+              entry.year == widget.taxYear &&
+              entry.category == IncomeCategory.employment,
+        )
+        .toList();
+    if (yearIncomes.isNotEmpty) {
+      imported('employmentIncome', true);
+      imported(
+        'employmentGrossCents',
+        yearIncomes.fold<int>(0, (sum, entry) => sum + entry.amount.cents),
+      );
+    }
+    if (product.expenses.any((entry) => entry.year == widget.taxYear)) {
+      imported('expensesReviewed', true);
+    }
     return TaxInterview(
       taxYear: widget.taxYear,
       answers: answers,
@@ -163,6 +188,34 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
+                      if (_interview!.answers[question.id] case final answer?
+                          when answer.provenance !=
+                              TaxFactProvenance.userEntered) ...[
+                        Semantics(
+                          label: l10n.guidedTaxPrefilled,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 9,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.auto_awesome, size: 18),
+                                const SizedBox(width: 8),
+                                Flexible(child: Text(l10n.guidedTaxPrefilled)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
                       _answerWidget(l10n, question),
                       const SizedBox(height: 20),
                       ExpansionTile(
@@ -307,8 +360,15 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
   }
 
   Future<void> _continue(List<TaxQuestion> questions, int index) async {
-    if (index + 1 < questions.length) {
-      _goTo(questions[index + 1].id);
+    final nextIndex = List.generate(questions.length, (candidate) => candidate)
+        .skip(index + 1)
+        .firstWhere(
+          (candidate) =>
+              !_interview!.answers.containsKey(questions[candidate].id),
+          orElse: () => -1,
+        );
+    if (nextIndex >= 0) {
+      _goTo(questions[nextIndex].id);
       return;
     }
     final completed = _interview!.copyWith(completed: true);
@@ -321,6 +381,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
           ),
         );
     await ref.read(taxInterviewRepositoryProvider).save(completed);
+    ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
     final simulation = _simulation(completed);
     if (_engine.result(completed).canEstimate && simulation != null) {
       await ref.read(repositoryProvider).save(simulation);
@@ -331,6 +392,8 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     setState(() {
       _interview = completed;
       _showResult = true;
+      _estimateChanged = _editingCompletedInterview;
+      _editingCompletedInterview = false;
     });
   }
 
@@ -342,6 +405,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
   Future<void> _persist() async {
     if (_interview != null) {
       await ref.read(taxInterviewRepositoryProvider).save(_interview!);
+      ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
     }
   }
 
@@ -408,6 +472,18 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
                 );
               },
             ),
+          if (_estimateChanged) ...[
+            const SizedBox(height: 12),
+            Semantics(
+              liveRegion: true,
+              child: Card(
+                child: ListTile(
+                  leading: const Icon(Icons.update_rounded),
+                  title: Text(l10n.estimateUpdated),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Card(
             child: ListTile(
@@ -433,16 +509,15 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
                   if (_interview!.answers.containsKey(question.id))
                     ListTile(
                       title: Text(_title(l10n, question)),
-                      subtitle: Text(
-                        _displayAnswer(
-                          l10n,
-                          question,
-                          _interview!.answers[question.id]!.value,
-                        ),
+                      subtitle: _reviewSubtitle(
+                        l10n,
+                        question,
+                        _interview!.answers[question.id]!,
                       ),
                       trailing: IconButton(
                         tooltip: l10n.guidedTaxEdit,
                         onPressed: () => setState(() {
+                          _editingCompletedInterview = true;
                           _showResult = false;
                           _interview = _interview!.copyWith(
                             currentQuestionId: question.id,
@@ -467,6 +542,12 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
             icon: const Icon(Icons.edit_outlined),
             label: Text(l10n.guidedTaxReviewAnswers),
           ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => _resetTaxYear(l10n),
+            icon: const Icon(Icons.restart_alt_rounded),
+            label: Text(l10n.resetTaxYear),
+          ),
         ],
       ),
     );
@@ -481,6 +562,54 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
       ],
     ),
   );
+
+  Widget _reviewSubtitle(
+    AppLocalizations l10n,
+    TaxQuestion question,
+    TaxAnswer answer,
+  ) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(_displayAnswer(l10n, question, answer.value)),
+      if (answer.provenance != TaxFactProvenance.userEntered)
+        Text(
+          l10n.guidedTaxPrefilled,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+    ],
+  );
+
+  Future<void> _resetTaxYear(AppLocalizations l10n) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.resetTaxYearTitle(widget.taxYear)),
+        content: Text(l10n.resetTaxYearBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.resetTaxYearConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final product = await ref.read(productStateProvider.future);
+    final reset = resetManualFiscalYear(product, widget.taxYear);
+    await ref.read(productRepositoryProvider).save(reset);
+    await ref.read(taxInterviewRepositoryProvider).clear(widget.taxYear);
+    ref.invalidate(productStateProvider);
+    ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
+    if (!mounted) return;
+    setState(() {
+      _interview = _prefill(reset);
+      _showResult = false;
+    });
+  }
 
   TaxSimulation? _simulation(TaxInterview interview) {
     Object? value(String id) => interview.answers[id]?.value;

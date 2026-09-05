@@ -1,5 +1,16 @@
 # Guided tax interview architecture
 
+## 0.8.1 orchestration integration
+
+The interview consumes existing profile and year-matched ledger data before asking a
+question. Prefilled answers retain imported provenance and are identified in the UI as known
+information that the user may review. Fiscal data conflicts are delegated to the shared
+`FiscalDataOrchestrator`; the interview does not silently choose between divergent sources.
+
+Home consumes the same consolidated state for completeness, missing data and next action.
+External e-Fatura evidence remains separate from `FiscalProfile` and does not enter an IRS
+calculation without an explicit supported mapping rule.
+
 ## Flow
 
 `TaxQuestion → TaxAnswer → TaxFact → next visible TaxQuestion → estimate → explanation → TaxNextAction`
