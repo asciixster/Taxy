@@ -8,6 +8,8 @@ import 'package:taxy_pt/l10n/app_localizations.dart';
 import 'package:taxy_pt/product/product_models.dart';
 import 'package:taxy_pt/product/product_repository.dart';
 import 'package:taxy_pt/state/providers.dart';
+import 'package:taxy_pt/domain/models.dart';
+import 'package:taxy_pt/domain/money.dart';
 
 void main() {
   testWidgets('guided flow is localized and usable at 200% text scale', (
@@ -118,4 +120,70 @@ void main() {
 
     expect(find.text('35'), findsOneWidget);
   });
+
+  testWidgets(
+    'same-year profile and ledger prefill reduce repeated questions',
+    (tester) async {
+      final state = ProductState(
+        profile: const FiscalProfile(
+          activeTaxYear: 2026,
+          region: TaxRegion.continent,
+          civilStatus: CivilStatus.married,
+          dependentCount: 2,
+          hasEmployment: true,
+          hasSelfEmployment: false,
+        ),
+        incomes: const [
+          IncomeEntry(
+            id: 'known-income',
+            category: IncomeCategory.employment,
+            amount: Money.fromCents(3200000),
+            year: 2026,
+            provenance: EntryProvenance.imported,
+            status: EntryStatus.confirmed,
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            productRepositoryProvider.overrideWithValue(
+              MemoryProductRepository(state),
+            ),
+            taxInterviewRepositoryProvider.overrideWithValue(
+              MemoryTaxInterviewRepository(),
+            ),
+          ],
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const GuidedTaxScreen(taxYear: 2026),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('We already found this information. You can review it.'),
+        findsNothing,
+      );
+      await tester.tap(find.text('Yes'));
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('How old were you at the end of 2026?'), findsOneWidget);
+      await tester.enterText(find.byType(TextFormField), '35');
+      await tester.pump();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Would you like to see joint taxation first?'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('What was your family situation at the end of 2026?'),
+        findsNothing,
+      );
+    },
+  );
 }

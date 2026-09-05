@@ -9,6 +9,7 @@ import 'domain/models.dart';
 import 'domain/money.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/language_controller.dart';
+import 'l10n/taxy_formatters.dart';
 import 'l10n/theme_controller.dart';
 import 'navigation/app_navigation.dart';
 import 'modules/efatura/application/efatura_read_only_service.dart';
@@ -19,6 +20,8 @@ import 'modules/efatura/infrastructure/efatura_session_token_store.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'guided_tax/guided_tax_screen.dart';
+import 'guided_tax/tax_interview_models.dart';
+import 'fiscal_data/fiscal_data_orchestrator.dart';
 import 'screens/how_we_calculate_screen.dart';
 import 'screens/settings_screen.dart';
 import 'state/providers.dart';
@@ -331,13 +334,262 @@ final class _DashboardRuleLoader extends ConsumerWidget {
   }
 }
 
-final class _Welcome extends StatelessWidget {
+final class _FiscalCompanionCard extends ConsumerWidget {
+  const _FiscalCompanionCard({required this.taxYear});
+
+  final int taxYear;
+  static const _orchestrator = FiscalDataOrchestrator();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final product = ref.watch(productStateProvider);
+    final interview = ref.watch(taxInterviewForYearProvider(taxYear));
+    final efatura = ref.watch(efaturaEvidenceForYearProvider(taxYear));
+    if (product.isLoading || interview.isLoading || efatura.isLoading) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: LinearProgressIndicator(),
+        ),
+      );
+    }
+    if (product.hasError || interview.hasError) {
+      return Card(
+        child: ListTile(
+          leading: const Icon(Icons.route_outlined),
+          title: Text(l10n.fiscalCompanionTitle),
+          subtitle: Text(l10n.fiscalCompanionContinue),
+          trailing: const Icon(Icons.arrow_forward_rounded),
+          onTap: () => _openGuidedTax(context, taxYear),
+        ),
+      );
+    }
+    final consolidated = _orchestrator.consolidate(
+      product: product.requireValue,
+      interview: interview.value,
+      efatura: efatura.value,
+    );
+    final efaturaEvidence = efatura.value;
+    final status = consolidated.conflicts.isNotEmpty
+        ? l10n.dataConflictTitle
+        : switch (consolidated.estimateCompleteness) {
+            EstimateCompleteness.ready => l10n.fiscalCompanionReady,
+            EstimateCompleteness.provisional => l10n.fiscalCompanionProvisional,
+            EstimateCompleteness.incomplete => l10n.fiscalCompanionIncomplete,
+            EstimateCompleteness.unavailable => l10n.fiscalCompanionIncomplete,
+          };
+    final action = switch (consolidated.nextAction) {
+      FiscalCompanionAction.reviewEfatura => l10n.fiscalCompanionReviewEfatura,
+      FiscalCompanionAction.noAction => l10n.fiscalCompanionNoAction,
+      _ => l10n.fiscalCompanionContinue,
+    };
+    return Semantics(
+      container: true,
+      label: '${l10n.fiscalCompanionTitle}. $status. $action',
+      child: Card(
+        key: const Key('fiscal-companion-card'),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.assistant_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      l10n.fiscalCompanionTitle,
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(status, style: Theme.of(context).textTheme.bodyLarge),
+              if (product.requireValue.incomeTotal.cents > 0) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: Text(l10n.income)),
+                    Text(
+                      TaxyFormatters.euros(
+                        context,
+                        product.requireValue.incomeTotal.cents,
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ],
+              if (consolidated.conflicts.isNotEmpty) ...[
+                const SizedBox(height: 5),
+                Text(
+                  l10n.dataConflictBody,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: interview.value == null
+                      ? null
+                      : () => _resolveFiscalConflict(
+                          context,
+                          ref,
+                          interview.value!,
+                          consolidated.conflicts.first,
+                        ),
+                  child: Text(l10n.dataConflictResolve),
+                ),
+              ],
+              if (consolidated.missing.isNotEmpty) ...[
+                const SizedBox(height: 5),
+                Text(
+                  l10n.fiscalCompanionMissingCount(consolidated.missing.length),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              if (efaturaEvidence != null) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(Icons.receipt_long_outlined, size: 18),
+                    const SizedBox(width: 8),
+                    const Expanded(child: Text('e-Fatura')),
+                    Text(
+                      '${l10n.connected} · ${l10n.updatedToday}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+                if ((efaturaEvidence.pendingCount ?? 0) > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      l10n.guidedTaxPendingEfatura(
+                        efaturaEvidence.pendingCount!,
+                      ),
+                    ),
+                  ),
+              ],
+              const SizedBox(height: 14),
+              FilledButton.tonalIcon(
+                onPressed:
+                    consolidated.nextAction ==
+                            FiscalCompanionAction.reviewEfatura &&
+                        EfaturaFeatureFlags.experimental
+                    ? () => _openEfatura(context, ref, taxYear)
+                    : () => _openGuidedTax(context, taxYear),
+                icon: const Icon(Icons.arrow_forward_rounded),
+                label: Text(action),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _resolveFiscalConflict(
+  BuildContext context,
+  WidgetRef ref,
+  TaxInterview interview,
+  FiscalDataConflict conflict,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final selected = await showDialog<FiscalDataPoint>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(l10n.dataConflictTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.dataConflictBody),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(dialogContext, conflict.current),
+            child: Text(
+              l10n.dataConflictUseOption(
+                _fiscalSourceLabel(l10n, conflict.current.source),
+                _fiscalConflictValue(conflict.current.value),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(dialogContext, conflict.candidate),
+            child: Text(
+              l10n.dataConflictUseOption(
+                _fiscalSourceLabel(l10n, conflict.candidate.source),
+                _fiscalConflictValue(conflict.candidate.value),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: Text(l10n.cancel),
+        ),
+      ],
+    ),
+  );
+  if (selected == null || !context.mounted) return;
+  final updated = interview.copyWith(
+    answers: {
+      ...interview.answers,
+      conflict.id: TaxAnswer(
+        questionId: conflict.id,
+        value: selected.value,
+        provenance: TaxFactProvenance.userEntered,
+      ),
+    },
+  );
+  final product = await ref.read(productStateProvider.future);
+  final updatedProfile = profileFromInterview(updated, product.profile);
+  await ref
+      .read(productRepositoryProvider)
+      .save(product.copyWith(profile: updatedProfile));
+  await ref.read(taxInterviewRepositoryProvider).save(updated);
+  ref.invalidate(productStateProvider);
+  ref.invalidate(taxInterviewForYearProvider(interview.taxYear));
+}
+
+String _fiscalSourceLabel(AppLocalizations l10n, FiscalDataSource source) =>
+    switch (source) {
+      FiscalDataSource.userEntered ||
+      FiscalDataSource.interview => l10n.sourceUser,
+      FiscalDataSource.official => l10n.sourceEfatura,
+      FiscalDataSource.imported => l10n.sourceImported,
+      FiscalDataSource.calculated => l10n.sourceCalculated,
+      FiscalDataSource.inferred => l10n.sourceExternal,
+    };
+
+String _fiscalConflictValue(Object? value) => switch (value) {
+  Enum value => value.name,
+  bool value => value ? '✓' : '✕',
+  null => '—',
+  _ => value.toString(),
+};
+
+final class _Welcome extends ConsumerWidget {
   const _Welcome({required this.rules, required this.hasDraft});
   final TaxRuleSet rules;
   final bool hasDraft;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return Stack(
       children: [
@@ -405,6 +657,8 @@ final class _Welcome extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
                   const _PreviewCard(),
+                  const SizedBox(height: 18),
+                  _FiscalCompanionCard(taxYear: rules.taxYear),
                   const SizedBox(height: 26),
                   Wrap(
                     spacing: 16,
@@ -427,7 +681,8 @@ final class _Welcome extends StatelessWidget {
                     onOpenIncome: () => _openIncome(context),
                     onOpenExpenses: () => _openExpenses(context),
                     showExperimentalEfatura: EfaturaFeatureFlags.experimental,
-                    onOpenEfatura: () => _openEfatura(context),
+                    onOpenEfatura: () =>
+                        _openEfatura(context, ref, rules.taxYear),
                   ),
                   const SizedBox(height: 26),
                   FilledButton.icon(
@@ -550,15 +805,7 @@ final class _Dashboard extends ConsumerWidget {
                   ),
                 ],
                 const SizedBox(height: 14),
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.route_outlined),
-                    title: Text(l10n.guidedTaxContinue),
-                    subtitle: Text(l10n.guidedTaxIntro),
-                    trailing: const Icon(Icons.arrow_forward_rounded),
-                    onTap: () => _openGuidedTax(context, rules.taxYear),
-                  ),
-                ),
+                _FiscalCompanionCard(taxYear: rules.taxYear),
                 const SizedBox(height: 22),
                 _ResultHero(
                   result: result,
@@ -631,7 +878,7 @@ final class _Dashboard extends ConsumerWidget {
                       title: Text(l10n.efaturaTitle),
                       subtitle: Text(l10n.readOnlyExperimental),
                       trailing: Chip(label: Text(l10n.experimental)),
-                      onTap: () => _openEfatura(context),
+                      onTap: () => _openEfatura(context, ref, rules.taxYear),
                     ),
                   ),
                 ],
@@ -927,7 +1174,7 @@ Future<void> _openWizard(
   );
 }
 
-Future<void> _openEfatura(BuildContext context) {
+Future<void> _openEfatura(BuildContext context, WidgetRef ref, int taxYear) {
   final screenProtection = AndroidEfaturaScreenProtection();
   final backendBridge = BackendEfaturaRuntimeBridge(
     baseUri: EfaturaApiConfiguration.baseUri,
@@ -941,6 +1188,44 @@ Future<void> _openEfatura(BuildContext context) {
       backendBridge,
     ),
     provisioning: backendBridge,
+    onOverviewChanged: (overview) async {
+      final repository = ref.read(fiscalEvidenceRepositoryProvider);
+      final current = await repository.loadEfatura(taxYear);
+      final pending = overview.pendingValidation.valueOrNull;
+      await repository.saveEfatura(
+        EfaturaCompanionEvidence.fromOverview(
+          taxYear: taxYear,
+          overview: overview,
+          invoiceCount: current?.invoiceCount,
+          updatedAt: DateTime.now().toUtc(),
+          needsReview:
+              current?.needsReview == true ||
+              (current != null &&
+                  pending != null &&
+                  current.pendingCount != pending),
+        ),
+      );
+      ref.invalidate(efaturaEvidenceForYearProvider(taxYear));
+    },
+    onInvoiceCountChanged: (invoiceCount) async {
+      final repository = ref.read(fiscalEvidenceRepositoryProvider);
+      final current = await repository.loadEfatura(taxYear);
+      await repository.saveEfatura(
+        EfaturaCompanionEvidence(
+          taxYear: taxYear,
+          pendingCount: current?.pendingCount,
+          invoiceCount: invoiceCount,
+          available: true,
+          lastUpdatedAt: DateTime.now().toUtc(),
+          needsReview: false,
+        ),
+      );
+      ref.invalidate(efaturaEvidenceForYearProvider(taxYear));
+    },
+    onDisconnected: () async {
+      await ref.read(fiscalEvidenceRepositoryProvider).clearEfatura(taxYear);
+      ref.invalidate(efaturaEvidenceForYearProvider(taxYear));
+    },
   );
   return Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 }

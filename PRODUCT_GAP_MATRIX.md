@@ -1,5 +1,19 @@
 # Product gap matrix — 0.7.13
 
+## Taxy 0.8.1 — integrated fiscal companion
+
+| Capability | Status | Notes |
+|---|---|---|
+| Cross-source orchestration | IMPLEMENTED | Year-scoped provenance, confidence and freshness |
+| Existing-data prefill | IMPLEMENTED | Profile and normalized ledgers reduce repeated questions |
+| Conflict detection/resolution | IMPLEMENTED | No silent source selection |
+| Central missing-data model | IMPLEMENTED | Severity, reason and action shared with Home |
+| Dirty-section review | IMPLEMENTED | Conflicts/new evidence target the affected section |
+| e-Fatura next action | IMPLEMENTED | Pending count only; strictly read-only |
+| Official benefit/sector totals | UNAVAILABLE | Never represented as zero |
+| Complex-income calculation | PLANNED | Identified and fail-closed |
+| Broad document ingestion/OCR | PLANNED | Confirmation-first foundation only |
+
 Statuses describe verified implementation evidence, not marketing readiness.
 
 | Capability | Product status | Gap | Evidence / remaining work |

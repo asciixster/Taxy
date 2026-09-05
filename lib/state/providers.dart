@@ -6,6 +6,8 @@ import '../domain/models.dart';
 import '../tax_engine/tax_rules.dart';
 import '../product/product_repository.dart';
 import '../product/product_models.dart';
+import '../fiscal_data/fiscal_data_orchestrator.dart';
+import '../fiscal_data/fiscal_evidence_repository.dart';
 
 final repositoryProvider = Provider<SimulationRepository>(
   (ref) => LocalSimulationRepository(),
@@ -47,3 +49,13 @@ final productRepositoryProvider = Provider<ProductRepository>(
 final productStateProvider = FutureProvider<ProductState>(
   (ref) => ref.watch(productRepositoryProvider).load(),
 );
+
+final fiscalEvidenceRepositoryProvider = Provider<FiscalEvidenceRepository>(
+  (ref) => LocalFiscalEvidenceRepository(),
+);
+
+final efaturaEvidenceForYearProvider =
+    FutureProvider.family<EfaturaCompanionEvidence?, int>(
+      (ref, year) =>
+          ref.watch(fiscalEvidenceRepositoryProvider).loadEfatura(year),
+    );

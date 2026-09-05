@@ -1,5 +1,19 @@
 # Taxfix → Taxy: public product gap
 
+## 0.8.1 returning-user benchmark
+
+| Measure | Taxfix public experience | Taxy 0.8.1 |
+|---|---|---|
+| Repeated input | Reuses available/prefilled information | Profile and same-year ledgers prefill and skip known answers |
+| Guided flow | Personalized question sequence | Rule-driven Portuguese sequence with deterministic cleanup |
+| Result clarity | Estimate with calculation detail | Explicit completeness plus engine-consistent breakdown |
+| Next action | Guided completion/submission | One action: missing data, interview, pending invoices or review |
+| Returning user | Continue an existing return | Annual companion, persisted interview and targeted section review |
+
+Acceptance answer: a user is asked fewer questions when Taxy already has matching, trusted,
+same-year data. Conflicting evidence is never silently substituted and instead marks the
+affected section for review.
+
 Date: 2026-09-04. This audit uses only public Taxfix pages, public support
 material and public store descriptions. No application binary, private asset,
 copy or proprietary implementation was inspected or reproduced.

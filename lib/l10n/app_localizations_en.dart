@@ -491,7 +491,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceExternal => 'External source';
 
   @override
-  String get sourceCalculated => 'Calculated';
+  String get sourceCalculated => 'Calculated by Taxy';
 
   @override
   String get statusConfirmed => 'Confirmed';
@@ -1237,4 +1237,82 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get guidedTaxDocumentsHint =>
       'Document capture is prepared for future confirmed imports; no value is applied without your confirmation.';
+
+  @override
+  String get guidedTaxPrefilled =>
+      'We already found this information. You can review it.';
+
+  @override
+  String get fiscalCompanionTitle => 'Your fiscal companion';
+
+  @override
+  String get fiscalCompanionIncomplete => 'Some information is still missing';
+
+  @override
+  String get fiscalCompanionReady => 'Your estimate is ready to review';
+
+  @override
+  String get fiscalCompanionProvisional => 'Your estimate is provisional';
+
+  @override
+  String get fiscalCompanionNoAction => 'Everything is up to date for now.';
+
+  @override
+  String get fiscalCompanionContinue => 'Continue your analysis';
+
+  @override
+  String get fiscalCompanionReviewEfatura => 'Review your pending invoices';
+
+  @override
+  String fiscalCompanionMissingCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count areas need attention',
+      one: '1 area needs attention',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dataConflictTitle => 'We found different information';
+
+  @override
+  String get dataConflictBody =>
+      'Choose which information we should use. Nothing is changed silently.';
+
+  @override
+  String get dataConflictResolve => 'Choose information';
+
+  @override
+  String dataConflictUseOption(String source, String value) {
+    return 'Use $source: $value';
+  }
+
+  @override
+  String get sourceUser => 'Entered by you';
+
+  @override
+  String get sourceEfatura => 'e-Fatura';
+
+  @override
+  String get updatedToday => 'Updated today';
+
+  @override
+  String get resetTaxYear => 'Reset this tax year';
+
+  @override
+  String resetTaxYearTitle(int year) {
+    return 'Reset $year?';
+  }
+
+  @override
+  String get resetTaxYearBody =>
+      'This removes interview answers and manual income and expenses for this year. Your e-Fatura connection is not removed.';
+
+  @override
+  String get resetTaxYearConfirm => 'Reset year';
+
+  @override
+  String get estimateUpdated => 'The estimate was updated.';
 }
