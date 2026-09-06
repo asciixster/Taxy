@@ -21,3 +21,21 @@ Audit às áreas de perguntas atuais, agrupado por facto. **11 perguntas/grupos 
 | contabilidade organizada/complexidade | ASK_IF_AT_UNKNOWN | 0 | never infer solely from invoices |
 
 `PREFILL_AND_CONFIRM` is the default for facts that affect tax rules. `AUTO_IMPORT_READONLY` is limited to observational data whose meaning is stable and conflict-safe.
+
+## DM3IRS Mobile discovery addendum
+
+The DM3IRS spike creates **no immediate reduction**: no response field, entitlement or runtime read has been confirmed. The following nine question groups would become reducible only after the corresponding operation passes contract, auth, read-only, runtime and product-review gates:
+
+| Question group | Conditional strategy | Required evidence |
+|---|---|---|
+| residence | PREFILL_AND_CONFIRM | exact field + tax-year semantics |
+| civil status / taxation choice | PREFILL_AND_CONFIRM | exact declaration/user field + current-year relevance |
+| dependants/household | PREFILL_AND_CONFIRM | exact household response fields |
+| employee income | PREFILL_AND_CONFIRM | declaration group returned and field semantics mapped |
+| Category A withholding | PREFILL_AND_CONFIRM | exact withholding source and year |
+| independent-work presence | PREFILL_AND_CONFIRM | Anexo B presence returned, not merely activity registration |
+| activity code/nature | PREFILL_AND_CONFIRM | exact code + reconciliation with curated 90-code mapping |
+| Category B revenue | PREFILL_AND_CONFIRM | exact box/amount mapping and user confirmation |
+| Category B withholding/contributions/payments | PREFILL_AND_CONFIRM | exact independent components, never a blended total |
+
+Counts for this spike: 13 conditional prefill mappings, 9 potentially reducible question groups, **0 newly reducible now**. The existing two e-Fatura reductions remain the only runtime-confirmed ones.

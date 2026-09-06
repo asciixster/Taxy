@@ -16,6 +16,8 @@ Autorização nunca é transitiva entre endpoint, operação ou população.
 | VIES / `checkVat` | none/basic public | n/a | none | YES for supplied VAT-number validation | public contract; no probe needed |
 | ATGo profile/analytics | official app context | app-owned | private context | NOT_AUTHORIZED for Taxy | capability public, API/auth not published |
 | Personal IRS/assessment/payment pages | user Portal session | n/a | Portal session | UNKNOWN for automation | no controlled mapping/probe |
+| DM3IRS Mobile `:411` / six read candidates | legitimate Taxy identity only | UNKNOWN | mobile auth envelope UNKNOWN | UNKNOWN; no operation passed schema/auth/no-side-effect gate | NO_LIVE_PROBE |
+| DM3IRS Mobile / `submeterDeclaracaoMobileRequest` | not applicable | not evaluated | not evaluated | WRITE BLOCKED | 0 write requests |
 
 ## Matrix completeness
 

@@ -1,6 +1,6 @@
 # Fontes oficiais revistas
 
-Data de revisão: 2026-09-06. Total: **17 fontes oficiais/primárias**. “Operações” descreve o documento; não é uma autorização Taxy.
+Data de revisão: 2026-09-06. Total: **19 fontes oficiais/primárias**. “Operações” descreve o documento; não é uma autorização Taxy.
 
 | # | Título/fonte | URL | Versão/data | Serviço e operações | Auth/schema/environment/limites |
 |---:|---|---|---|---|---|
@@ -21,6 +21,8 @@ Data de revisão: 2026-09-06. Total: **17 fontes oficiais/primárias**. “Opera
 | 15 | Formatos de ficheiros — contribuintes/CC | https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Outras_entidades/Suporte_tecnologico/Formato_de_ficheiros/Contribuintes_e_contabilistas_certificados/Paginas/default.aspx | IRS 2026 atualizado 2026-03-10 | schemas Modelo 3, M22, IVA, OSS, IES, retenções | formatos de entrega/importação; não read APIs |
 | 16 | ATGo | https://info.portaldasfinancas.gov.pt/pt/destaques/Paginas/Nova_aplicacao_ATGo.aspx | página oficial consultada 2026-09-06 | consulta perfil atividade, regime IVA/IRS, CAE/CIRS, receitas/despesas/estatísticas; emissão de documentos | prova de produto oficial; endpoint e entitlement Taxy não publicados |
 | 17 | VIES — Comissão Europeia | https://ec.europa.eu/taxation_customs/vies/ | consultado 2026-09-06 | validação de número IVA intracomunitário | fonte oficial UE; read-only público; não devolve o regime IVA completo do titular |
+| 18 | Suporte Informático IRS 2026 | https://info.portaldasfinancas.gov.pt/pt/apoio_ao_contribuinte/Outras_entidades/Suporte_tecnologico/Formato_de_ficheiros/Contribuintes_e_contabilistas_certificados/Documents/Suporte_Informatico_IRS_2026.zip | pacote 2026, obtido 2026-09-06 | `Modelo3IRSv2026.xsd` e `types.xsd`; Rosto, 13 anexos e catálogos | esquema de declaração/input; não documenta auth ou responses DM3IRS Mobile |
+| 19 | IRS — aplicação oficial (Google Play) | https://play.google.com/store/apps/details?id=pt.gov.portaldasfinancas.irs&hl=pt | atualizada 2026-05-28, consultada 2026-09-06 | submissão IRS Automático e consulta da declaração de 2025 | evidência pública de produto; não publica endpoint, schema ou autorização Taxy |
 
 ## Nota de inconsistência documental
 

@@ -1,6 +1,6 @@
 # Índice WSDL/XSD e contratos
 
-Foram localizados **10 artefactos/famílias WSDL/XSD relevantes**; sete WSDL foram enumerados diretamente nesta investigação. O download de documentação não é um business probe.
+Foram localizados **11 artefactos/famílias WSDL/XSD relevantes**; sete WSDL foram enumerados diretamente na investigação geral e o pacote público Modelo 3 contém dois XSD. O download de documentação não é um business probe.
 
 | Contrato | Namespace/operations | Request/response | SOAPAction/paginação/faults | Estado |
 |---|---|---|---|---|
@@ -14,6 +14,7 @@ Foram localizados **10 artefactos/famílias WSDL/XSD relevantes**; sete WSDL for
 | `DeclaracaoPeriodicaIVAWebService.wsdl` | IVA | submissão periódica | SOAP | LOCATED, WRITE |
 | `oaatws.zip` | obrigações acessórias | comunicação de modelos declarativos | WSDL empacotado | LOCATED, WRITE |
 | VIES `checkVatService.wsdl` | UE VIES | `checkVat` e variantes publicadas | faults de indisponibilidade nacional/global, input inválido e throttling | LOCATED, READ_ONLY |
+| `Modelo3IRSv2026.xsd` + `types.xsd` | Modelo 3 IRS 2026; `Rosto` + anexos A–L/SS e catálogos | esquema declarativo de input | não define SOAPAction, auth nem responses DM3IRS Mobile | PUBLIC_XSD_CONFIRMED; não é mobile WSDL/XSD |
 
 ## Fatshare: elementos úteis
 
@@ -25,3 +26,7 @@ Foram localizados **10 artefactos/famílias WSDL/XSD relevantes**; sete WSDL for
 ## FactIntWS: contrato não público
 
 Namespace `http://factemi.at.min_financas.pt/factintws`; SOAPAction `namespace/Operation`. Reads: `EcraInicial`, `DadosContribuinte`, `FaturasPorClassificar`, `FaturasPorSetor`. O contrato provém de evidência de app oficial e runtime controlado, não de WSDL público; estabilidade `MOBILE_PRIVATE_CONTEXT`.
+
+## DM3IRS Mobile
+
+Foram reportados os locais `/dm3irs/schemas` e `/dm3irsmobile/schemas` e o serviço `:411/dm3irsMobileService/`. O cliente TLS local não conseguiu obter esses recursos, e não existe APK/WSDL/XSD mobile neste worktree. Consequentemente, os seis roots read-candidate estão catalogados mas SOAP version, SOAPAction, namespace, request sequence, auth e response permanecem `UNKNOWN`. O XSD público Modelo 3 não deve ser usado como substituto do contrato mobile.
