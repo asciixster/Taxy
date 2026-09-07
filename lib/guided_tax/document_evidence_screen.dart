@@ -63,7 +63,7 @@ final class _DocumentEvidenceScreenState extends State<DocumentEvidenceScreen> {
     super.dispose();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool preserveError = false}) async {
     try {
       final values = await widget.repository.load(widget.taxYear);
       final pending = (await _captureRepository.load())
@@ -79,7 +79,7 @@ final class _DocumentEvidenceScreenState extends State<DocumentEvidenceScreen> {
         _items = values;
         _pending = pending;
         _loading = false;
-        _error = null;
+        if (!preserveError) _error = null;
       });
     } catch (_) {
       if (!mounted) return;
@@ -219,7 +219,7 @@ final class _DocumentEvidenceScreenState extends State<DocumentEvidenceScreen> {
     } finally {
       if (mounted) {
         setState(() => _processing = false);
-        await _load();
+        await _load(preserveError: _error != null);
       }
     }
   }

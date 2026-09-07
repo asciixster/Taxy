@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taxy_pt/guided_tax/document_evidence.dart';
@@ -445,6 +445,35 @@ void main() {
     final confirmed = await evidence.load(2026);
     expect(confirmed, hasLength(3));
   });
+
+  testWidgets('a native processing failure remains visible after reload', (
+    tester,
+  ) async {
+    final evidence = MemoryGuidedDocumentEvidenceRepository();
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('pt', 'PT'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: DocumentEvidenceScreen(
+          taxYear: 2026,
+          repository: evidence,
+          captureGateway: const _FailingCaptureGateway('PROCESSING_FAILED'),
+          captureRepository: MemoryCapturedTaxDocumentRepository(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('document-capture-file')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Não conseguimos ler este documento com segurança.'),
+      findsOneWidget,
+    );
+    expect(find.text('Introduzir valores manualmente'), findsOneWidget);
+  });
 }
 
 CapturedTaxDocument _capturedDocument({
@@ -572,4 +601,34 @@ final class _FakeCaptureGateway implements TaxDocumentCaptureGateway {
 
   @override
   Future<void> clearTemporary() async => deletedRaw = true;
+}
+
+final class _FailingCaptureGateway implements TaxDocumentCaptureGateway {
+  const _FailingCaptureGateway(this.code);
+
+  final String code;
+
+  Future<NativeDocumentCaptureResult?> _fail() async =>
+      throw PlatformException(code: code);
+
+  @override
+  Future<NativeDocumentCaptureResult?> chooseFile(int taxYear) => _fail();
+
+  @override
+  Future<NativeDocumentCaptureResult?> takePhoto(int taxYear) => _fail();
+
+  @override
+  Future<Uint8List?> preview(String id) async => null;
+
+  @override
+  Future<void> confirmAndDeleteRaw(String id) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<int> cleanupExpired() async => 0;
+
+  @override
+  Future<int> clearTemporary() async => 0;
 }
