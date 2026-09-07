@@ -35,4 +35,4 @@ The APK signing certificate is a public signing identity, not the TLS client ide
 
 Manifest/resource inventory, ZIP asset inspection, sanitized fixture-shape analysis and static Dart AOT disassembly were used. The app was never installed or executed. Embedded fixtures were used only to enumerate element names/types; values and identifying filenames were not retained.
 
-Sanitized response-shape counts are: 24 payload fields for `infoUtilizador` (excluding root/status), 89 distinct payload fields for `infoAgregado`, four catalog families in the active app, 17 receipt payload fields, one PDF payload field and one optional delivery-reference field.
+Sanitized response-shape counts are: 24 payload fields for `infoUtilizador` (excluding root/status), 89 distinct payload fields for `infoAgregado`, four catalog families in the active app, 16 receipt payload fields, one PDF payload field and one optional delivery-reference field.

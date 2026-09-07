@@ -1,42 +1,37 @@
-# Estratégia Ask Less
+# Taxy Ask Less strategy — DM3IRS impact
 
-Audit às áreas de perguntas atuais, agrupado por facto. **11 perguntas/grupos podem ser removidos ou reduzidos** se as fontes correspondentes passarem o gate; 2 já são reduzíveis com e-Fatura recebido.
+Baseline: the current guided interview has 16 questions. The figures below describe the future authorized state, not present capability. A question “disappears” only when current-year official data is present, complete and semantically unambiguous.
 
-| Pergunta/facto | Strategy | Redução | Gate |
-|---|---|---:|---|
-| tens despesas/faturas e-Fatura? | AUTO_IMPORT_READONLY | 1 | current runtime |
-| existem faturas pendentes? | AUTO_IMPORT_READONLY | 1 | current runtime |
-| trabalhas por conta própria? | PREFILL_AND_CONFIRM | 1 | taxpayer profile auth |
-| quando iniciou/cessou atividade? | PREFILL_AND_CONFIRM | 1 | taxpayer profile auth |
-| tipo/código de atividade | PREFILL_AND_CONFIRM | 1 | CAE/CIRS auth + mapping |
-| regime simplificado/organizada | PREFILL_AND_CONFIRM | 1 | IRS regime auth |
-| enquadramento IVA | PREFILL_AND_CONFIRM | 1 | VAT profile auth |
-| faturação bruta independente | PREFILL_AND_CONFIRM | 1 | issued documents auth + complete interval |
-| rendimentos de trabalho | PREFILL_AND_CONFIRM | 1 | reported-income source |
-| retenção Categoria A | PREFILL_AND_CONFIRM | 1 | withholding source |
-| retenção Categoria B | PREFILL_AND_CONFIRM | 1 | withholding/source semantics |
-| estado civil/dependentes | ASK_IF_AT_UNKNOWN | 0 | no source discovered |
-| residência fiscal | ASK_ALWAYS initially | 0 | high-risk/year-specific |
-| rendimentos estrangeiros | ASK_ALWAYS | 0 | no supported source |
-| contabilidade organizada/complexidade | ASK_IF_AT_UNKNOWN | 0 | never infer solely from invoices |
+| Section | Current | Disappear | Confirm-only | Remain manual | Decision |
+|---|---:|---:|---:|---:|---|
+| Sobre ti | 3 | 0 | 2 | 1 | residence/region confirm; age stays manual because no birth-date field was confirmed |
+| Família | 3 | 0 | 3 | 0 | civil status, joint/separate context and dependant count confirm |
+| Trabalho e rendimentos | 3 | 2 | 1 | 0 | employment/self-employment presence may hide; employment amount confirms |
+| Outros rendimentos | 3 | 1 | 0 | 2 | pension presence may hide; foreign and rental income remain manual |
+| Despesas | 1 | 0 | 1 | 0 | official expense availability still requires review |
+| Retenções e pagamentos | 2 | 0 | 2 | 0 | withholding and Social Security confirm |
+| Revisão | 1 | 0 | 0 | 1 | final user review remains mandatory |
+| **Total** | **16** | **3** | **9** | **4** |  |
 
-`PREFILL_AND_CONFIRM` is the default for facts that affect tax rules. `AUTO_IMPORT_READONLY` is limited to observational data whose meaning is stable and conflict-safe.
+## Per-question strategy
 
-## DM3IRS Mobile discovery addendum
-
-The DM3IRS static analysis creates **no immediate reduction** because entitlement and runtime access remain unconfirmed. It confirms fields for the following ten question groups, which would become reducible after authorization, runtime and product-review gates:
-
-| Question group | Conditional strategy | Required evidence |
+| Question | Authorized-data strategy | Reason |
 |---|---|---|
-| residence | PREFILL_AND_CONFIRM | exact field + tax-year semantics |
-| civil status / taxation choice | PREFILL_AND_CONFIRM | exact declaration/user field + current-year relevance |
-| dependants/household | PREFILL_AND_CONFIRM | exact household response fields |
-| employee income | PREFILL_AND_CONFIRM | declaration group returned and field semantics mapped |
-| Category A withholding | PREFILL_AND_CONFIRM | exact withholding source and year |
-| independent-work presence | PREFILL_AND_CONFIRM | Anexo B presence returned, not merely activity registration |
-| activity code/nature | PREFILL_AND_CONFIRM | exact code + reconciliation with curated 90-code mapping |
-| Category B revenue | PREFILL_AND_CONFIRM | exact box/amount mapping and user confirmation |
-| Category B withholding/contributions/payments | PREFILL_AND_CONFIRM | exact independent components, never a blended total |
-| IRS Jovem context | PREFILL_AND_CONFIRM | exact eligibility/option semantics for the selected year |
+| `residentPortugal` | PREFILL_CONFIRM | residence is year-sensitive |
+| `region` | PREFILL_CONFIRM | map only recognized official residence codes |
+| `age` | ASK_ALWAYS | no confirmed date-of-birth field |
+| `civilStatus` | PREFILL_CONFIRM | family status affects calculation |
+| `jointTaxation` | PREFILL_CONFIRM | never infer a current choice solely from spouse presence |
+| `dependentCount` | PREFILL_CONFIRM | derived from returned records; detailed differences need review |
+| `employmentIncome` | HIDE_IF_OFFICIAL | only with complete current-year income group |
+| `employmentGrossCents` | PREFILL_CONFIRM | financial amount must be visible before use |
+| `selfEmploymentIncome` | HIDE_IF_OFFICIAL | revenue evidence is required; activity registration alone is insufficient |
+| `pensionIncome` | HIDE_IF_OFFICIAL | only with complete current-year income group |
+| `foreignIncome` | ASK_ALWAYS | no confirmed mobile field safely proves absence |
+| `rentalIncome` | ASK_ALWAYS | no confirmed mobile field safely proves absence |
+| `expensesReviewed` | PREFILL_CONFIRM | official availability is evidence, not user review |
+| `withholdingCents` | PREFILL_CONFIRM | reconcile category details and total |
+| `socialSecurityCents` | PREFILL_CONFIRM | fiscal meaning and period must be confirmed |
+| `reviewConfirmed` | ASK_ALWAYS | explicit user control is a product safety boundary |
 
-Counts for this spike: 14 conditional prefill mappings, 10 potentially reducible question groups, **0 newly reducible now**. The existing two e-Fatura reductions remain the only runtime-confirmed ones.
+DM3IRS authorization is currently unknown, so actual present-state reduction remains zero. Existing e-Fatura read-only behavior remains independent and available through its current sanctioned path.

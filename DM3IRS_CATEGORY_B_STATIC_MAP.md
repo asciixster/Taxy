@@ -17,6 +17,21 @@
 
 Ten Category B-relevant field families were confirmed. The response does not expose a field explicitly named coefficient, Anexo B field 403/404, or an Article 31 adjustment sequence. It is highly useful for prefill, but only medium-useful for the Category B golden harness.
 
+## Product and validation disposition
+
+| Field family | Official role | Current Taxy/harness equivalent | Prefill | Validation | Golden-suitable |
+|---|---|---|---|---|---|
+| `codAtividadeIRS` | INPUT | `activityCode` | HIGH | coefficient-classification input | NO — does not prove selected coefficient |
+| `rendimentoTIndependente` | INPUT/aggregate | Category B gross total | HIGH | reconciles declared gross | NO — not taxable B output |
+| `impostoRetidoTIndpendente` | INPUT | Category B withholding | HIGH | withholding reconciliation | YES as official input, not calculation output |
+| `contribuicoesObgSegSocial` | INPUT | `socialSecurityPaidCents` | HIGH | contribution input | NO — does not expose adjustment order |
+| `pagamentosPorConta` / `pagConta` | INPUT plus calculation trace | payments on account | HIGH | aggregate reconciliation | YES for total payment stage |
+| `despesasAtividade` | INPUT | `eligibleExpenseCents` candidate | MEDIUM | expense input | NO — eligible subset semantics need mapping |
+| `detalheRendimentos` | INPUT collection | `incomeComponents[]` | HIGH | component trace | NO by itself |
+| `codigoRendimentos` | INPUT classification | `nature` / `annexBField` candidate | HIGH | classification bridge | NO until code-to-box mapping is reconciled |
+| `rendimentoTableList` | INPUT detail | component gross lines | HIGH | mixed-nature aggregation input | NO by itself |
+| `contribuicoesTableList` | INPUT detail | contribution evidence lines | MEDIUM | total/detail reconciliation | NO by itself |
+
 ## Official calculation outputs
 
 `infoAgregado` parses server-returned `rendimentoGlobal`, `rendColetavel`, `deducoesEspecificas`, `deducoesColeta`, `coletaTotal`, `coletaLiquida`, `retFonte`, `pagConta`, `impostoPagar`, `impostoReceber`, rates and minimum-existence indicators. The AOT call path shows these are parsed from the SOAP response rather than calculated by a Dart IRS engine.
