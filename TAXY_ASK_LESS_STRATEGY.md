@@ -24,7 +24,7 @@ Audit às áreas de perguntas atuais, agrupado por facto. **11 perguntas/grupos 
 
 ## DM3IRS Mobile discovery addendum
 
-The DM3IRS spike creates **no immediate reduction**: no response field, entitlement or runtime read has been confirmed. The following nine question groups would become reducible only after the corresponding operation passes contract, auth, read-only, runtime and product-review gates:
+The DM3IRS static analysis creates **no immediate reduction** because entitlement and runtime access remain unconfirmed. It confirms fields for the following ten question groups, which would become reducible after authorization, runtime and product-review gates:
 
 | Question group | Conditional strategy | Required evidence |
 |---|---|---|
@@ -37,5 +37,6 @@ The DM3IRS spike creates **no immediate reduction**: no response field, entitlem
 | activity code/nature | PREFILL_AND_CONFIRM | exact code + reconciliation with curated 90-code mapping |
 | Category B revenue | PREFILL_AND_CONFIRM | exact box/amount mapping and user confirmation |
 | Category B withholding/contributions/payments | PREFILL_AND_CONFIRM | exact independent components, never a blended total |
+| IRS Jovem context | PREFILL_AND_CONFIRM | exact eligibility/option semantics for the selected year |
 
-Counts for this spike: 13 conditional prefill mappings, 9 potentially reducible question groups, **0 newly reducible now**. The existing two e-Fatura reductions remain the only runtime-confirmed ones.
+Counts for this spike: 14 conditional prefill mappings, 10 potentially reducible question groups, **0 newly reducible now**. The existing two e-Fatura reductions remain the only runtime-confirmed ones.

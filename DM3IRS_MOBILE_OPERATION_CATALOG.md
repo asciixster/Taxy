@@ -1,106 +1,45 @@
 # DM3IRS Mobile operation catalog
 
-## Executive result
+## Result
 
-Seven operation roots are catalogued: six read candidates and one confirmed write by functional meaning. None is fully reconstructed and none is live-eligible. The absent APK/mobile schema prevents verification of SOAP version, action, namespace, field sequence, auth envelope, response models and side-effect semantics.
+Static analysis of the official IRS Android package reconstructs seven operations: six read-only operations and one write. All use SOAP 1.1 over `POST` to the same environment-specific service path. This is an official-app-private contract, not a documented public API.
 
-The service location is an `APK_OBSERVATION_SUPPLIED`, not an official public contract:
+Production endpoint: `https://servicos.portaldasfinancas.gov.pt:411/ws/dm3irsMobileService/`
 
-`https://servicos.portaldasfinancas.gov.pt:411/dm3irsMobileService/`
+Quality endpoint: `https://servicos.portaldasfinancas.gov.pt:711/ws/dm3irsMobileService/`
 
-## Common transport and auth contract
+Common namespaces:
 
-| Property | Result | Evidence |
-|---|---|---|
-| SOAP version | `UNKNOWN` | mobile WSDL/XSD unavailable |
-| SOAPAction | `UNKNOWN` per operation | mobile WSDL/XSD unavailable |
-| operation namespace | `UNKNOWN` | the two reported schema URIs are locations, not proven XML namespace values |
-| TLS endpoint | observed candidate on port 411 | supplied APK observation only |
-| mTLS required | `UNKNOWN` | no handshake with an identity was attempted |
-| WS-Security/header | `UNKNOWN` | no serializer/auth class available |
-| public request-encryption key | existing AT public cert: certificate SHA-256 `43b40f…6383`, SPKI SHA-256 `b19983…4968`, RSA 4096 | existing sanitized Taxy evidence; equality with IRS-app material is not established |
-| Taxy authorization | `UNKNOWN` | authorization is operation- and service-specific; FactIntWS success is not transitive |
+- envelope: `http://schemas.xmlsoap.org/soap/envelope/`
+- mobile schema (`sch`): `https://servicos.portaldasfinancas.gov.pt/dm3irsmobile/schemas`
+- Modelo 3 schema (`sch1`): `https://servicos.portaldasfinancas.gov.pt/dm3irs/schemas`
+- authentication: `http://at.pt/wsp/auth`
+- WS-Security: `http://schemas.xmlsoap.org/ws/2002/12/secext`
 
-The Taxy legitimate identity is documented only by public fingerprint metadata in `AT_IDENTITY_CAPABILITY_MAP.md`. No private material was opened, copied or committed.
+`Content-Type` is `text/xml`. `SOAPAction` is the literal `tns:` followed by the request operation name. The request operation is also the single element below `S:Body`.
 
-## Operation matrix
+## Canonical contracts
 
-| Operation | Functional hypothesis | Semantics status | APK trace | Schema confidence | Gate |
+| Operation | SOAPAction | Ordered request body | Parsed response | Semantics | Confidence |
 |---|---|---|---|---|---|
-| `obterCatalogosMobileRequest` | obtain declaration catalogs | `READ_CANDIDATE` | unavailable | root name only | NO LIVE |
-| `infoUtilizadorAutenticadoMobileRequest` | authenticated-user information | `READ_CANDIDATE` | unavailable | root name only | NO LIVE |
-| `infoAgregadoMobileRequest` | household information | `READ_CANDIDATE` | unavailable | root name only | NO LIVE |
-| `checkEntregaDeclMobileRequest` | check delivery eligibility/state | `READ_CANDIDATE_SIDE_EFFECT_UNPROVEN` | unavailable | root name only | NO LIVE |
-| `obterReceiptMobileRequest` | obtain receipt/proof | `READ_CANDIDATE` | unavailable | root name only | NO LIVE |
-| `obterDeclaracaoMobileRequest` | obtain declaration data | `READ_CANDIDATE` | unavailable | root name only | NO LIVE |
-| `submeterDeclaracaoMobileRequest` | submit declaration | `WRITE` | deliberately not reconstructed | root name only | PROHIBITED |
+| `obterCatalogosMobileRequest` | `tns:obterCatalogosMobileRequest` | `sch:tipoCatalogo` | `tipoCatalogo`, `detalheCatalogoJsonCdata` | read-only catalog lookup | EXACT request / HIGH response |
+| `infoUtilizadorAutenticadoMobileRequest` | `tns:infoUtilizadorAutenticadoMobileRequest` | optional `sch:ano-fiscal`, optional `sch:nif` | `AuthUserInformation` and nested user/profile models | read-only authenticated-user profile | EXACT / HIGH |
+| `infoAgregadoMobileRequest` | `tns:infoAgregadoMobileRequest` | `sch:ano-fiscal`, `sch:utilizadorAutenticado`, optional `sch:conjuge`, `sch:incluirConjuge`, repeated `sch:dependentes` | `AuthUserInformation`, including income, expense and calculation groups | read-only household/declaration context calculation | EXACT / HIGH |
+| `checkEntregaDeclMobileRequest` | `tns:checkEntregaDeclMobileRequest` | `sch:ano-fiscal`, `sch:nif` | optional `declaracao` identifier plus status | read-only delivery-existence check | EXACT / HIGH |
+| `obterReceiptMobileRequest` | `tns:obterReceiptMobileRequest` | `sch:declaracao`, `sch:nif` | receipt/status metadata | read-only receipt lookup | EXACT / HIGH |
+| `obterDeclaracaoMobileRequest` | `tns:obterDeclaracaoMobileRequest` | `sch:modelo` containing declaration identifier, taxpayer identifiers and optional SS/IRS Jovem/consignation/IBAN choices | `pdf` | read-only rendered declaration PDF retrieval | EXACT / HIGH |
+| `submeterDeclaracaoMobileRequest` | `tns:submeterDeclaracaoMobileRequest` | `sch:modelo` (full declaration graph) | submission metadata | WRITE | HIGH; never live-eligible |
 
-## Per-operation reconstruction
+Optionality is confirmed from null guards in the compiled builders. `infoAgregado` serializes nested `UserInfo` objects for the authenticated taxpayer, spouse and zero-or-more dependants. `obterDeclaracao` serializes a Modelo 3 graph already held by the app; it does not return structured prefill data.
 
-For every read candidate, the only contract item confirmed from the supplied APK observation is the root request name. Endpoint, version, SOAPAction and XML namespace cannot be inferred from Java/KSOAP naming conventions.
+## Response and fault handling
 
-### `infoUtilizadorAutenticadoMobileRequest`
+The generic parser removes arbitrary SOAP prefixes, selects `Envelope/Body`, then hands the operation payload to a typed parser. Every response uses `statusType/codigo`; non-success status is converted to a sanitized application exception. HTTP/network failures are handled separately. No operation-specific SOAP Fault schema was embedded, so fault detail remains `MEDIUM` rather than guessed.
 
-- Exact endpoint: service-path candidate only; operation binding `UNKNOWN`.
-- Required/optional fields, auth header, encryption/digest: `UNKNOWN`.
-- Response root/fields, faults/statuses: `UNKNOWN`.
-- Builder, serializer, parser, repository, calling screen, consumer: `NOT_VERIFIABLE_APK_ABSENT`.
-- Data claims: zero taxpayer-profile response fields are discoverable from a parser/model. Residence, marital status and fiscal situation remain hypotheses, not findings.
-- Sequence dependency and no-side-effect proof: `UNKNOWN`.
+## Read/write decision
 
-### `infoAgregadoMobileRequest`
+The six `obter`/`info`/`check` call sites only create POST requests and parse responses; no state mutation or submission service is reached. `checkEntregaDeclMobileRequest` is therefore classified read-only from its request builder, result model and consumer. `submeterDeclaracaoMobileRequest` is isolated in `SubmissionService` and remains prohibited.
 
-- Contract and APK trace: `UNKNOWN` / `NOT_VERIFIABLE_APK_ABSENT` as above.
-- Data claims: zero household response fields are discoverable from a parser/model.
-- The public Modelo 3 XSD contains declaration-input concepts `IntegraAgregadoSP`, `IntegraAgregadoOutro` and `Dependente`; this does not prove the mobile operation returns them.
+## Live gate
 
-### `obterCatalogosMobileRequest`
-
-- Contract and APK trace: `UNKNOWN` / `NOT_VERIFIABLE_APK_ABSENT`.
-- Public-schema evidence: `types.xsd` exposes 32 income/activity/country-related catalog types, including Article 151 activity codes and `Cat_M3V2026_AnexoBRendimentos`.
-- Mobile-response groups discoverable: zero. It is not proven that this operation emits any public-XSD catalog.
-- The operation would be first in a future controlled probe because it is expected to be least sensitive, not because authorization/read semantics are currently proven.
-
-### `obterDeclaracaoMobileRequest`
-
-- Contract and APK trace: `UNKNOWN` / `NOT_VERIFIABLE_APK_ABSENT`.
-- Public product evidence: the official app listing states that a user can consult the 2025 declaration. The linkage to this exact request is plausible but unverified.
-- Public XSD evidence: `Modelo3IRSv2026` defines `Rosto` plus 13 annex groups. This is an input/filing schema, not proof that the operation returns a submitted declaration, draft, prefill, calculation or liquidation.
-- Mobile declaration groups discoverable: zero. Public declaration-input groups discoverable: 14.
-- Official calculation outputs: none discovered.
-
-### `checkEntregaDeclMobileRequest`
-
-- Contract and APK trace: `UNKNOWN` / `NOT_VERIFIABLE_APK_ABSENT`.
-- “Check” is not enough to prove read-only or absence of server state. It stays explicitly blocked until the call graph and request contract show no submission/preparation side effect.
-- Potential monitoring (conditional only): declaration delivery-state change.
-
-### `obterReceiptMobileRequest`
-
-- Contract and APK trace: `UNKNOWN` / `NOT_VERIFIABLE_APK_ABSENT`.
-- Return type (metadata, binary/PDF, identifier, status) is unknown.
-- Potential monitoring (conditional only): proof/receipt availability.
-- No receipt download or persistence occurred.
-
-### `submeterDeclaracaoMobileRequest`
-
-- Classified `WRITE` by operation meaning.
-- Request/response detail deliberately not reconstructed beyond the supplied root name.
-- It is excluded from tooling and probing. `writeRequests = 0`.
-
-## APK trace ledger
-
-| Operation | Builder/request class | Serializer | Parser | Repository/service | Calling screen | Consumer |
-|---|---|---|---|---|---|---|
-| all six read candidates | not available | not available | not available | not available | not available | not available |
-| submit | write-block | write-block | write-block | write-block | write-block | write-block |
-
-This is a documented evidence gap, not a negative claim about what the official APK contains.
-
-## Live gate decision
-
-Required: confirmed read-only + sufficiently reconstructed schema + legitimate Taxy auth path + deterministic request + confirmed no side effect.
-
-Result for every candidate: **NO_LIVE_PROBE**. At least schema, authorization and side-effect proof fail. Consequently, business `networkRequests = 0`, live requests = 0 and write requests = 0.
-
-The earlier attempts to retrieve public schema/WSDL metadata failed during TLS before HTTP and did not carry credentials or a SOAP body. They are documentation retrieval attempts, not operation probes.
+No live operation is eligible. Request construction is now exact/high and read-only semantics are established, but the official app loads a bundled client identity into a TLS `SecurityContext`. The legitimate Taxy identity has no established DM3IRS entitlement and must not impersonate that channel. Therefore `TAXY_AUTH_PATH_KNOWN = NO`, `networkRequests = 0`, and `writeRequests = 0`.

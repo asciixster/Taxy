@@ -1,34 +1,29 @@
 # DM3IRS runtime capability matrix
 
-No operation was invoked. “Blocked” below means the safety gate prevented a request; it is not an upstream rejection.
+No operation was invoked. `NO_LIVE_PROBE` means the authorization gate prevented a request; it is not an upstream rejection.
 
-| Operation | Read-only | Schema confidence | Auth result | Runtime result | Fields present | Taxy value | Stability | Production recommendation |
-|---|---|---|---|---|---|---|---|---|
-| obterCatalogos | candidate | root only | NOT_TESTED / entitlement unknown | NO_LIVE_PROBE | n/a | activity/income catalog reconciliation | OFFICIAL_APP_PRIVATE | acquire contract and review entitlement |
-| infoUtilizador | candidate | root only | NOT_TESTED / entitlement unknown | NO_LIVE_PROBE | n/a | profile prefill | OFFICIAL_APP_PRIVATE | acquire contract and review entitlement |
-| infoAgregado | candidate | root only | NOT_TESTED / entitlement unknown | NO_LIVE_PROBE | n/a | family prefill | OFFICIAL_APP_PRIVATE | acquire contract and review entitlement |
-| checkEntrega | side effect unproven | root only | NOT_TESTED / entitlement unknown | NO_LIVE_PROBE | n/a | delivery monitoring | OFFICIAL_APP_PRIVATE | do not call until semantics proven |
-| obterReceipt | candidate | root only | NOT_TESTED / entitlement unknown | NO_LIVE_PROBE | n/a | proof availability | OFFICIAL_APP_PRIVATE | acquire contract; privacy review for binary data |
-| obterDeclaracao | candidate | root only | NOT_TESTED / entitlement unknown | NO_LIVE_PROBE | n/a | highest: prefill/history/Category B validation | OFFICIAL_APP_PRIVATE | contract + entitlement + product/legal review |
+| Operation | Read-only | Schema confidence | Taxy auth | Runtime | Static fields/groups | Taxy value | Stability | Production recommendation |
+|---|---:|---|---|---|---|---|---|---|
+| obterCatalogos | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | 4 catalog types | catalog reconciliation | OFFICIAL_APP_PRIVATE | obtain explicit entitlement/contract first |
+| infoUtilizador | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | 24 payload fields across nested models | profile prefill | OFFICIAL_APP_PRIVATE | entitlement plus legal/product review |
+| infoAgregado | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | 89 distinct payload fields; 8 functional groups | household, inputs and official server calculation | OFFICIAL_APP_PRIVATE | highest-value controlled read after entitlement |
+| checkEntrega | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | status plus optional declaration reference | monitoring | OFFICIAL_APP_PRIVATE | safe only after entitlement |
+| obterReceipt | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | 17 receipt/status fields | proof/status monitoring | OFFICIAL_APP_PRIVATE | avoid persisting identifiers |
+| obterDeclaracao | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | PDF payload only | user-visible declaration copy | OFFICIAL_APP_PRIVATE | lower prefill value; privacy-heavy |
+| submeterDeclaracao | NO (WRITE) | HIGH | NOT_APPLICABLE | PROHIBITED | submission graph | out of scope | OFFICIAL_APP_PRIVATE | never probe in discovery |
 
-## Status counters
+## Counters
 
 - operations catalogued: 7
-- operations fully reconstructed: 0
-- read candidates: 6
-- read-only confirmed: 0
+- operations fully reconstructed: 7 (six exact/high read contracts; write documented without execution)
+- read-only confirmed: 6
+- write confirmed: 1
 - live eligible: 0
-- business live requests: 0
+- live requests: 0
 - runtime read capabilities confirmed: 0
-- runtime technically available but product-review-required: 0
+- technically available but product-review-required: 0 (no runtime proof)
 - write requests: 0
 
-## Potential outcomes (not current capabilities)
+## Key distinction
 
-| Impact class | Conditional outcome |
-|---|---|
-| A — eliminates questions | user/household facts if exact fields and entitlement are proven |
-| B — improves estimate | declaration inputs, withholding and contribution fields if returned with year semantics |
-| C — validation/golden case | only official calculation outputs; public filing XSD inputs are not golden outputs |
-| D — monitoring | delivery-state and receipt-availability transitions |
-| E — low value | catalogs already available in stable public XSD/form sources unless mobile adds authoritative version metadata |
+The APK proves what the official client can request and consume. It does not prove that the Taxy identity is authorized, that the interface is offered to third parties, or that product use is permitted. Those remain separate gates.

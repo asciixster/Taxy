@@ -1,6 +1,6 @@
 # DM3IRS conditional prefill opportunities
 
-These are product mappings to apply **only if** an exact DM3IRS response field, year semantics and Taxy entitlement are later confirmed. They do not represent currently readable fields.
+Static analysis now confirms the named response fields and their consumers. These remain product mappings to apply **only if** Taxy entitlement, runtime behavior and year semantics are confirmed. They do not represent currently readable Taxy data.
 
 | # | Conditional DM3IRS concept | Taxy destination | Provenance if imported | Confirmation | Interview impact |
 |---:|---|---|---|---|---|
@@ -20,4 +20,4 @@ These are product mappings to apply **only if** an exact DM3IRS response field, 
 
 Conflict handling remains mandatory: official import must not silently overwrite user- or document-confirmed facts. Prior-year declaration data is historical evidence, not proof of the current-year situation.
 
-Current result: 13 conditional opportunities, 0 runtime-confirmed opportunities and 0 newly removable questions.
+The richer static map in `DM3IRS_PREFILL_MAP.md` records 14 mappings. Current result remains 0 runtime-confirmed opportunities and 0 immediately removable questions.

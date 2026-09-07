@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "evidence": "official IRS APK static analysis only",
+  "transport": {
+    "soapVersion": "1.1",
+    "contentType": "text/xml",
+    "productionEndpoint": "https://servicos.portaldasfinancas.gov.pt:411/ws/dm3irsMobileService/",
+    "qualityEndpoint": "https://servicos.portaldasfinancas.gov.pt:711/ws/dm3irsMobileService/",
+    "namespaces": {
+      "envelope": "http://schemas.xmlsoap.org/soap/envelope/",
+      "mobile": "https://servicos.portaldasfinancas.gov.pt/dm3irsmobile/schemas",
+      "declaration": "https://servicos.portaldasfinancas.gov.pt/dm3irs/schemas",
+      "authentication": "http://at.pt/wsp/auth",
+      "wsSecurity": "http://schemas.xmlsoap.org/ws/2002/12/secext"
+    }
+  },
+  "operations": [
+    {"name":"obterCatalogosMobileRequest","soapAction":"tns:obterCatalogosMobileRequest","readOnly":true,"requestFields":[{"name":"tipoCatalogo","type":"string","required":true}],"responseFields":[{"name":"tipoCatalogo","type":"string"},{"name":"detalheCatalogoJsonCdata","type":"json-cdata"}],"confidence":"HIGH"},
+    {"name":"infoUtilizadorAutenticadoMobileRequest","soapAction":"tns:infoUtilizadorAutenticadoMobileRequest","readOnly":true,"requestFields":[{"name":"ano-fiscal","type":"string","required":false},{"name":"nif","type":"string","required":false}],"responseFields":[{"name":"utilizadorAutenticado","type":"UserInfo"},{"name":"conjuge","type":"UserInfo?"},{"name":"dependentes","type":"UserInfo[]"},{"name":"cenario","type":"string?"},{"name":"rendimentos","type":"Incomes?"},{"name":"detalheRendimentos","type":"IncomeDetail[]?"}],"confidence":"HIGH"},
+    {"name":"infoAgregadoMobileRequest","soapAction":"tns:infoAgregadoMobileRequest","readOnly":true,"requestFields":[{"name":"ano-fiscal","type":"string","required":true},{"name":"utilizadorAutenticado","type":"UserInfo","required":true},{"name":"conjuge","type":"UserInfo","required":false},{"name":"incluirConjuge","type":"boolean","required":true},{"name":"dependentes","type":"UserInfo[]","required":false}],"responseFields":[{"name":"utilizadorAutenticado","type":"UserInfo"},{"name":"conjuge","type":"UserInfo?"},{"name":"dependentes","type":"UserInfo[]"},{"name":"rendimentos","type":"Incomes"},{"name":"despesas","type":"Expenses"},{"name":"demonstracaoResultados","type":"LiquidationDemonstration"},{"name":"declaracao","type":"ModelInfoDelivery"}],"confidence":"HIGH"},
+    {"name":"checkEntregaDeclMobileRequest","soapAction":"tns:checkEntregaDeclMobileRequest","readOnly":true,"requestFields":[{"name":"ano-fiscal","type":"string","required":true},{"name":"nif","type":"string","required":true}],"responseFields":[{"name":"declaracao","type":"integer?"}],"confidence":"HIGH"},
+    {"name":"obterReceiptMobileRequest","soapAction":"tns:obterReceiptMobileRequest","readOnly":true,"requestFields":[{"name":"declaracao","type":"integer","required":true},{"name":"nif","type":"string","required":true}],"responseFields":[{"name":"declaracao","type":"integer"},{"name":"situacao","type":"string"},{"name":"dataSubm","type":"date-time"},{"name":"dataRececao","type":"date-time?"},{"name":"dataSituacao","type":"date-time?"},{"name":"numLiquidacao","type":"string?"},{"name":"montante","type":"decimal?"}],"confidence":"HIGH"},
+    {"name":"obterDeclaracaoMobileRequest","soapAction":"tns:obterDeclaracaoMobileRequest","readOnly":true,"requestFields":[{"name":"modelo","type":"Modelo3","required":true}],"responseFields":[{"name":"pdf","type":"base64-binary"}],"confidence":"HIGH"},
+    {"name":"submeterDeclaracaoMobileRequest","soapAction":"tns:submeterDeclaracaoMobileRequest","readOnly":false,"requestFields":[{"name":"modelo","type":"Modelo3","required":true}],"responseFields":[{"name":"declaracao","type":"integer?"},{"name":"dataSubmissao","type":"date-time?"}],"confidence":"HIGH","liveEligible":false}
+  ],
+  "models": {
+    "UserInfo": {
+      "fields": ["nif:string", "nome:string?", "genero:string?", "estadoCivil:string?", "residenciaFiscal:string?", "servicoFinancas:string?", "codAtividadeIRS:string?", "integraAgregado:boolean?", "residenciaAlternada:boolean?", "percentagemPartDespesas:decimal?", "podeEntregarDeclAuto:boolean?", "hasIrsJovem:boolean?", "fObito:date?", "cPosDecl:string?", "cProgen:string?", "ddfId:string?", "nifSPDG:string?", "nifEntidadeConsignacao:string?", "pertenceSoConjuge:boolean?", "xGinv:string?"]
+    },
+    "AuthUserInformation": {
+      "fields": ["ano-fiscal:string", "utilizadorAutenticado:UserInfo", "conjuge:UserInfo?", "dependentes:UserInfo[]", "cenario:string?", "rendimentos:Incomes?", "detalheRendimentos:IncomeDetail[]?", "tc:ModelInfoDelivery?", "ts1:ModelInfoDelivery?", "ts2:ModelInfoDelivery?"]
+    },
+    "Incomes": {
+      "fields": ["rendimentoTDependente:decimal?", "rendimentoTIndependente:decimal?", "rendimentoPensoes:decimal?", "impostoRetidoTDpendente:decimal?", "impostoRetidoTIndpendente:decimal?", "impostoRetidoPensoes:decimal?", "sobretaxaTDependente:decimal?", "sobretaxaPensoes:decimal?", "contribuicoesObgSegSocial:decimal?", "quotizacoesSindicais:decimal?", "pagamentosPorConta:decimal?"]
+    },
+    "IncomeDetail": {
+      "fields": ["codigoRendimentos:string?", "descricao:string?", "nifEntidadePagadora:string?", "valor:decimal?", "rendimentoTableList:list?", "impostoRetidoTableList:list?", "contribuicoesTableList:list?", "pagamentosPorContaTableList:list?", "quotizacoesTableList:list?", "sobretaxaTableList:list?"]
+    },
+    "LiquidationDemonstration": {
+      "fields": ["rendimentoGlobal:decimal?", "deducoesEspecificas:decimal?", "rendDetTaxas:decimal?", "rendAnosAnteriores:decimal?", "impostoRendAnosAnteriores:decimal?", "rendIsentoEnglobamento:decimal?", "impostoRendIsentos:decimal?", "rendColetavel:decimal?", "quocienteFamiliar:decimal?", "taxa:decimal?", "importanciaApurada:decimal?", "parcelaAbater:decimal?", "taxaAdicional:decimal?", "beneficioMunicipal:decimal?", "coletaTotal:decimal?", "deducoesColeta:decimal?", "coletaLiquida:decimal?", "retFonte:decimal?", "pagConta:decimal?", "impostoPagar:decimal?", "impostoReceber:decimal?", "taxaEfetiva:decimal?", "abatimentoMinimoExistencia:decimal?", "usaRegraAntigaMinExistencia:boolean?"]
+    },
+    "ModelInfoDelivery": {
+      "fields": ["declaracao:integer?", "nifA:string?", "nifB:string?", "iban:string?", "isValid:boolean?", "anexoSS:SSAttachment?", "irsJovem:YouthIrs?", "nifEntidadeConsignacao:string?", "flagCalculoLiquidacao:boolean?", "valorLiquidacao:decimal?", "demonstracaoResultados:LiquidationDemonstration?", "flagCalculoLiquidacaoComConsignacaoIVA:boolean?", "valorLiquidacaoComConsignacaoIVA:decimal?", "demonstracaoResultadosComConsignacaoIVA:LiquidationDemonstration?", "flagCalculoLiquidacaoIrsJovemConj:boolean?", "valorLiquidacaoIrsJovemConj:decimal?", "demonstracaoResultadosIrsJovemConj:LiquidationDemonstration?", "flagCalculoLiquidacaoIrsJovemSpa:boolean?", "valorLiquidacaoIrsJovemSpa:decimal?", "demonstracaoResultadosIrsJovemSpa:LiquidationDemonstration?", "flagCalculoLiquidacaoIrsJovemSpaConj:boolean?", "valorLiquidacaoIrsJovemSpaConj:decimal?", "demonstracaoResultadosIrsJovemSpaConj:LiquidationDemonstration?"]
+    },
+    "DeclarationReceipt": {
+      "fields": ["declaracao:integer", "ano:integer?", "ano-fiscal:string?", "tipo:string?", "situacao:string?", "dataSubm:date-time?", "dataRececao:date-time?", "dataSituacao:date-time?", "id:string?", "infoDeclCentralType:string?", "mensagemPosSubmissao:string?", "montante:decimal?", "numLiquidacao:string?", "nifA:string?", "nomeA:string?", "generoA:string?"]
+    },
+    "CatalogsData": {
+      "fields": ["tipoCatalogo:string", "detalheCatalogoJsonCdata:json-cdata"],
+      "knownTypes": ["ENTIDADES_BANCARIAS", "ENTIDADES_CONSIGNACAO", "TIPOS_INSTITUICAO", "GRAFICO_DESPESAS"]
+    }
+  },
+  "privacy": {"containsValues":false,"containsSecrets":false,"containsPrivateCertificateData":false},
+  "runtime": {"liveRequests":0,"writeRequests":0,"taxyAuthorization":"UNKNOWN"}
+}
