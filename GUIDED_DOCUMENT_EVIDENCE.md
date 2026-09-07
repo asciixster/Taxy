@@ -1,5 +1,21 @@
 # Guided document evidence
 
+## Secure capture in 0.8.4
+
+The existing evidence model remains the only confirmed-document boundary.
+Android can now take a photo or choose a PDF/JPEG/PNG through platform intents,
+then performs bundled on-device text recognition. The raw input and preview are
+held only as AES-GCM encrypted temporary files in app-private storage. They are
+excluded from backup, protected from screenshots during review, bounded to
+10 MB and 10 PDF pages, and removed after confirmation, cancellation, reset or
+the 24-hour expiry window.
+
+Recognized text and extracted candidates are not `TaxFact`s. Only fields the
+user explicitly selects, reviews and confirms become `GuidedDocumentEvidence`;
+the pre-existing reconciliation layer then decides whether to prefill, confirm
+an equal value, or surface a conflict. Unsupported documents never affect the
+IRS estimate, and manual entry remains available when extraction fails.
+
 ## Scope
 
 Taxy 0.8.2 adds a deliberately narrow evidence workflow for values already supported by

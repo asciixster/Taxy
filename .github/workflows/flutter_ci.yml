@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -23,3 +25,43 @@ jobs:
         run: flutter test
       - name: Test AT connector (offline unit tests only)
         run: node --test "tools/at_connector/test/**/*.test.mjs"
+      - name: Build Android debug APK
+        run: flutter build apk --debug
+      - name: Compare 0.8.4 APK with main baseline
+        if: github.head_ref == 'secure-document-capture-0.8.4' || github.ref_name == 'secure-document-capture-0.8.4'
+        shell: bash
+        run: |
+          set -euo pipefail
+          baseline="$RUNNER_TEMP/taxy-main-baseline"
+          git worktree add --detach "$baseline" origin/main
+          (
+            cd "$baseline"
+            flutter pub get
+            flutter build apk --debug
+          )
+          current=build/app/outputs/flutter-apk/app-debug.apk
+          previous="$baseline/build/app/outputs/flutter-apk/app-debug.apk"
+          current_bytes=$(stat -c%s "$current")
+          previous_bytes=$(stat -c%s "$previous")
+          delta_bytes=$((current_bytes - previous_bytes))
+          delta_percent=$(awk -v delta="$delta_bytes" -v previous="$previous_bytes" 'BEGIN { printf "%.2f", (delta * 100) / previous }')
+          mkdir -p "$RUNNER_TEMP/taxy-apks"
+          cp "$current" "$RUNNER_TEMP/taxy-apks/taxy-0.8.4-debug.apk"
+          cp "$previous" "$RUNNER_TEMP/taxy-apks/taxy-main-baseline-debug.apk"
+          {
+            echo "### APK size comparison"
+            echo "- main baseline: $previous_bytes bytes"
+            echo "- Taxy 0.8.4: $current_bytes bytes"
+            echo "- delta: $delta_bytes bytes ($delta_percent%)"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload sanitized APK comparison artifacts
+        if: github.head_ref == 'secure-document-capture-0.8.4' || github.ref_name == 'secure-document-capture-0.8.4'
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-size-comparison-${{ github.run_id }}
+          path: ${{ runner.temp }}/taxy-apks/*.apk
+          if-no-files-found: error
+          retention-days: 3
+      - name: Test Android native code
+        working-directory: android
+        run: ./gradlew testDebugUnitTest

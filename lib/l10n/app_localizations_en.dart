@@ -1325,7 +1325,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guidedDocumentsPrivacy =>
-      'The document file is not uploaded or stored. Only the amount you confirm is saved on this device.';
+      'Captured files are encrypted temporarily on this device and deleted after confirmation or cancellation. Only confirmed values remain.';
 
   @override
   String get guidedDocumentsEntryHint =>
@@ -1486,4 +1486,134 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taxReviewActionEstimate => 'Review estimate';
+
+  @override
+  String get documentTakePhoto => 'Take a photo';
+
+  @override
+  String get documentChooseFile => 'Choose file';
+
+  @override
+  String get documentManualEntry => 'Enter values manually';
+
+  @override
+  String get documentProcessing => 'Reading the document…';
+
+  @override
+  String get documentCapturePrivacyLocal =>
+      'The document is processed on this device. Only values you explicitly confirm are kept.';
+
+  @override
+  String get documentCaptureLimits =>
+      'PDF, JPG or PNG · up to 10 MB and 10 pages';
+
+  @override
+  String get documentReadFailure => 'We couldn\'t read this document safely.';
+
+  @override
+  String get documentTryAgain => 'Try again';
+
+  @override
+  String get documentDelete => 'Delete document';
+
+  @override
+  String get documentDeleteTitle => 'Delete this document?';
+
+  @override
+  String get documentDeleteBody =>
+      'The temporary document and unconfirmed values will be removed.';
+
+  @override
+  String get documentFoundValues => 'We found these values';
+
+  @override
+  String get documentReviewIntro =>
+      'Check the document and select only the values you want to confirm.';
+
+  @override
+  String get documentConfirmValues => 'Confirm values';
+
+  @override
+  String get documentConfirmExplanation =>
+      'Only the values you confirm will be used by Taxy.';
+
+  @override
+  String get documentPartialHint =>
+      'You can confirm some values and leave the others out.';
+
+  @override
+  String get documentPreview => 'Document preview';
+
+  @override
+  String get documentPreviewUnavailable => 'Preview is unavailable.';
+
+  @override
+  String get documentType => 'Document type';
+
+  @override
+  String get documentTypeEmployment => 'Employment income statement';
+
+  @override
+  String get documentTypeWithholding => 'IRS withholding proof';
+
+  @override
+  String get documentTypeSocialSecurity =>
+      'Social Security contributions proof';
+
+  @override
+  String get documentTypeCombined => 'Employment annual statement';
+
+  @override
+  String get documentTypeUnknown => 'Unknown document';
+
+  @override
+  String get documentTypeUnsupported =>
+      'This document type is not yet included in Taxy\'s estimate.';
+
+  @override
+  String get documentConfidenceHigh => 'High extraction confidence';
+
+  @override
+  String get documentConfidenceMedium => 'Check this extracted value';
+
+  @override
+  String get documentConfidenceLow => 'Low confidence — review required';
+
+  @override
+  String get documentValueEmployment => 'Employment income';
+
+  @override
+  String get documentValueWithholding => 'IRS withholding';
+
+  @override
+  String get documentValueSocialSecurity => 'Social Security contributions';
+
+  @override
+  String get documentValueTaxYear => 'Tax year';
+
+  @override
+  String documentYearMismatch(int year) {
+    return 'This document appears to be from $year. It cannot be applied to the active tax year.';
+  }
+
+  @override
+  String get documentCaptureUnavailable =>
+      'Document capture is available on Android. You can still enter values manually.';
+
+  @override
+  String get documentTooLarge => 'This file is larger than the 10 MB limit.';
+
+  @override
+  String get documentTooManyPages => 'This PDF has more than 10 pages.';
+
+  @override
+  String get documentUnsupportedFile => 'Choose a valid PDF, JPG or PNG file.';
+
+  @override
+  String get documentSavedAndDeleted =>
+      'Values confirmed. The temporary document was deleted.';
+
+  @override
+  String get documentOriginalNotStored =>
+      'The original document is not kept after confirmation.';
 }
