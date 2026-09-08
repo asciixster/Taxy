@@ -2,6 +2,8 @@
 
 This is a design map, not a production capability. All fields remain unavailable to Taxy until authorization and product/legal gates pass.
 
+Runtime note (2026-09-08): the single `infoUtilizadorAutenticadoMobileRequest` probe reached authenticated TLS but returned an HTTP 500 SOAP Fault categorized as `REQUEST_ERROR`. Therefore the runtime-confirmed prefill, removable-question and confirm-only counts are all `0`; these are no-payload observations, not evidence that the fields are absent from a valid response.
+
 | DM3IRS field/group | Taxy destination | Interview effect | Confirmation |
 |---|---|---|---|
 | fiscal residence | FiscalProfile residence | prefill + confirm | YES |
