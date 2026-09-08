@@ -23,14 +23,14 @@ Common namespaces:
 | Operation | SOAPAction | Ordered request body | Parsed response | Semantics | Confidence |
 |---|---|---|---|---|---|
 | `obterCatalogosMobileRequest` | `tns:obterCatalogosMobileRequest` | `sch:tipoCatalogo` | `tipoCatalogo`, `detalheCatalogoJsonCdata` | read-only catalog lookup | EXACT request / HIGH response |
-| `infoUtilizadorAutenticadoMobileRequest` | `tns:infoUtilizadorAutenticadoMobileRequest` | optional `sch:ano-fiscal`, optional `sch:nif` | `AuthUserInformation` and nested user/profile models | read-only authenticated-user profile | EXACT / HIGH |
+| `infoUtilizadorAutenticadoMobileRequest` | `tns:infoUtilizadorAutenticadoMobileRequest` | `sch:ano-fiscal`, then `sch:nif`; serializer omits nulls, but official call-site always passes both | `AuthUserInformation` and nested user/profile models | read-only authenticated-user profile | EXACT / HIGH |
 | `infoAgregadoMobileRequest` | `tns:infoAgregadoMobileRequest` | `sch:ano-fiscal`, `sch:utilizadorAutenticado`, optional `sch:conjuge`, `sch:incluirConjuge`, repeated `sch:dependentes` | `AuthUserInformation`, including income, expense and calculation groups | read-only household/declaration context calculation | EXACT / HIGH |
 | `checkEntregaDeclMobileRequest` | `tns:checkEntregaDeclMobileRequest` | `sch:ano-fiscal`, `sch:nif` | optional `declaracao` identifier plus status | read-only delivery-existence check | EXACT / HIGH |
 | `obterReceiptMobileRequest` | `tns:obterReceiptMobileRequest` | `sch:declaracao`, `sch:nif` | receipt/status metadata | read-only receipt lookup | EXACT / HIGH |
 | `obterDeclaracaoMobileRequest` | `tns:obterDeclaracaoMobileRequest` | `sch:modelo` containing declaration identifier, taxpayer identifiers and optional SS/IRS Jovem/consignation/IBAN choices | `pdf` | read-only rendered declaration PDF retrieval | EXACT / HIGH |
 | `submeterDeclaracaoMobileRequest` | `tns:submeterDeclaracaoMobileRequest` | `sch:modelo` (full declaration graph) | submission metadata | WRITE | HIGH; never live-eligible |
 
-Optionality is confirmed from null guards in the compiled builders. `infoAgregado` serializes nested `UserInfo` objects for the authenticated taxpayer, spouse and zero-or-more dependants. `obterDeclaracao` serializes a Modelo 3 graph already held by the app; it does not return structured prefill data.
+Serializer null guards are confirmed in the compiled builders, but they do not by themselves define valid operation-level context. For `infoUtilizador`, the official call-site requires a selected exercise year and base NIF and passes both as non-null strings. `infoAgregado` serializes nested `UserInfo` objects for the authenticated taxpayer, spouse and zero-or-more dependants. `obterDeclaracao` serializes a Modelo 3 graph already held by the app; it does not return structured prefill data.
 
 ## Response and fault handling
 

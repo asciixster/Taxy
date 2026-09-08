@@ -18,6 +18,8 @@
 | obterDeclaracao | `PdfReceiptRequestBuilder` | `DeclarationService.fetchPdfReceipt` | `PdfReceipt.fromResponse` | declaration PDF viewer/share flow |
 | submeterDeclaracao | `SubmitDeclarationRequestBuilder` | `SubmissionService` | submission response model | confirmation/submission flow (WRITE; not executed) |
 
+For infoUser specifically, the caller chain is `AuthenticationService.navigateAfterDelivery -> AuthenticationService.getPostLoginNavigation -> UserInfoService.fetchUserInformation(year, baseNif) -> UserInfoRequestBuilder.addBody`. The official call-site supplies both values; the builder emits `ano-fiscal` before `nif` and only omits an element when the corresponding map value is null.
+
 ## Important semantic finding
 
 `infoAgregado`, not `obterDeclaracao`, is the source consumed by the income, expenses, pre-liquidation and liquidation demonstration screens. `obterDeclaracao` serializes an already prepared Modelo 3 model and retrieves a PDF representation.
