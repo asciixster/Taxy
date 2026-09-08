@@ -51,5 +51,21 @@
     }
   },
   "privacy": {"containsValues":false,"containsSecrets":false,"containsPrivateCertificateData":false},
-  "runtime": {"liveRequests":0,"writeRequests":0,"taxyAuthorization":"UNKNOWN"}
+  "runtime": {
+    "liveRequests": 1,
+    "writeRequests": 0,
+    "taxyAuthorization": "CATALOGS_RUNTIME_CONFIRMED_PRODUCT_REVIEW_REQUIRED",
+    "lastProbe": {
+      "date": "2026-09-08",
+      "environment": "PROD",
+      "operation": "obterCatalogosMobileRequest",
+      "httpStatus": 200,
+      "soapResponse": true,
+      "soapFault": false,
+      "status": "0",
+      "catalogGroupsObserved": 1,
+      "catalogItemCounts": "NOT_RETAINED",
+      "retryCount": 0
+    }
+  }
 }
