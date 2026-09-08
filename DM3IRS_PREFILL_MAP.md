@@ -2,7 +2,7 @@
 
 This is a design map, not a production capability. All fields remain unavailable to Taxy until authorization and product/legal gates pass.
 
-Runtime note (2026-09-08): the single `infoUtilizadorAutenticadoMobileRequest` probe reached authenticated TLS but returned an HTTP 500 SOAP Fault categorized as `REQUEST_ERROR`. Therefore the runtime-confirmed prefill, removable-question and confirm-only counts are all `0`; these are no-payload observations, not evidence that the fields are absent from a valid response.
+Runtime note (2026-09-08): a corrected single-shot `infoUtilizadorAutenticadoMobileRequest` probe included the official ordered context fields and received HTTP 200, the exact SOAP response root, no SOAP Fault, and business status `130`. No profile fields were returned. Therefore the runtime-confirmed prefill, removable-question and confirm-only counts remain `0`; these are no-payload observations, not evidence that the fields are absent from a successful response.
 
 | DM3IRS field/group | Taxy destination | Interview effect | Confirmation |
 |---|---|---|---|

@@ -52,7 +52,7 @@
   },
   "privacy": {"containsValues":false,"containsSecrets":false,"containsPrivateCertificateData":false},
   "runtime": {
-    "liveRequests": 2,
+    "liveRequests": 3,
     "writeRequests": 0,
     "taxyAuthorization": "CATALOGS_RUNTIME_CONFIRMED_PRODUCT_REVIEW_REQUIRED",
     "lastSuccessfulProbe": {
@@ -67,7 +67,7 @@
       "catalogItemCounts": "NOT_RETAINED",
       "retryCount": 0
     },
-    "lastProbe": {
+    "previousProbe": {
       "date": "2026-09-08",
       "environment": "PROD",
       "operation": "infoUtilizadorAutenticadoMobileRequest",
@@ -78,6 +78,29 @@
       "operationRecognized": false,
       "serviceAuthorized": "UNKNOWN",
       "operationAuthorized": "UNKNOWN",
+      "expectedFieldCount": 24,
+      "runtimePresentFieldCount": 0,
+      "runtimePopulatedFieldCount": 0,
+      "retryCount": 0,
+      "piiPersisted": false
+    },
+    "lastProbe": {
+      "date": "2026-09-08",
+      "environment": "PROD",
+      "operation": "infoUtilizadorAutenticadoMobileRequest",
+      "requestYearPresent": true,
+      "requestNifPresent": true,
+      "requestFieldOrderExact": true,
+      "httpStatus": 200,
+      "tlsVersion": "TLSv1.3",
+      "cipher": "TLS_AES_128_GCM_SHA256",
+      "soapResponse": true,
+      "soapFault": false,
+      "responseRoot": "infoUtilizadorAutenticadoMobileResponse",
+      "operationRecognized": true,
+      "businessStatus": "130",
+      "businessStatusMeaning": "UNKNOWN",
+      "classification": "DM3IRS_INFOUTILIZADOR_REQUEST_REJECTED",
       "expectedFieldCount": 24,
       "runtimePresentFieldCount": 0,
       "runtimePopulatedFieldCount": 0,

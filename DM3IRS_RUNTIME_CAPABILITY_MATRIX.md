@@ -1,11 +1,11 @@
 # DM3IRS runtime capability matrix
 
-Two separately authorized, read-only, single-shot probes have been executed on 2026-09-08. Both used the legitimate Taxy client identity against the exact production endpoint. Each task stopped after its first request; there was no retry, fallback or write.
+Three separately authorized, read-only, single-shot probes have been executed on 2026-09-08. All used the legitimate Taxy client identity against the exact production endpoint. Each task stopped after its first request; there was no retry, fallback or write.
 
 | Operation | Read-only | Schema confidence | Taxy auth | Runtime | Static fields/groups | Taxy value | Stability | Production recommendation |
 |---|---:|---|---|---|---|---|---|---|
 | obterCatalogos | YES | EXACT/HIGH | RUNTIME_CONFIRMED | HTTP 200; SOAP response; status `0`; no SOAP Fault | 1 requested catalog group observed; item count not retained | catalog reconciliation | OFFICIAL_APP_PRIVATE | technically available; product use still requires terms/entitlement review |
-| infoUtilizador | YES | EXACT/HIGH | TLS CONFIRMED; SERVICE/OPERATION UNKNOWN | HTTP 500; SOAP Fault; sanitized `REQUEST_ERROR`; no functional payload | 24-field static baseline; 0 runtime fields observable because the request was rejected | profile prefill | OFFICIAL_APP_PRIVATE | correct the deterministic request contract offline before any separately authorized future probe |
+| infoUtilizador | YES | EXACT/HIGH | TLS AND OPERATION FRAMING CONFIRMED; BUSINESS ACCEPTANCE NOT CONFIRMED | corrected request: HTTP 200; SOAP response root recognized; no SOAP Fault; business status `130`; no functional payload | 24-field static baseline; 0 runtime fields present/populated | profile prefill | OFFICIAL_APP_PRIVATE | interpret status `130` with the AT before any further probe; do not infer field absence |
 | infoAgregado | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | 89 distinct payload fields; 8 functional groups | household, inputs and official server calculation | OFFICIAL_APP_PRIVATE | highest-value controlled read after entitlement |
 | checkEntrega | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | status plus optional declaration reference | monitoring | OFFICIAL_APP_PRIVATE | safe only after entitlement |
 | obterReceipt | YES | EXACT/HIGH | UNKNOWN | NO_LIVE_PROBE | 16 receipt payload fields | proof/status monitoring | OFFICIAL_APP_PRIVATE | avoid persisting identifiers |
@@ -18,8 +18,8 @@ Two separately authorized, read-only, single-shot probes have been executed on 2
 - operations fully reconstructed: 7 (six exact/high read contracts; write documented without execution)
 - read-only confirmed: 6
 - write confirmed: 1
-- live eligible: 0 (both separately authorized single-shot probe budgets consumed)
-- live requests: 2 total across the two tasks
+- live eligible: 0 (all three separately authorized single-shot probe budgets consumed)
+- live requests: 3 total across the three tasks
 - runtime read capabilities confirmed: 1
 - technically available but product-review-required: 1
 - write requests: 0
@@ -28,4 +28,4 @@ Two separately authorized, read-only, single-shot probes have been executed on 2
 
 The runtime probe proves that the Taxy mTLS identity reached the service and that `obterCatalogosMobileRequest` was recognized and accepted with business status `0`. It does not prove that other operations are authorized, that the interface is contractually offered to third parties, or that product use is permitted. Those remain separate gates.
 
-The `infoUtilizadorAutenticadoMobileRequest` probe separately proves TLS acceptance of the same legitimate Taxy identity. Its HTTP 500 SOAP Fault was sanitized as `REQUEST_ERROR`; because no operation response root or business status was returned, service- and operation-level authorization remain `UNKNOWN`. No retry is permitted under this task's budget.
+The first `infoUtilizadorAutenticadoMobileRequest` probe separately proved TLS acceptance but used an incomplete operation body and returned an HTTP 500 SOAP Fault. A later, separately authorized corrected probe sent the official call-site context (`ano-fiscal`, then base `nif`) and received HTTP 200 with the exact operation response root, no SOAP Fault, and business status `130`. This confirms transport and operation framing, but not successful profile retrieval: zero profile fields were returned and the meaning of status `130` is not established by retained static fixtures. It is therefore classified as `DM3IRS_INFOUTILIZADOR_REQUEST_REJECTED`, not as an authorization denial or runtime profile capability.

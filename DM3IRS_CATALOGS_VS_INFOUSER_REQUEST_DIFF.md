@@ -115,8 +115,8 @@ No credible channel, cookie, bearer, device metadata or prior-catalog dependency
 
 ## Retry gate
 
-A new live probe is **not recommended yet** under the stated single-variable rule: two operation fields must change together to match the official call-site. The next step is to freeze and locally test a canonical builder vector containing both ordered values, update the contract distinction between serializer optionality and call-site requirements, and request separate authorization for any future one-shot probe.
+A separately authorized corrected probe was subsequently executed with both ordered values. It reached HTTP 200, returned the exact `infoUtilizadorAutenticadoMobileResponse` root without a SOAP Fault, and returned business status `130` with no profile fields. This validates the request framing correction but does not establish successful profile retrieval. The status meaning was not found in the retained static fixtures, so no further request should be made until the AT clarifies it or supplies the relevant status catalogue.
 
 ## Classification
 
-`DM3IRS_INFOUSER_REQUEST_CONTEXT_MISMATCH_OFFLINE_CONFIRMED`
+`DM3IRS_INFOUSER_REQUEST_CONTEXT_MISMATCH_CORRECTED_STATUS_130`
