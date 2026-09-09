@@ -113,10 +113,10 @@ These hashes cover only the canonical operation body with placeholders; no crede
 
 No credible channel, cookie, bearer, device metadata or prior-catalog dependency was found.
 
-## Retry gate
+## Corrected-probe interpretation
 
-A separately authorized corrected probe was subsequently executed with both ordered values. It reached HTTP 200, returned the exact `infoUtilizadorAutenticadoMobileResponse` root without a SOAP Fault, and returned business status `130` with no profile fields. This validates the request framing correction but does not establish successful profile retrieval. The status meaning was not found in the retained static fixtures, so no further request should be made until the AT clarifies it or supplies the relevant status catalogue.
+A separately authorized corrected probe was subsequently executed with both ordered values. It reached HTTP 200, returned the exact `infoUtilizadorAutenticadoMobileResponse` root without a SOAP Fault, and returned business status `130` with no profile fields. This validates the request framing correction but does not establish successful profile retrieval. Subsequent offline AOT analysis found the exact mapping: `BadIrsYearErrorEffect` handles codes `130` and `131`, raises `BadIrsYearException`, and the login flow displays “Período de entrega de IRS não é válido”. Because the same APK configures exercise year `2025`, no deterministic request change follows from this finding. No further request should be made until the AT confirms the accepted campaign/year or supplies the status contract.
 
 ## Classification
 
-`DM3IRS_INFOUSER_REQUEST_CONTEXT_MISMATCH_CORRECTED_STATUS_130`
+`DM3IRS_INFOUSER_STATUS_130_BAD_IRS_YEAR_EXACT_OFFLINE_CONFIRMED`

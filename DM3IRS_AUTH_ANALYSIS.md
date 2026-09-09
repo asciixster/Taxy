@@ -27,6 +27,8 @@ The AT RSA request-encryption public key matches Taxy's already-known public key
 
 The legitimate Taxy client identity is proven only for FactIntWS. DM3IRS authorization is not transitive, and no sanctioned Taxy DM3IRS channel metadata or entitlement is available. Result: `TAXY_AUTH_FEASIBILITY = UNKNOWN` and `TAXY_AUTH_PATH_KNOWN = NO`.
 
-## Live decision
+## Runtime evidence and current decision
 
-Although six read schemas are exact/high, every operation fails the authorization gate. No live request was executed. The correct next step is explicit AT entitlement/documentation or a sanctioned test environment—not reuse of the official app identity.
+Later, separately authorized one-shot probes used only the legitimate Taxy identity. Catalogs succeeded. A corrected `infoUtilizador` request completed TLS, returned HTTP 200 and the exact non-Fault response root, then returned status `130`. Offline AOT tracing now establishes that `130` and `131` are handled as `BadIrsYear`; the login flow displays “Período de entrega de IRS não é válido”.
+
+This confirms Taxy mTLS acceptance and the common SOAP-auth framing, but it does not grant contractual product entitlement or establish successful profile access. The APK itself configures exercise year `2025`, which was also used by the corrected request. No deterministic request correction exists. The correct next step is AT clarification of the accepted exercise/campaign year and entitlement—not another probe or reuse of the official app identity.
