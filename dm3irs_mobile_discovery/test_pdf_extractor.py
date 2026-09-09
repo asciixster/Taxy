@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import io
+import json
+import subprocess
+import sys
 import unittest
+from pathlib import Path
 
 from reportlab.pdfgen import canvas
 
@@ -60,6 +64,19 @@ class PdfExtractorTest(unittest.TestCase):
         summary = extract_pdf(sanitized_pdf_fixture()).sanitized_summary()
         self.assertNotIn("12 345,67", repr(summary))
         self.assertTrue(all("value" not in field for field in summary["fields"]))
+
+    def test_stdin_probe_never_persists_pdf_or_values(self) -> None:
+        fixture = sanitized_pdf_fixture()
+        probe = Path(__file__).with_name("pdf_extractor_probe.py")
+        completed = subprocess.run(
+            [sys.executable, str(probe), "-"],
+            input=fixture,
+            capture_output=True,
+            check=True,
+        )
+        summary = json.loads(completed.stdout)
+        self.assertTrue(summary["pdf_text_layer"])
+        self.assertNotIn("12 345,67", completed.stdout.decode("utf-8"))
 
 
 if __name__ == "__main__":
