@@ -6,7 +6,7 @@ Scope: static, offline analysis of the user-supplied official IRS APK. No networ
 
 `EstadoOperacao = 130` is an exact match for `BadIrsYearErrorEffect`. The effect raises `BadIrsYearException`; the login flow catches that exception class and displays **“Período de entrega de IRS não é válido”**. The effect is installed in the shared `ApiService` error chain, so this is a global DM3IRS status class rather than an `infoUtilizador`-specific branch.
 
-This establishes the meaning of the status. It does **not** establish whether production rejected the numeric year itself or the availability of that year's delivery campaign: both the production and quality APK configurations set `exerciseYearRequests` to `2025`, and `config/app.json` sets `exerciseYear` to `2025`. The same-year configuration weighs against a simple client-side year typo and makes a closed/unavailable delivery period the strongest explanation, but that causal step remains an inference. There is no statically supported replacement year to try.
+This establishes the meaning of the status. A later one-shot `checkEntrega` read accepted the same `2025` year with status `0` and found an already delivered declaration. This rules out a global rejection of the numeric year for that operation. Because the official app bypasses `infoUtilizador` when a declaration exists, invalid eligibility for the `infoUtilizador` delivery branch is now the strongest explanation. The causal link remains partial because no server-side status documentation was supplied.
 
 ## Explicit mappings
 
@@ -44,6 +44,6 @@ No operation-specific `130` handler was found in `infoUtilizador`, `infoAgregado
 ## Safe conclusion
 
 - Exact meaning: found.
-- Exact reason that the configured `2025` year/period context was rejected at the time of the probe: not found; unavailable delivery period is the highest-confidence inference.
+- Exact reason that `infoUtilizador` rejected the `2025` context: not fully documented; the official-flow branch was inapplicable because a delivered declaration existed is the highest-confidence inference.
 - Deterministic request correction: none.
 - Safe next live action: none until the AT confirms the currently accepted exercise/campaign year or provides an updated sanctioned configuration/status catalogue.

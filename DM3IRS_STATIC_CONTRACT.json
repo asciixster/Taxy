@@ -52,7 +52,7 @@
   },
   "privacy": {"containsValues":false,"containsSecrets":false,"containsPrivateCertificateData":false},
   "runtime": {
-    "liveRequests": 3,
+    "liveRequests": 4,
     "writeRequests": 0,
     "taxyAuthorization": "CATALOGS_RUNTIME_CONFIRMED_PRODUCT_REVIEW_REQUIRED",
     "lastSuccessfulProbe": {
@@ -107,6 +107,27 @@
       "runtimePopulatedFieldCount": 0,
       "retryCount": 0,
       "piiPersisted": false
+    },
+    "checkEntregaProbe": {
+      "date": "2026-09-09",
+      "environment": "PROD",
+      "operation": "checkEntregaDeclMobileRequest",
+      "requestYear": "2025",
+      "httpStatus": 200,
+      "tlsVersion": "TLSv1.3",
+      "cipher": "TLS_AES_128_GCM_SHA256",
+      "soapResponse": true,
+      "soapFault": false,
+      "responseRoot": "checkEntregaDeclMobileResponse",
+      "operationRecognized": true,
+      "businessStatus": "0",
+      "declarationFieldPresent": true,
+      "deliveredDeclarationAvailable": true,
+      "declarationIdentifierRetained": false,
+      "retryCount": 0,
+      "piiPersisted": false,
+      "writeOperations": 0,
+      "classification": "CHECK_ENTREGA_2025_VALID"
     }
   }
 }
