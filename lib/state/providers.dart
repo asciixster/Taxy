@@ -9,6 +9,9 @@ import '../product/product_models.dart';
 import '../fiscal_data/fiscal_data_orchestrator.dart';
 import '../fiscal_data/fiscal_evidence_repository.dart';
 import '../guided_tax/document_evidence.dart';
+import '../modules/dm3irs/infrastructure/dm3irs_history_bridge.dart';
+import '../modules/dm3irs/infrastructure/historical_tax_confirmation_repository.dart';
+import '../modules/dm3irs/domain/historical_tax_evidence.dart';
 
 final repositoryProvider = Provider<SimulationRepository>(
   (ref) => LocalSimulationRepository(),
@@ -69,4 +72,19 @@ final documentEvidenceRepositoryProvider =
 final documentEvidenceForYearProvider =
     FutureProvider.family<List<GuidedDocumentEvidence>, int>(
       (ref, year) => ref.watch(documentEvidenceRepositoryProvider).load(year),
+    );
+
+final dm3IrsHistoryGatewayProvider = Provider<Dm3IrsHistoryGateway>(
+  (_) => AndroidDm3IrsHistoryGateway(),
+);
+
+final historicalTaxConfirmationRepositoryProvider =
+    Provider<HistoricalTaxConfirmationRepository>(
+      (_) => LocalHistoricalTaxConfirmationRepository(),
+    );
+
+final historicalTaxConfirmationsForYearProvider =
+    FutureProvider.family<List<HistoricalTaxConfirmation>, int>(
+      (ref, year) =>
+          ref.watch(historicalTaxConfirmationRepositoryProvider).load(year),
     );

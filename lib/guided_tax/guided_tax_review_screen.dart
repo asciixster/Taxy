@@ -22,6 +22,7 @@ final class GuidedTaxReviewScreen extends ConsumerStatefulWidget {
     this.onEditQuestion,
     this.onOpenDocuments,
     this.onOpenEfatura,
+    this.onOpenIrsHistory,
   });
 
   final int taxYear;
@@ -29,6 +30,7 @@ final class GuidedTaxReviewScreen extends ConsumerStatefulWidget {
   final ValueChanged<String>? onEditQuestion;
   final VoidCallback? onOpenDocuments;
   final VoidCallback? onOpenEfatura;
+  final VoidCallback? onOpenIrsHistory;
 
   @override
   ConsumerState<GuidedTaxReviewScreen> createState() =>
@@ -161,6 +163,19 @@ final class _GuidedTaxReviewScreenState
                     subtitle: Text(l10n.guidedDocumentsPrivacy),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: widget.onOpenDocuments,
+                  ),
+                ),
+              ],
+              if (widget.onOpenIrsHistory != null) ...[
+                const SizedBox(height: 12),
+                Card(
+                  child: ListTile(
+                    key: const Key('irs-history-review-entry'),
+                    leading: const Icon(Icons.history_rounded),
+                    title: Text(l10n.irsHistoryTitle),
+                    subtitle: Text(l10n.irsHistoryCardSubtitle),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: widget.onOpenIrsHistory,
                   ),
                 ),
               ],

@@ -8,6 +8,8 @@ import '../l10n/app_localizations.dart';
 import '../l10n/taxy_formatters.dart';
 import '../product/product_models.dart';
 import '../state/providers.dart';
+import '../modules/dm3irs/domain/historical_tax_evidence.dart';
+import '../modules/dm3irs/screens/irs_history_prefill_screen.dart';
 import '../tax_engine/tax_engine.dart';
 import 'tax_interview_engine.dart';
 import 'tax_interview_models.dart';
@@ -423,6 +425,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
           );
         }),
         onOpenDocuments: _openDocumentEvidence,
+        onOpenIrsHistory: _openIrsHistory,
       );
     }
     final result = _engine.result(_interview!);
@@ -699,6 +702,48 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     });
   }
 
+  Future<void> _openIrsHistory() async {
+    final confirmations = await Navigator.push<List<HistoricalTaxConfirmation>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => IrsHistoryPrefillScreen(
+          targetYear: widget.taxYear,
+          gateway: ref.read(dm3IrsHistoryGatewayProvider),
+          repository: ref.read(historicalTaxConfirmationRepositoryProvider),
+        ),
+      ),
+    );
+    if (!mounted ||
+        confirmations == null ||
+        confirmations.isEmpty ||
+        _interview == null) {
+      return;
+    }
+    final answers = applyHistoricalConfirmations(
+      current: _interview!.answers,
+      targetYear: widget.taxYear,
+      confirmations: confirmations,
+    );
+    final updated = _interview!.copyWith(answers: answers);
+    final product = await ref.read(productStateProvider.future);
+    await ref
+        .read(productRepositoryProvider)
+        .save(
+          product.copyWith(
+            profile: profileFromInterview(updated, product.profile),
+          ),
+        );
+    await ref.read(taxInterviewRepositoryProvider).save(updated);
+    ref.invalidate(productStateProvider);
+    ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
+    ref.invalidate(historicalTaxConfirmationsForYearProvider(widget.taxYear));
+    if (!mounted) return;
+    setState(() {
+      _interview = updated;
+      _estimateChanged = true;
+    });
+  }
+
   bool _sameAnswers(Map<String, TaxAnswer> left, Map<String, TaxAnswer> right) {
     if (left.length != right.length) return false;
     for (final entry in left.entries) {
@@ -735,6 +780,9 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     await ref.read(productRepositoryProvider).save(reset);
     await ref.read(taxInterviewRepositoryProvider).clear(widget.taxYear);
     await ref.read(documentEvidenceRepositoryProvider).clear(widget.taxYear);
+    await ref
+        .read(historicalTaxConfirmationRepositoryProvider)
+        .clear(widget.taxYear);
     await AndroidTaxDocumentCaptureGateway().clearTemporary().catchError(
       (_) {},
     );
@@ -742,6 +790,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
     ref.invalidate(productStateProvider);
     ref.invalidate(taxInterviewForYearProvider(widget.taxYear));
     ref.invalidate(documentEvidenceForYearProvider(widget.taxYear));
+    ref.invalidate(historicalTaxConfirmationsForYearProvider(widget.taxYear));
     if (!mounted) return;
     setState(() {
       _interview = _prefill(reset);

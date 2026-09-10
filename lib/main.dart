@@ -18,6 +18,8 @@ import 'modules/efatura/infrastructure/efatura_api_configuration.dart';
 import 'modules/efatura/infrastructure/efatura_screen_protection.dart';
 import 'modules/efatura/infrastructure/efatura_session_token_store.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
+import 'modules/dm3irs/domain/historical_tax_evidence.dart';
+import 'modules/dm3irs/screens/irs_history_prefill_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'guided_tax/guided_tax_screen.dart';
 import 'guided_tax/guided_tax_review_screen.dart';
@@ -265,6 +267,50 @@ Future<void> _openGuidedTax(BuildContext context, int taxYear) =>
       MaterialPageRoute(builder: (_) => GuidedTaxScreen(taxYear: taxYear)),
     );
 
+Future<void> _openIrsHistory(
+  BuildContext context,
+  WidgetRef ref,
+  int targetYear,
+) async {
+  final interview = await ref.read(
+    taxInterviewForYearProvider(targetYear).future,
+  );
+  if (!context.mounted) return;
+  if (interview == null) {
+    await _openGuidedTax(context, targetYear);
+    return;
+  }
+  final confirmations = await Navigator.push<List<HistoricalTaxConfirmation>>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => IrsHistoryPrefillScreen(
+        targetYear: targetYear,
+        gateway: ref.read(dm3IrsHistoryGatewayProvider),
+        repository: ref.read(historicalTaxConfirmationRepositoryProvider),
+      ),
+    ),
+  );
+  if (confirmations == null || confirmations.isEmpty) return;
+  final answers = applyHistoricalConfirmations(
+    current: interview.answers,
+    targetYear: targetYear,
+    confirmations: confirmations,
+  );
+  final updated = interview.copyWith(answers: answers);
+  final product = await ref.read(productStateProvider.future);
+  await ref
+      .read(productRepositoryProvider)
+      .save(
+        product.copyWith(
+          profile: profileFromInterview(updated, product.profile),
+        ),
+      );
+  await ref.read(taxInterviewRepositoryProvider).save(updated);
+  ref.invalidate(productStateProvider);
+  ref.invalidate(taxInterviewForYearProvider(targetYear));
+  ref.invalidate(historicalTaxConfirmationsForYearProvider(targetYear));
+}
+
 Future<void> _openGuidedReview(
   BuildContext context,
   WidgetRef ref,
@@ -278,6 +324,9 @@ Future<void> _openGuidedReview(
       onOpenEfatura: EfaturaFeatureFlags.experimental
           ? () => _openEfatura(reviewContext, ref, taxYear)
           : null,
+      onOpenIrsHistory: () async {
+        await _openIrsHistory(reviewContext, ref, taxYear);
+      },
     ),
   ),
 );

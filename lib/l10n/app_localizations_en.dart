@@ -1616,4 +1616,89 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get documentOriginalNotStored =>
       'The original document is not kept after confirmation.';
+
+  @override
+  String get irsHistoryTitle => 'Previous IRS return';
+
+  @override
+  String get irsHistoryCardSubtitle =>
+      'Use confirmed information from your 2024 IRS return to answer fewer questions';
+
+  @override
+  String get irsHistoryIntro =>
+      'We found information in your previous IRS return';
+
+  @override
+  String get irsHistoryPrivacy =>
+      'The return is read in memory only. The PDF, XML and declaration identifiers are not stored.';
+
+  @override
+  String get irsHistorySelectIdentity => 'Select Taxy identity';
+
+  @override
+  String get irsHistorySelectPublicCertificate =>
+      'Select AT public certificate';
+
+  @override
+  String get irsHistoryFind2024 => 'Find 2024 IRS return';
+
+  @override
+  String get irsHistoryContinueManual => 'Continue without previous IRS';
+
+  @override
+  String get irsHistoryFound => 'Information found';
+
+  @override
+  String irsHistoryYearNotice(int sourceYear, int targetYear) {
+    return 'This information is from $sourceYear. It is only used for $targetYear if you confirm it.';
+  }
+
+  @override
+  String get irsHistoryConfirmSelected => 'Confirm selection';
+
+  @override
+  String get irsHistoryIgnore => 'Ignore for now';
+
+  @override
+  String get irsHistoryReviewValue => 'Confirm or change';
+
+  @override
+  String get irsHistoryCategoryA => 'Employment income';
+
+  @override
+  String get irsHistoryCategoryB => 'Self-employment';
+
+  @override
+  String get irsHistoryCategoryBRegime => 'Self-employment regime';
+
+  @override
+  String get irsHistoryActivityCode => 'Activity code';
+
+  @override
+  String get irsHistoryTaxableProfit => 'Historical taxable profit';
+
+  @override
+  String get irsHistoryWithholding => 'Historical withholding';
+
+  @override
+  String get irsHistoryPresentIn2024 => 'Present in the 2024 IRS return';
+
+  @override
+  String get irsHistoryOrganizedAccounting => 'Organized accounting';
+
+  @override
+  String get irsHistoryNone =>
+      'No previous return is available. You can continue manually.';
+
+  @override
+  String get irsHistoryUnknownTemplate =>
+      'This return uses a format Taxy cannot recognize safely yet. Nothing was imported.';
+
+  @override
+  String get irsHistoryAuthenticationError =>
+      'We could not sign in to Portal das Finanças. Check your details and try again.';
+
+  @override
+  String get irsHistoryFallback =>
+      'We could not check your previous IRS return. The manual interview remains available.';
 }

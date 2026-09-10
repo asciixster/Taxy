@@ -1631,6 +1631,90 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get documentOriginalNotStored =>
       'O documento original não é guardado depois da confirmação.';
+
+  @override
+  String get irsHistoryTitle => 'IRS anterior';
+
+  @override
+  String get irsHistoryCardSubtitle =>
+      'Usa informação confirmada do IRS de 2024 para responderes menos';
+
+  @override
+  String get irsHistoryIntro => 'Encontrámos informação no teu IRS anterior';
+
+  @override
+  String get irsHistoryPrivacy =>
+      'A declaração é lida apenas em memória. O PDF, o XML e os identificadores não são guardados.';
+
+  @override
+  String get irsHistorySelectIdentity => 'Selecionar identidade Taxy';
+
+  @override
+  String get irsHistorySelectPublicCertificate =>
+      'Selecionar certificado público da AT';
+
+  @override
+  String get irsHistoryFind2024 => 'Procurar IRS de 2024';
+
+  @override
+  String get irsHistoryContinueManual => 'Continuar sem IRS anterior';
+
+  @override
+  String get irsHistoryFound => 'Informação encontrada';
+
+  @override
+  String irsHistoryYearNotice(int sourceYear, int targetYear) {
+    return 'Estes dados são de $sourceYear. Só entram em $targetYear se os confirmares.';
+  }
+
+  @override
+  String get irsHistoryConfirmSelected => 'Confirmar seleção';
+
+  @override
+  String get irsHistoryIgnore => 'Ignorar por agora';
+
+  @override
+  String get irsHistoryReviewValue => 'Confirmar ou alterar';
+
+  @override
+  String get irsHistoryCategoryA => 'Rendimentos do trabalho';
+
+  @override
+  String get irsHistoryCategoryB => 'Trabalho independente';
+
+  @override
+  String get irsHistoryCategoryBRegime => 'Regime do trabalho independente';
+
+  @override
+  String get irsHistoryActivityCode => 'Código de atividade';
+
+  @override
+  String get irsHistoryTaxableProfit => 'Lucro tributável histórico';
+
+  @override
+  String get irsHistoryWithholding => 'Retenções históricas';
+
+  @override
+  String get irsHistoryPresentIn2024 => 'Presente no IRS de 2024';
+
+  @override
+  String get irsHistoryOrganizedAccounting => 'Contabilidade organizada';
+
+  @override
+  String get irsHistoryNone =>
+      'Não encontrámos uma declaração anterior disponível. Podes continuar manualmente.';
+
+  @override
+  String get irsHistoryUnknownTemplate =>
+      'Esta declaração usa um formato que a Taxy ainda não reconhece com segurança. Nada foi importado.';
+
+  @override
+  String get irsHistoryAuthenticationError =>
+      'Não foi possível autenticar no Portal das Finanças. Confirma os dados e tenta novamente.';
+
+  @override
+  String get irsHistoryFallback =>
+      'Não foi possível consultar o IRS anterior. A entrevista manual continua disponível.';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -3259,4 +3343,88 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get documentOriginalNotStored =>
       'O documento original não é guardado depois da confirmação.';
+
+  @override
+  String get irsHistoryTitle => 'IRS anterior';
+
+  @override
+  String get irsHistoryCardSubtitle =>
+      'Usa informação confirmada do IRS de 2024 para responderes menos';
+
+  @override
+  String get irsHistoryIntro => 'Encontrámos informação no teu IRS anterior';
+
+  @override
+  String get irsHistoryPrivacy =>
+      'A declaração é lida apenas em memória. O PDF, o XML e os identificadores não são guardados.';
+
+  @override
+  String get irsHistorySelectIdentity => 'Selecionar identidade Taxy';
+
+  @override
+  String get irsHistorySelectPublicCertificate =>
+      'Selecionar certificado público da AT';
+
+  @override
+  String get irsHistoryFind2024 => 'Procurar IRS de 2024';
+
+  @override
+  String get irsHistoryContinueManual => 'Continuar sem IRS anterior';
+
+  @override
+  String get irsHistoryFound => 'Informação encontrada';
+
+  @override
+  String irsHistoryYearNotice(int sourceYear, int targetYear) {
+    return 'Estes dados são de $sourceYear. Só entram em $targetYear se os confirmares.';
+  }
+
+  @override
+  String get irsHistoryConfirmSelected => 'Confirmar seleção';
+
+  @override
+  String get irsHistoryIgnore => 'Ignorar por agora';
+
+  @override
+  String get irsHistoryReviewValue => 'Confirmar ou alterar';
+
+  @override
+  String get irsHistoryCategoryA => 'Rendimentos do trabalho';
+
+  @override
+  String get irsHistoryCategoryB => 'Trabalho independente';
+
+  @override
+  String get irsHistoryCategoryBRegime => 'Regime do trabalho independente';
+
+  @override
+  String get irsHistoryActivityCode => 'Código de atividade';
+
+  @override
+  String get irsHistoryTaxableProfit => 'Lucro tributável histórico';
+
+  @override
+  String get irsHistoryWithholding => 'Retenções históricas';
+
+  @override
+  String get irsHistoryPresentIn2024 => 'Presente no IRS de 2024';
+
+  @override
+  String get irsHistoryOrganizedAccounting => 'Contabilidade organizada';
+
+  @override
+  String get irsHistoryNone =>
+      'Não encontrámos uma declaração anterior disponível. Podes continuar manualmente.';
+
+  @override
+  String get irsHistoryUnknownTemplate =>
+      'Esta declaração usa um formato que a Taxy ainda não reconhece com segurança. Nada foi importado.';
+
+  @override
+  String get irsHistoryAuthenticationError =>
+      'Não foi possível autenticar no Portal das Finanças. Confirma os dados e tenta novamente.';
+
+  @override
+  String get irsHistoryFallback =>
+      'Não foi possível consultar o IRS anterior. A entrevista manual continua disponível.';
 }
