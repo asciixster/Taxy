@@ -391,6 +391,9 @@ final class _IrsHistoryPrefillScreenState
     'none' || 'noDeclaration' => l10n.irsHistoryNone,
     'unknownTemplate' || 'invalidDocument' => l10n.irsHistoryUnknownTemplate,
     'authentication' => l10n.irsHistoryAuthenticationError,
+    'notConfigured' => l10n.irsHistoryConfigurationError,
+    'network' => l10n.irsHistoryNetworkError,
+    'unavailable' => l10n.irsHistoryServiceError,
     _ => l10n.irsHistoryFallback,
   };
 }

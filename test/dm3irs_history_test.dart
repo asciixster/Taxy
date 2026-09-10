@@ -221,39 +221,67 @@ void main() {
     expect(find.byKey(const Key('irs-history-prefill')), findsOneWidget);
   });
 
-  testWidgets('edited suggestion is the only value persisted after confirmation', (
+  testWidgets(
+    'edited suggestion is the only value persisted after confirmation',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repository = MemoryHistoricalTaxConfirmationRepository();
+      await _pump(tester, _FakeGateway(), repository);
+      await tester.tap(find.byKey(const Key('irs-history-load')));
+      await tester.pumpAndSettle();
+      final withholdingTile = find.byKey(const Key('irs-history-withholding'));
+      await tester.scrollUntilVisible(
+        withholdingTile,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(
+        find.descendant(of: withholdingTile, matching: find.byType(Checkbox)),
+      );
+      final input = find.descendant(
+        of: withholdingTile,
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(input, '300,00');
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('irs-history-confirm')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(const Key('irs-history-confirm')));
+      await tester.pumpAndSettle();
+      final saved = await repository.load(2026);
+      expect(saved, hasLength(1));
+      expect(saved.single.field, HistoricalSuggestionField.withholding);
+      expect(saved.single.value, 30000);
+    },
+  );
+
+  testWidgets('safe failure category replaces the generic fallback', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(800, 1200);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final repository = MemoryHistoricalTaxConfirmationRepository();
-    await _pump(tester, _FakeGateway(), repository);
+    await _pump(
+      tester,
+      _FakeGateway(failure: Dm3IrsFailureKind.network),
+      MemoryHistoricalTaxConfirmationRepository(),
+    );
     await tester.tap(find.byKey(const Key('irs-history-load')));
     await tester.pumpAndSettle();
-    final withholdingTile = find.byKey(const Key('irs-history-withholding'));
-    await tester.scrollUntilVisible(
-      withholdingTile,
-      300,
-      scrollable: find.byType(Scrollable).first,
+    expect(
+      find.text(
+        'Não foi possível estabelecer uma ligação segura ao Portal das Finanças. Verifica a rede e tenta novamente.',
+      ),
+      findsOneWidget,
     );
-    await tester.tap(
-      find.descendant(of: withholdingTile, matching: find.byType(Checkbox)),
+    expect(
+      find.text(
+        'Não foi possível consultar o IRS anterior. A entrevista manual continua disponível.',
+      ),
+      findsNothing,
     );
-    final input = find.descendant(of: withholdingTile, matching: find.byType(TextField));
-    await tester.enterText(input, '300,00');
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('irs-history-confirm')),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.byKey(const Key('irs-history-confirm')));
-    await tester.pumpAndSettle();
-    final saved = await repository.load(2026);
-    expect(saved, hasLength(1));
-    expect(saved.single.field, HistoricalSuggestionField.withholding);
-    expect(saved.single.value, 30000);
   });
 }
 
@@ -287,26 +315,31 @@ Future<void> _pump(
 }
 
 final class _FakeGateway implements Dm3IrsHistoryGateway {
+  _FakeGateway({this.failure});
+
+  final Dm3IrsFailureKind? failure;
   bool secure = false;
 
   @override
   Future<void> clear() async {}
 
   @override
-  Future<HistoricalTaxEvidence?> loadHistory({required int sourceYear}) async =>
-      HistoricalTaxEvidence.fromNative(const {
-        'available': true,
-        'taxYear': 2024,
-        'annexes': ['A', 'C', 'H', 'SS'],
-        'incomeCategories': ['A', 'B'],
-        'categoryBRegime': 'CONTABILIDADE_ORGANIZADA',
-        'activityCode': '4015',
-        'taxableProfitCents': 12345,
-        'withholdingCents': 23456,
-        'templateVersion': 'MODELO3_2024_V1',
-        'templateFingerprint': 'known-fingerprint',
-        'confidence': 'EXACT',
-      });
+  Future<HistoricalTaxEvidence?> loadHistory({required int sourceYear}) async {
+    if (failure != null) throw Dm3IrsException(failure!, 'safe failure');
+    return HistoricalTaxEvidence.fromNative(const {
+      'available': true,
+      'taxYear': 2024,
+      'annexes': ['A', 'C', 'H', 'SS'],
+      'incomeCategories': ['A', 'B'],
+      'categoryBRegime': 'CONTABILIDADE_ORGANIZADA',
+      'activityCode': '4015',
+      'taxableProfitCents': 12345,
+      'withholdingCents': 23456,
+      'templateVersion': 'MODELO3_2024_V1',
+      'templateFingerprint': 'known-fingerprint',
+      'confidence': 'EXACT',
+    });
+  }
 
   @override
   Future<Dm3IrsReadiness> readiness() async => const Dm3IrsReadiness(

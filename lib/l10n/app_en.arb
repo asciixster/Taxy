@@ -527,5 +527,8 @@
   ,"irsHistoryNone": "No previous return is available. You can continue manually."
   ,"irsHistoryUnknownTemplate": "This return uses a format Taxy cannot recognize safely yet. Nothing was imported."
   ,"irsHistoryAuthenticationError": "We could not sign in to Portal das Finanças. Check your details and try again."
+  ,"irsHistoryConfigurationError": "The connection is not complete yet. Select the Taxy identity and the AT public certificate."
+  ,"irsHistoryNetworkError": "We could not establish a secure connection to Portal das Finanças. Check the network and try again."
+  ,"irsHistoryServiceError": "The previous IRS return service did not complete the request. Try again later."
   ,"irsHistoryFallback": "We could not check your previous IRS return. The manual interview remains available."
 }

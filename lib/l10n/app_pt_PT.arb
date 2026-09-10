@@ -527,5 +527,8 @@
   ,"irsHistoryNone": "Não encontrámos uma declaração anterior disponível. Podes continuar manualmente."
   ,"irsHistoryUnknownTemplate": "Esta declaração usa um formato que a Taxy ainda não reconhece com segurança. Nada foi importado."
   ,"irsHistoryAuthenticationError": "Não foi possível autenticar no Portal das Finanças. Confirma os dados e tenta novamente."
+  ,"irsHistoryConfigurationError": "A ligação ainda não está completa. Seleciona a identidade Taxy e o certificado público da AT."
+  ,"irsHistoryNetworkError": "Não foi possível estabelecer uma ligação segura ao Portal das Finanças. Verifica a rede e tenta novamente."
+  ,"irsHistoryServiceError": "O serviço de IRS anterior não concluiu a consulta. Tenta novamente mais tarde."
   ,"irsHistoryFallback": "Não foi possível consultar o IRS anterior. A entrevista manual continua disponível."
 }

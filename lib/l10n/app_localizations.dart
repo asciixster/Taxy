@@ -3063,6 +3063,24 @@ abstract class AppLocalizations {
   /// **'Não foi possível autenticar no Portal das Finanças. Confirma os dados e tenta novamente.'**
   String get irsHistoryAuthenticationError;
 
+  /// No description provided for @irsHistoryConfigurationError.
+  ///
+  /// In pt, this message translates to:
+  /// **'A ligação ainda não está completa. Seleciona a identidade Taxy e o certificado público da AT.'**
+  String get irsHistoryConfigurationError;
+
+  /// No description provided for @irsHistoryNetworkError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível estabelecer uma ligação segura ao Portal das Finanças. Verifica a rede e tenta novamente.'**
+  String get irsHistoryNetworkError;
+
+  /// No description provided for @irsHistoryServiceError.
+  ///
+  /// In pt, this message translates to:
+  /// **'O serviço de IRS anterior não concluiu a consulta. Tenta novamente mais tarde.'**
+  String get irsHistoryServiceError;
+
   /// No description provided for @irsHistoryFallback.
   ///
   /// In pt, this message translates to:

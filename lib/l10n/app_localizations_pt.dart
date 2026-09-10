@@ -1713,6 +1713,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível autenticar no Portal das Finanças. Confirma os dados e tenta novamente.';
 
   @override
+  String get irsHistoryConfigurationError =>
+      'A ligação ainda não está completa. Seleciona a identidade Taxy e o certificado público da AT.';
+
+  @override
+  String get irsHistoryNetworkError =>
+      'Não foi possível estabelecer uma ligação segura ao Portal das Finanças. Verifica a rede e tenta novamente.';
+
+  @override
+  String get irsHistoryServiceError =>
+      'O serviço de IRS anterior não concluiu a consulta. Tenta novamente mais tarde.';
+
+  @override
   String get irsHistoryFallback =>
       'Não foi possível consultar o IRS anterior. A entrevista manual continua disponível.';
 }
@@ -3423,6 +3435,18 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get irsHistoryAuthenticationError =>
       'Não foi possível autenticar no Portal das Finanças. Confirma os dados e tenta novamente.';
+
+  @override
+  String get irsHistoryConfigurationError =>
+      'A ligação ainda não está completa. Seleciona a identidade Taxy e o certificado público da AT.';
+
+  @override
+  String get irsHistoryNetworkError =>
+      'Não foi possível estabelecer uma ligação segura ao Portal das Finanças. Verifica a rede e tenta novamente.';
+
+  @override
+  String get irsHistoryServiceError =>
+      'O serviço de IRS anterior não concluiu a consulta. Tenta novamente mais tarde.';
 
   @override
   String get irsHistoryFallback =>

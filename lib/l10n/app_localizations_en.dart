@@ -1699,6 +1699,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'We could not sign in to Portal das Finanças. Check your details and try again.';
 
   @override
+  String get irsHistoryConfigurationError =>
+      'The connection is not complete yet. Select the Taxy identity and the AT public certificate.';
+
+  @override
+  String get irsHistoryNetworkError =>
+      'We could not establish a secure connection to Portal das Finanças. Check the network and try again.';
+
+  @override
+  String get irsHistoryServiceError =>
+      'The previous IRS return service did not complete the request. Try again later.';
+
+  @override
   String get irsHistoryFallback =>
       'We could not check your previous IRS return. The manual interview remains available.';
 }
