@@ -508,6 +508,7 @@
   ,"irsHistoryPrivacy": "A declaração é lida apenas em memória. O PDF, o XML e os identificadores não são guardados."
   ,"irsHistorySelectIdentity": "Selecionar identidade Taxy"
   ,"irsHistorySelectPublicCertificate": "Selecionar certificado público da AT"
+  ,"irsHistoryChangeLogin": "Alterar login"
   ,"irsHistoryFind2024": "Procurar IRS de 2024"
   ,"irsHistoryContinueManual": "Continuar sem IRS anterior"
   ,"irsHistoryFound": "Informação encontrada"

@@ -2955,6 +2955,12 @@ abstract class AppLocalizations {
   /// **'Selecionar certificado público da AT'**
   String get irsHistorySelectPublicCertificate;
 
+  /// No description provided for @irsHistoryChangeLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterar login'**
+  String get irsHistoryChangeLogin;
+
   /// No description provided for @irsHistoryFind2024.
   ///
   /// In pt, this message translates to:

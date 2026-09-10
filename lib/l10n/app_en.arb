@@ -508,6 +508,7 @@
   ,"irsHistoryPrivacy": "The return is read in memory only. The PDF, XML and declaration identifiers are not stored."
   ,"irsHistorySelectIdentity": "Select Taxy identity"
   ,"irsHistorySelectPublicCertificate": "Select AT public certificate"
+  ,"irsHistoryChangeLogin": "Change login"
   ,"irsHistoryFind2024": "Find 2024 IRS return"
   ,"irsHistoryContinueManual": "Continue without previous IRS"
   ,"irsHistoryFound": "Information found"

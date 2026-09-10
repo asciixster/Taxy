@@ -28,6 +28,7 @@ final class _IrsHistoryPrefillScreenState
   static const _sourceYear = 2024;
   final _nif = TextEditingController();
   final _password = TextEditingController();
+  final _nifFocus = FocusNode();
   Dm3IrsReadiness? _readiness;
   HistoricalTaxEvidence? _evidence;
   final Set<HistoricalSuggestionField> _selected = {};
@@ -47,6 +48,7 @@ final class _IrsHistoryPrefillScreenState
     widget.gateway.setScreenSecure(false);
     _nif.dispose();
     _password.dispose();
+    _nifFocus.dispose();
     for (final controller in _edits.values) {
       controller.dispose();
     }
@@ -118,6 +120,7 @@ final class _IrsHistoryPrefillScreenState
           TextField(
             key: const Key('irs-history-nif'),
             controller: _nif,
+            focusNode: _nifFocus,
             keyboardType: TextInputType.number,
             autofillHints: const [AutofillHints.username],
             decoration: InputDecoration(labelText: l10n.nif),
@@ -133,7 +136,12 @@ final class _IrsHistoryPrefillScreenState
             decoration: InputDecoration(labelText: l10n.password),
           ),
           const SizedBox(height: 12),
-        ],
+        ] else
+          TextButton(
+            key: const Key('irs-history-change-login'),
+            onPressed: _changeLogin,
+            child: Text(l10n.irsHistoryChangeLogin),
+          ),
         if (readiness?.hasClientIdentity != true)
           OutlinedButton.icon(
             key: const Key('irs-history-client-identity'),
@@ -246,6 +254,26 @@ final class _IrsHistoryPrefillScreenState
     if (selected) await _loadReadiness();
   }
 
+  Future<void> _changeLogin() async {
+    try {
+      await widget.gateway.clear();
+    } catch (_) {
+      // Saving the replacement credential remains an overwrite operation.
+    }
+    if (!mounted) return;
+    setState(() {
+      _readiness = Dm3IrsReadiness(
+        hasCredentials: false,
+        hasClientIdentity: _readiness?.hasClientIdentity == true,
+        hasCipherCertificate: _readiness?.hasCipherCertificate == true,
+      );
+      _error = null;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _nifFocus.requestFocus();
+    });
+  }
+
   Future<void> _selectCipherCertificate() async {
     final selected = await widget.gateway.selectCipherCertificate();
     if (selected) await _loadReadiness();
@@ -280,10 +308,31 @@ final class _IrsHistoryPrefillScreenState
       });
     } on Dm3IrsException catch (error) {
       if (!mounted) return;
+      if (error.kind == Dm3IrsFailureKind.authentication) {
+        try {
+          await widget.gateway.clear();
+        } catch (_) {
+          // The next save overwrites the rejected credential even if cleanup
+          // could not be completed here.
+        }
+        if (!mounted) return;
+      }
       setState(() {
         _loading = false;
         _error = error.kind.name;
+        if (error.kind == Dm3IrsFailureKind.authentication) {
+          _readiness = Dm3IrsReadiness(
+            hasCredentials: false,
+            hasClientIdentity: _readiness?.hasClientIdentity == true,
+            hasCipherCertificate: _readiness?.hasCipherCertificate == true,
+          );
+        }
       });
+      if (error.kind == Dm3IrsFailureKind.authentication) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _nifFocus.requestFocus();
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(() {

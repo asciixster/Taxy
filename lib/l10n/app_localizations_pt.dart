@@ -1654,6 +1654,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Selecionar certificado público da AT';
 
   @override
+  String get irsHistoryChangeLogin => 'Alterar login';
+
+  @override
   String get irsHistoryFind2024 => 'Procurar IRS de 2024';
 
   @override
@@ -3376,6 +3379,9 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get irsHistorySelectPublicCertificate =>
       'Selecionar certificado público da AT';
+
+  @override
+  String get irsHistoryChangeLogin => 'Alterar login';
 
   @override
   String get irsHistoryFind2024 => 'Procurar IRS de 2024';

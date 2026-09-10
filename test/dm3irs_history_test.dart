@@ -283,6 +283,42 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('rejected credentials return focus to editable login', (
+    tester,
+  ) async {
+    final gateway = _FakeGateway(failure: Dm3IrsFailureKind.authentication);
+    await _pump(tester, gateway, MemoryHistoricalTaxConfirmationRepository());
+    await tester.tap(find.byKey(const Key('irs-history-load')));
+    await tester.pumpAndSettle();
+    expect(gateway.cleared, isTrue);
+    expect(find.byKey(const Key('irs-history-nif')), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('irs-history-nif')))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+  });
+
+  testWidgets('stored credentials can be replaced without clearing profile', (
+    tester,
+  ) async {
+    final gateway = _FakeGateway();
+    await _pump(tester, gateway, MemoryHistoricalTaxConfirmationRepository());
+    await tester.tap(find.byKey(const Key('irs-history-change-login')));
+    await tester.pumpAndSettle();
+    expect(gateway.cleared, isTrue);
+    expect(find.byKey(const Key('irs-history-nif')), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('irs-history-nif')))
+          .focusNode
+          ?.hasFocus,
+      isTrue,
+    );
+  });
 }
 
 Future<void> _pump(
@@ -319,9 +355,10 @@ final class _FakeGateway implements Dm3IrsHistoryGateway {
 
   final Dm3IrsFailureKind? failure;
   bool secure = false;
+  bool cleared = false;
 
   @override
-  Future<void> clear() async {}
+  Future<void> clear() async => cleared = true;
 
   @override
   Future<HistoricalTaxEvidence?> loadHistory({required int sourceYear}) async {

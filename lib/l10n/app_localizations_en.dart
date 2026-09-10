@@ -1640,6 +1640,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Select AT public certificate';
 
   @override
+  String get irsHistoryChangeLogin => 'Change login';
+
+  @override
   String get irsHistoryFind2024 => 'Find 2024 IRS return';
 
   @override
