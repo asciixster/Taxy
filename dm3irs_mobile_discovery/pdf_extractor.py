@@ -126,6 +126,7 @@ class PdfExtraction:
             counts[row.classification] += len(row.populated_columns)
         counts["EXACT"] += ss_metadata
         return {
+            "pages_parsed": len(self.pages),
             "annexes_detected": {item.annex: item.quantity for item in self.annexes if item.quantity > 0},
             "annex_a_structured_fields_count": sum(len(row.populated_columns) for row in self.annex_a_rows),
             "annex_c_structured_fields_count": accepted("C"),
