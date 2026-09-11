@@ -1652,6 +1652,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get irsHistoryFound => 'Information found';
 
   @override
+  String get irsHistoryAnnexesFound => 'Annexes found';
+
+  @override
+  String get irsHistoryAnnexA => 'Annex A';
+
+  @override
+  String get irsHistoryAnnexC => 'Annex C';
+
+  @override
+  String get irsHistoryAnnexH => 'Annex H';
+
+  @override
+  String get irsHistoryAnnexSS => 'Annex SS';
+
+  @override
   String irsHistoryYearNotice(int sourceYear, int targetYear) {
     return 'This information is from $sourceYear. It is only used for $targetYear if you confirm it.';
   }

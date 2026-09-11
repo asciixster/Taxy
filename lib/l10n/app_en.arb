@@ -512,6 +512,11 @@
   ,"irsHistoryFind2024": "Find 2024 IRS return"
   ,"irsHistoryContinueManual": "Continue without previous IRS"
   ,"irsHistoryFound": "Information found"
+  ,"irsHistoryAnnexesFound": "Annexes found"
+  ,"irsHistoryAnnexA": "Annex A"
+  ,"irsHistoryAnnexC": "Annex C"
+  ,"irsHistoryAnnexH": "Annex H"
+  ,"irsHistoryAnnexSS": "Annex SS"
   ,"irsHistoryYearNotice": "This information is from {sourceYear}. It is only used for {targetYear} if you confirm it."
   ,"@irsHistoryYearNotice": {"placeholders": {"sourceYear": {"type": "int"}, "targetYear": {"type": "int"}}}
   ,"irsHistoryConfirmSelected": "Confirm selection"

@@ -1666,6 +1666,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get irsHistoryFound => 'Informação encontrada';
 
   @override
+  String get irsHistoryAnnexesFound => 'Anexos encontrados';
+
+  @override
+  String get irsHistoryAnnexA => 'Anexo A';
+
+  @override
+  String get irsHistoryAnnexC => 'Anexo C';
+
+  @override
+  String get irsHistoryAnnexH => 'Anexo H';
+
+  @override
+  String get irsHistoryAnnexSS => 'Anexo SS';
+
+  @override
   String irsHistoryYearNotice(int sourceYear, int targetYear) {
     return 'Estes dados são de $sourceYear. Só entram em $targetYear se os confirmares.';
   }
@@ -3391,6 +3406,21 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
 
   @override
   String get irsHistoryFound => 'Informação encontrada';
+
+  @override
+  String get irsHistoryAnnexesFound => 'Anexos encontrados';
+
+  @override
+  String get irsHistoryAnnexA => 'Anexo A';
+
+  @override
+  String get irsHistoryAnnexC => 'Anexo C';
+
+  @override
+  String get irsHistoryAnnexH => 'Anexo H';
+
+  @override
+  String get irsHistoryAnnexSS => 'Anexo SS';
 
   @override
   String irsHistoryYearNotice(int sourceYear, int targetYear) {

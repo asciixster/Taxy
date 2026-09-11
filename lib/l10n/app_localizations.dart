@@ -2979,6 +2979,36 @@ abstract class AppLocalizations {
   /// **'Informação encontrada'**
   String get irsHistoryFound;
 
+  /// No description provided for @irsHistoryAnnexesFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexos encontrados'**
+  String get irsHistoryAnnexesFound;
+
+  /// No description provided for @irsHistoryAnnexA.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo A'**
+  String get irsHistoryAnnexA;
+
+  /// No description provided for @irsHistoryAnnexC.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo C'**
+  String get irsHistoryAnnexC;
+
+  /// No description provided for @irsHistoryAnnexH.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo H'**
+  String get irsHistoryAnnexH;
+
+  /// No description provided for @irsHistoryAnnexSS.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo SS'**
+  String get irsHistoryAnnexSS;
+
   /// No description provided for @irsHistoryYearNotice.
   ///
   /// In pt, this message translates to:

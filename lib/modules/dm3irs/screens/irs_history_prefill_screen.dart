@@ -182,6 +182,23 @@ final class _IrsHistoryPrefillScreenState
         const SizedBox(height: 6),
         Text(l10n.irsHistoryYearNotice(evidence.taxYear, widget.targetYear)),
         const SizedBox(height: 12),
+        Text(
+          l10n.irsHistoryAnnexesFound,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final annex in evidence.annexes)
+              Chip(
+                key: Key('irs-history-annex-${annex.name}'),
+                label: Text(_annexLabel(l10n, annex)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
         for (final suggestion in evidence.suggestions)
           _suggestionTile(l10n, suggestion),
         const SizedBox(height: 12),
@@ -205,6 +222,14 @@ final class _IrsHistoryPrefillScreenState
       ],
     );
   }
+
+  String _annexLabel(AppLocalizations l10n, HistoricalTaxAnnex annex) =>
+      switch (annex) {
+        HistoricalTaxAnnex.a => l10n.irsHistoryAnnexA,
+        HistoricalTaxAnnex.c => l10n.irsHistoryAnnexC,
+        HistoricalTaxAnnex.h => l10n.irsHistoryAnnexH,
+        HistoricalTaxAnnex.ss => l10n.irsHistoryAnnexSS,
+      };
 
   Widget _suggestionTile(
     AppLocalizations l10n,

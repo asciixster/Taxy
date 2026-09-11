@@ -512,6 +512,11 @@
   ,"irsHistoryFind2024": "Procurar IRS de 2024"
   ,"irsHistoryContinueManual": "Continuar sem IRS anterior"
   ,"irsHistoryFound": "Informação encontrada"
+  ,"irsHistoryAnnexesFound": "Anexos encontrados"
+  ,"irsHistoryAnnexA": "Anexo A"
+  ,"irsHistoryAnnexC": "Anexo C"
+  ,"irsHistoryAnnexH": "Anexo H"
+  ,"irsHistoryAnnexSS": "Anexo SS"
   ,"irsHistoryYearNotice": "Estes dados são de {sourceYear}. Só entram em {targetYear} se os confirmares."
   ,"@irsHistoryYearNotice": {"placeholders": {"sourceYear": {"type": "int"}, "targetYear": {"type": "int"}}}
   ,"irsHistoryConfirmSelected": "Confirmar seleção"

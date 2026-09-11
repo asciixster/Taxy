@@ -176,6 +176,30 @@ void main() {
     },
   );
 
+  testWidgets('review exposes every structurally detected annex', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await _pump(
+      tester,
+      _FakeGateway(),
+      MemoryHistoricalTaxConfirmationRepository(),
+    );
+    await tester.tap(find.byKey(const Key('irs-history-load')));
+    await tester.pumpAndSettle();
+    expect(find.text('Anexos encontrados'), findsOneWidget);
+    for (final annex in ['a', 'c', 'h', 'ss']) {
+      expect(find.byKey(Key('irs-history-annex-$annex')), findsOneWidget);
+    }
+    expect(find.text('Anexo A'), findsOneWidget);
+    expect(find.text('Anexo C'), findsOneWidget);
+    expect(find.text('Anexo H'), findsOneWidget);
+    expect(find.text('Anexo SS'), findsOneWidget);
+  });
+
   testWidgets('selected facts are confirmed with source and target years', (
     tester,
   ) async {
