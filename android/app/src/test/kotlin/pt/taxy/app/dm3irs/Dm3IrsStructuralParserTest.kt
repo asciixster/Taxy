@@ -79,6 +79,20 @@ class Dm3IrsStructuralParserTest {
     }
 
     @Test
+    fun `money from the next printed row is not owned by the preceding field code`() {
+        val pages = template().map { page ->
+            if (page.number == 8) {
+                page.copy(tokens = page.tokens + listOf(
+                    token("602", .291, .333),
+                    token("999,99", .460, .363),
+                ))
+            } else page
+        }
+
+        assertEquals(23456, Dm3IrsStructuralParser.parse(pages).withholdingCents)
+    }
+
+    @Test
     fun `field 603 remains runtime-validation gated and absent from product map`() {
         val result = Dm3IrsStructuralParser.parse(template()).toMap()
         assertEquals("603", Dm3IrsStructuralParser.RUNTIME_VALIDATION_REQUIRED_FIELD_603)

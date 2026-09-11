@@ -183,11 +183,14 @@ internal object Dm3IrsStructuralParser {
     ): Long? {
         val candidates = mutableListOf<String>()
         for (page in pages) {
-            val codeOnPage = page.tokens.any { it.text == code && it.top in yMin..yMax }
-            if (!codeOnPage) continue
+            val owners = page.tokens.filter { it.text == code && it.top in yMin..yMax }
+            if (owners.isEmpty()) continue
+            if (owners.size != 1) return null
+            val owner = owners.single()
             val fragments = page.tokens.filter {
                 it.left in xMin..xMax &&
                     it.top in yMin..yMax &&
+                    kotlin.math.abs(it.top - owner.top) <= .008 &&
                     Regex("^[0-9., ]+$").matches(it.text)
             }.sortedBy { it.left }
             if (fragments.isEmpty()) continue
