@@ -2918,6 +2918,210 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'O documento original não é guardado depois da confirmação.'**
   String get documentOriginalNotStored;
+
+  /// No description provided for @irsHistoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'IRS anterior'**
+  String get irsHistoryTitle;
+
+  /// No description provided for @irsHistoryCardSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usa informação confirmada do IRS de 2024 para responderes menos'**
+  String get irsHistoryCardSubtitle;
+
+  /// No description provided for @irsHistoryIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrámos informação no teu IRS anterior'**
+  String get irsHistoryIntro;
+
+  /// No description provided for @irsHistoryPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'A declaração é lida apenas em memória. O PDF, o XML e os identificadores não são guardados.'**
+  String get irsHistoryPrivacy;
+
+  /// No description provided for @irsHistorySelectIdentity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecionar identidade Taxy'**
+  String get irsHistorySelectIdentity;
+
+  /// No description provided for @irsHistorySelectPublicCertificate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecionar certificado público da AT'**
+  String get irsHistorySelectPublicCertificate;
+
+  /// No description provided for @irsHistoryChangeLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterar login'**
+  String get irsHistoryChangeLogin;
+
+  /// No description provided for @irsHistoryFind2024.
+  ///
+  /// In pt, this message translates to:
+  /// **'Procurar IRS de 2024'**
+  String get irsHistoryFind2024;
+
+  /// No description provided for @irsHistoryContinueManual.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar sem IRS anterior'**
+  String get irsHistoryContinueManual;
+
+  /// No description provided for @irsHistoryFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informação encontrada'**
+  String get irsHistoryFound;
+
+  /// No description provided for @irsHistoryAnnexesFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexos encontrados'**
+  String get irsHistoryAnnexesFound;
+
+  /// No description provided for @irsHistoryAnnexA.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo A'**
+  String get irsHistoryAnnexA;
+
+  /// No description provided for @irsHistoryAnnexC.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo C'**
+  String get irsHistoryAnnexC;
+
+  /// No description provided for @irsHistoryAnnexH.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo H'**
+  String get irsHistoryAnnexH;
+
+  /// No description provided for @irsHistoryAnnexSS.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo SS'**
+  String get irsHistoryAnnexSS;
+
+  /// No description provided for @irsHistoryYearNotice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estes dados são de {sourceYear}. Só entram em {targetYear} se os confirmares.'**
+  String irsHistoryYearNotice(int sourceYear, int targetYear);
+
+  /// No description provided for @irsHistoryConfirmSelected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar seleção'**
+  String get irsHistoryConfirmSelected;
+
+  /// No description provided for @irsHistoryIgnore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ignorar por agora'**
+  String get irsHistoryIgnore;
+
+  /// No description provided for @irsHistoryReviewValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar ou alterar'**
+  String get irsHistoryReviewValue;
+
+  /// No description provided for @irsHistoryCategoryA.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos do trabalho'**
+  String get irsHistoryCategoryA;
+
+  /// No description provided for @irsHistoryCategoryB.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trabalho independente'**
+  String get irsHistoryCategoryB;
+
+  /// No description provided for @irsHistoryCategoryBRegime.
+  ///
+  /// In pt, this message translates to:
+  /// **'Regime do trabalho independente'**
+  String get irsHistoryCategoryBRegime;
+
+  /// No description provided for @irsHistoryActivityCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código de atividade'**
+  String get irsHistoryActivityCode;
+
+  /// No description provided for @irsHistoryTaxableProfit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lucro tributável histórico'**
+  String get irsHistoryTaxableProfit;
+
+  /// No description provided for @irsHistoryWithholding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retenções históricas'**
+  String get irsHistoryWithholding;
+
+  /// No description provided for @irsHistoryPresentIn2024.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente no IRS de 2024'**
+  String get irsHistoryPresentIn2024;
+
+  /// No description provided for @irsHistoryOrganizedAccounting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contabilidade organizada'**
+  String get irsHistoryOrganizedAccounting;
+
+  /// No description provided for @irsHistoryNone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não encontrámos uma declaração anterior disponível. Podes continuar manualmente.'**
+  String get irsHistoryNone;
+
+  /// No description provided for @irsHistoryUnknownTemplate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta declaração usa um formato que a Taxy ainda não reconhece com segurança. Nada foi importado.'**
+  String get irsHistoryUnknownTemplate;
+
+  /// No description provided for @irsHistoryAuthenticationError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível autenticar no Portal das Finanças. Confirma os dados e tenta novamente.'**
+  String get irsHistoryAuthenticationError;
+
+  /// No description provided for @irsHistoryConfigurationError.
+  ///
+  /// In pt, this message translates to:
+  /// **'A ligação ainda não está completa. Seleciona a identidade Taxy e o certificado público da AT.'**
+  String get irsHistoryConfigurationError;
+
+  /// No description provided for @irsHistoryNetworkError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível estabelecer uma ligação segura ao Portal das Finanças. Verifica a rede e tenta novamente.'**
+  String get irsHistoryNetworkError;
+
+  /// No description provided for @irsHistoryServiceError.
+  ///
+  /// In pt, this message translates to:
+  /// **'O serviço de IRS anterior não concluiu a consulta. Tenta novamente mais tarde.'**
+  String get irsHistoryServiceError;
+
+  /// No description provided for @irsHistoryFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível consultar o IRS anterior. A entrevista manual continua disponível.'**
+  String get irsHistoryFallback;
 }
 
 class _AppLocalizationsDelegate
