@@ -71,7 +71,16 @@ internal object Dm3IrsStructuralParser {
             ?: throw UnknownDm3IrsTemplate()
         val cPages = pages.filter { routes[it.number] == "C" }
         val cFirst = cPages.firstOrNull() ?: throw UnknownDm3IrsTemplate()
-        val regime = checkboxSelection(cFirst, code = "01", yMin = .055, yMax = .095)
+        val regime = checkboxSelection(
+            cFirst,
+            code = "01",
+            codeXMin = .74,
+            codeXMax = .82,
+            markXMin = .58,
+            markXMax = .65,
+            yMin = .055,
+            yMax = .105,
+        )
             ?.let { "CONTABILIDADE_ORGANIZADA" }
             ?: throw UnknownDm3IrsTemplate()
         val activity = exactTextCell(cFirst, code = "07", xMin = .15, xMax = .24, yMin = .21, yMax = .26, Regex("^\\d{4}$"))
@@ -102,9 +111,18 @@ internal object Dm3IrsStructuralParser {
     private fun routeAnnexes(pages: List<RecognizedPage>): Map<Int, String> {
         val starts = mutableListOf<Pair<Int, String>>()
         for (page in pages) {
-            val text = page.normalizedText()
-            if (!text.contains("modelo 3")) continue
-            val matches = Regex("\\banexo (ss|[a-z])\\b").findAll(text).map { it.groupValues[1].uppercase() }.toSet()
+            // Annex ownership comes only from the printed page header. Body text
+            // frequently refers to other annexes and must never influence routing.
+            val header = page.tokens.filter { it.top <= .20 }
+            val owners = header.filter { normalize(it.text) == "anexo" }
+            val matches = owners.flatMap { owner ->
+                header.filter { candidate ->
+                    candidate.text.uppercase() in setOf("A", "C", "H", "SS") &&
+                        candidate.left >= owner.right &&
+                        candidate.left - owner.right <= .10 &&
+                        kotlin.math.abs(candidate.top - owner.top) <= .015
+                }.map { it.text.uppercase() }
+            }.toSet()
             if (matches.size == 1) starts += page.number to matches.single()
         }
         val routed = mutableMapOf<Int, String>()
@@ -118,17 +136,22 @@ internal object Dm3IrsStructuralParser {
     private fun checkboxSelection(
         page: RecognizedPage,
         code: String,
+        codeXMin: Double,
+        codeXMax: Double,
+        markXMin: Double,
+        markXMax: Double,
         yMin: Double,
         yMax: Double,
     ): RecognizedToken? {
-        val codes = page.tokens.filter { it.text == code && it.top in yMin..yMax }
+        val codes = page.tokens.filter {
+            it.text == code && it.left in codeXMin..codeXMax && it.top in yMin..yMax
+        }
         if (codes.size != 1) return null
         val owner = codes.single()
         val marks = page.tokens.filter {
             it.text.equals("x", ignoreCase = true) &&
+                it.left in markXMin..markXMax &&
                 it.top in yMin..yMax &&
-                it.left >= owner.right &&
-                it.left - owner.right <= .05 &&
                 kotlin.math.abs(it.top - owner.top) <= .02
         }
         return marks.singleOrNull()
@@ -162,9 +185,14 @@ internal object Dm3IrsStructuralParser {
         for (page in pages) {
             val codeOnPage = page.tokens.any { it.text == code && it.top in yMin..yMax }
             if (!codeOnPage) continue
-            candidates += page.tokens.filter {
-                money.matches(it.text) && it.left in xMin..xMax && it.top in yMin..yMax
-            }.map { it.text }
+            val fragments = page.tokens.filter {
+                it.left in xMin..xMax &&
+                    it.top in yMin..yMax &&
+                    Regex("^[0-9., ]+$").matches(it.text)
+            }.sortedBy { it.left }
+            if (fragments.isEmpty()) continue
+            val joined = fragments.joinToString("") { it.text.replace(" ", "") }
+            if (money.matches(joined)) candidates += joined
         }
         return candidates.singleOrNull()?.let(::parseMoneyCents)
     }

@@ -61,6 +61,24 @@ class Dm3IrsStructuralParserTest {
     }
 
     @Test
+    fun `money fragments are joined only inside the structurally owned cell`() {
+        val pages = template().map { page ->
+            if (page.number == 7) {
+                page.copy(tokens = page.tokens
+                    .filterNot { it.text == "123,45" || it.text == "234,56" } +
+                    listOf(
+                        token("123", .870, .115), token(",", .900, .115), token("45", .910, .115),
+                        token("234", .433, .332), token(",", .463, .332), token("56", .473, .332),
+                    ))
+            } else page
+        }
+
+        val result = Dm3IrsStructuralParser.parse(pages)
+        assertEquals(12345, result.taxableProfitCents)
+        assertEquals(23456, result.withholdingCents)
+    }
+
+    @Test
     fun `field 603 remains runtime-validation gated and absent from product map`() {
         val result = Dm3IrsStructuralParser.parse(template()).toMap()
         assertEquals("603", Dm3IrsStructuralParser.RUNTIME_VALIDATION_REQUIRED_FIELD_603)
@@ -73,6 +91,33 @@ class Dm3IrsStructuralParserTest {
             if (page.number == 6) page.copy(tokens = page.tokens + heading("H")) else page
         }
         assertFailsWith<UnknownDm3IrsTemplate> { Dm3IrsStructuralParser.parse(pages) }
+    }
+
+    @Test
+    fun `annex references in the body do not change page ownership`() {
+        val pages = template().map { page ->
+            if (page.number == 5) {
+                page.copy(tokens = page.tokens + listOf(
+                    token("ANEXO", .20, .50),
+                    token("H", .29, .50),
+                    token("ANEXO", .20, .60),
+                    token("SS", .29, .60),
+                ))
+            } else page
+        }
+
+        assertEquals(setOf("A", "C", "H", "SS"), Dm3IrsStructuralParser.parse(pages).annexes)
+    }
+
+    @Test
+    fun `annex header remains structural when OCR misses the model token`() {
+        val pages = template().map { page ->
+            if (page.number == 17) {
+                page.copy(tokens = page.tokens.filterNot { it.text == "MODELO" })
+            } else page
+        }
+
+        assertEquals(setOf("A", "C", "H", "SS"), Dm3IrsStructuralParser.parse(pages).annexes)
     }
 
     @Test
@@ -95,7 +140,7 @@ class Dm3IrsStructuralParserTest {
         val pages = (1..17).map { RecognizedPage(it, 1000, 1400, mutableListOf(token("2024", .1, .1))) }.toMutableList()
         pages[2] = pages[2].copy(tokens = heading("A"))
         pages[4] = pages[4].copy(tokens = heading("C") + listOf(
-            token("01", .586, .073), token("X", .612, .074),
+            token("01", .771, .086), token("X", .612, .073),
             token("07", .097, .233), token("4015", .176, .233),
         ))
         pages[6] = pages[6].copy(tokens = listOf(

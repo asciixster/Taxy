@@ -142,13 +142,12 @@ final class _IrsHistoryPrefillScreenState
             onPressed: _changeLogin,
             child: Text(l10n.irsHistoryChangeLogin),
           ),
-        if (readiness?.hasClientIdentity != true)
-          OutlinedButton.icon(
-            key: const Key('irs-history-client-identity'),
-            onPressed: _selectIdentity,
-            icon: const Icon(Icons.verified_user_outlined),
-            label: Text(l10n.irsHistorySelectIdentity),
-          ),
+        OutlinedButton.icon(
+          key: const Key('irs-history-client-identity'),
+          onPressed: _selectIdentity,
+          icon: const Icon(Icons.verified_user_outlined),
+          label: Text(l10n.irsHistorySelectIdentity),
+        ),
         if (readiness?.hasCipherCertificate != true)
           OutlinedButton.icon(
             key: const Key('irs-history-public-certificate'),

@@ -319,6 +319,18 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets('configured client identity can be replaced', (tester) async {
+    await _pump(
+      tester,
+      _FakeGateway(),
+      MemoryHistoricalTaxConfirmationRepository(),
+    );
+    expect(
+      find.byKey(const Key('irs-history-client-identity')),
+      findsOneWidget,
+    );
+  });
 }
 
 Future<void> _pump(

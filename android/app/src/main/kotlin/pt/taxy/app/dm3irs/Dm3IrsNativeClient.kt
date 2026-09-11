@@ -7,6 +7,8 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.Socket
 import java.net.URL
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.security.KeyStore
 import java.security.Principal
 import java.security.PrivateKey
@@ -14,11 +16,13 @@ import java.security.cert.X509Certificate
 import java.time.Instant
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.KeyManager
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLEngine
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedKeyManager
 import javax.xml.parsers.DocumentBuilderFactory
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import pt.taxy.app.efatura.CipherCertificateStore
@@ -148,6 +152,8 @@ internal class Dm3IrsNativeClient(
             return output.toByteArray()
         } catch (error: RuntimeBridgeException) {
             throw error
+        } catch (error: SSLException) {
+            throw failure("TLS_ERROR", "Não foi possível estabelecer a ligação segura.", error)
         } catch (error: Exception) {
             throw failure("NETWORK_ERROR", "Não foi possível consultar o IRS anterior.", error)
         } finally {
@@ -157,18 +163,11 @@ internal class Dm3IrsNativeClient(
 
     private fun parse(bytes: ByteArray, operation: Dm3IrsReadOperation): SoapPayload {
         try {
-            val factory = DocumentBuilderFactory.newInstance().apply {
-                isNamespaceAware = true
-                setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
-                setFeature("http://xml.org/sax/features/external-general-entities", false)
-                setFeature("http://xml.org/sax/features/external-parameter-entities", false)
-                setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
-                isXIncludeAware = false
-                isExpandEntityReferences = false
-            }
-            val document = factory.newDocumentBuilder().parse(ByteArrayInputStream(bytes))
+            val document = Dm3IrsSafeXml.parse(bytes)
             val fault = first(document.documentElement, "Fault")
-            if (fault != null) throw failure("SERVICE_UNAVAILABLE", "O serviço de IRS anterior devolveu um erro.")
+            if (fault != null) {
+                throw failure("SERVICE_UNAVAILABLE", "O serviço de IRS anterior devolveu um erro.")
+            }
             val root = first(document.documentElement, operation.responseRoot)
                 ?: throw failure("INVALID_DOCUMENT", "A resposta do IRS anterior não foi reconhecida.")
             val status = text(root, "codigo") ?: text(root, "EstadoOperacao") ?: text(root, "estadoOperacao")
@@ -214,11 +213,26 @@ internal class Dm3IrsNativeClient(
     )
 
     private class SingleIdentityKeyManager(private val identity: ClientIdentity) : X509ExtendedKeyManager() {
-        override fun chooseClientAlias(keyType: Array<out String>?, issuers: Array<out Principal>?, socket: Socket?): String = identity.alias
-        override fun chooseEngineClientAlias(keyType: Array<out String>?, issuers: Array<out Principal>?, engine: SSLEngine?): String = identity.alias
+        override fun chooseClientAlias(keyType: Array<out String>?, issuers: Array<out Principal>?, socket: Socket?): String? {
+            val keyMatch = Dm3IrsClientIdentitySelection.acceptsKeyTypes(keyType, identity.privateKey.algorithm)
+            val issuerMatch = Dm3IrsClientIdentitySelection.acceptsIssuers(issuers, identity.chain)
+            return identity.alias.takeIf { keyMatch && issuerMatch }
+        }
+
+        override fun chooseEngineClientAlias(keyType: Array<out String>?, issuers: Array<out Principal>?, engine: SSLEngine?): String? =
+            chooseClientAlias(keyType, issuers, null)
+
         override fun getCertificateChain(alias: String?): Array<X509Certificate>? = if (alias == identity.alias) identity.chain else null
         override fun getPrivateKey(alias: String?): PrivateKey? = if (alias == identity.alias) identity.privateKey else null
-        override fun getClientAliases(keyType: String?, issuers: Array<out Principal>?): Array<String> = arrayOf(identity.alias)
+        override fun getClientAliases(keyType: String?, issuers: Array<out Principal>?): Array<String>? =
+            if (Dm3IrsClientIdentitySelection.acceptsKeyTypes(keyType?.let(::arrayOf), identity.privateKey.algorithm) &&
+                Dm3IrsClientIdentitySelection.acceptsIssuers(issuers, identity.chain)
+            ) {
+                arrayOf(identity.alias)
+            } else {
+                null
+            }
+
         override fun chooseServerAlias(keyType: String?, issuers: Array<out Principal>?, socket: Socket?): String? = null
         override fun getServerAliases(keyType: String?, issuers: Array<out Principal>?): Array<String>? = null
     }
@@ -228,5 +242,59 @@ internal class Dm3IrsNativeClient(
     private companion object {
         const val MAX_RESPONSE_BYTES = 2 * 1024 * 1024
         const val MAX_DECLARATION_RESPONSE_BYTES = 28 * 1024 * 1024
+    }
+}
+
+internal object Dm3IrsSafeXml {
+    private val forbiddenDeclarations = Regex("<!\\s*(DOCTYPE|ENTITY)", RegexOption.IGNORE_CASE)
+
+    fun parse(bytes: ByteArray): Document {
+        val declarationProbe = try {
+            Charsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(bytes))
+                .toString()
+        } catch (error: Exception) {
+            throw IllegalArgumentException("Invalid XML encoding", error)
+        }
+        require(!forbiddenDeclarations.containsMatchIn(declarationProbe)) { "Unsafe XML declaration" }
+
+        val factory = DocumentBuilderFactory.newInstance().apply {
+            isNamespaceAware = true
+            setSupportedFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+            setSupportedFeature("http://xml.org/sax/features/external-general-entities", false)
+            setSupportedFeature("http://xml.org/sax/features/external-parameter-entities", false)
+            setSupportedFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+            runCatching { isXIncludeAware = false }
+            isExpandEntityReferences = false
+        }
+        val builder = factory.newDocumentBuilder().apply {
+            setEntityResolver { _, _ -> org.xml.sax.InputSource(java.io.StringReader("")) }
+        }
+        return builder.parse(ByteArrayInputStream(bytes))
+    }
+
+    private fun DocumentBuilderFactory.setSupportedFeature(name: String, value: Boolean) {
+        runCatching { setFeature(name, value) }
+    }
+}
+
+internal object Dm3IrsClientIdentitySelection {
+    fun acceptsKeyTypes(requested: Array<out String>?, privateKeyAlgorithm: String): Boolean {
+        if (requested.isNullOrEmpty()) return false
+        val available = privateKeyAlgorithm.uppercase()
+        return requested.any { keyType ->
+            val required = keyType.uppercase()
+            required == available || (available == "RSA" && required == "RSASSA-PSS")
+        }
+    }
+
+    fun acceptsIssuers(requested: Array<out Principal>?, chain: Array<X509Certificate>): Boolean {
+        if (requested.isNullOrEmpty()) return true
+        val certificatePrincipals = chain.flatMap { certificate ->
+            listOf(certificate.subjectX500Principal, certificate.issuerX500Principal)
+        }.toSet()
+        return requested.any(certificatePrincipals::contains)
     }
 }
