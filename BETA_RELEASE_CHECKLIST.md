@@ -42,6 +42,6 @@
 ## Delivery
 
 - [ ] Physical smoke passes on Motorola edge 50 pro / Android 15 / API 35.
-- [ ] CI is green on the release PR.
+- [x] CI is green on the release PR.
 - [x] Known limitations accompany the beta.
-- [ ] PR remains open for explicit human merge approval.
+- [x] PR remains open for explicit human merge approval.
