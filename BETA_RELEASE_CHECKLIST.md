@@ -31,6 +31,7 @@
 - [ ] Signed release AAB builds with external signing secrets.
 - [ ] Release artifact signature is verified privately.
 - [x] Missing signing credentials have a fail-closed handoff document.
+- [x] Clean detached checkout reproduces analyze, tests and debug APK build.
 
 ## Privacy and security
 

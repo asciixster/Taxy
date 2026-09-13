@@ -12,6 +12,8 @@
 - Flutter tests: 611/611 PASS
 - AT connector tests: 139 PASS, 4 credential-dependent skips, 0 FAIL
 - Official comparison: 13/13 compared fields, zero-cent tolerance, PASS
+- Clean detached checkout: dependency restore, analyze, 611 tests, debug APK
+  build and Android native tests all PASS
 
 ## Distribution gate
 
@@ -41,3 +43,9 @@ DM3IRS client shares its public security framing and the internal native
 e-Fatura bridge remains covered by tests. The user-facing e-Fatura route is
 still exclusively the `api.taxy.pt` backend bridge; there is no normal-flow
 direct fallback.
+
+The repository, generated APK and build intermediates contain no private-key
+container, raw fiscal PDF, live token form or Cloudflare credential pattern.
+The same Cloudflare-secret pattern was absent from the latest 100 commits. Key
+rotation remains an external confirmation because local absence cannot prove
+provider-side revocation.

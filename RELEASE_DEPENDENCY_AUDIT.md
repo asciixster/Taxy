@@ -15,6 +15,17 @@ camera, broad-storage or backup permission. The approximately 188 MiB debug
 universal APK size is consistent with the already accepted OCR/native-library
 impact; effective store delivery is expected to benefit from AAB ABI splitting.
 
+- ML Kit text recognition `16.0.1` is used directly by document capture and its
+  local Maven metadata declares the ML Kit Terms of Service.
+- `flutter_secure_storage` `10.0.0` is used directly for protected credentials
+  and declares BSD-3-Clause in the installed package.
+- PDF rendering uses Android `PdfRenderer`; encryption uses Android Keystore
+  and platform JCA primitives. No separate PDF or cryptography library was
+  added by this release.
+- No dependency in the checked lock/build metadata carries a local vulnerability
+  advisory, and no unused new heavy dependency was found. This is a local
+  package audit, not a claim about future advisories.
+
 Available incompatible package upgrades were reported by the package manager
 but are intentionally deferred: changing them would expand release scope and
 invalidate the already green regression baseline.
