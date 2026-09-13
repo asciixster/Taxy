@@ -19,9 +19,9 @@ void main() {
     final pubspec = File('pubspec.yaml').readAsStringSync();
     final diagnostics = File('lib/core/internal_beta_build_info.dart')
         .readAsStringSync();
-    expect(pubspec, contains('version: 0.8.6+21'));
-    expect(diagnostics, contains("defaultValue: '0.8.6'"));
-    expect(diagnostics, contains("defaultValue: '21'"));
+    expect(pubspec, contains('version: 0.9.0-beta.1+22'));
+    expect(diagnostics, contains("defaultValue: '0.9.0-beta.1'"));
+    expect(diagnostics, contains("defaultValue: '22'"));
   });
 
   test('production Android registers no direct FactIntWS bridge', () {
@@ -32,6 +32,27 @@ void main() {
     expect(activity, isNot(contains('FactIntWs')));
     expect(activity, contains('setScreenSecure'));
     expect(activity, contains('FLAG_SECURE'));
+  });
+
+  test('Android release configuration is fail-closed and hardened', () {
+    final gradle = File(
+      'android/app/build.gradle.kts',
+    ).readAsStringSync();
+    final manifest = File(
+      'android/app/src/main/AndroidManifest.xml',
+    ).readAsStringSync();
+    for (final variable in <String>[
+      'TAXY_ANDROID_KEYSTORE_PATH',
+      'TAXY_ANDROID_KEYSTORE_PASSWORD',
+      'TAXY_ANDROID_KEY_ALIAS',
+      'TAXY_ANDROID_KEY_PASSWORD',
+    ]) {
+      expect(gradle, contains(variable));
+    }
+    expect(gradle, contains('isDebuggable = false'));
+    expect(gradle, contains('Production signing is not configured'));
+    expect(manifest, contains('android:allowBackup="false"'));
+    expect(manifest, contains('android:usesCleartextTraffic="false"'));
   });
 
   test('normal Flutter path is api.taxy.pt-only and read-only', () {

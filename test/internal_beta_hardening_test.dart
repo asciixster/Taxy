@@ -5,8 +5,8 @@ import 'package:taxy_pt/core/internal_beta_build_info.dart';
 
 void main() {
   test('build identification has safe non-secret fields only', () {
-    expect(InternalBetaBuildInfo.appVersion, '0.8.6');
-    expect(InternalBetaBuildInfo.buildNumber, '21');
+    expect(InternalBetaBuildInfo.appVersion, '0.9.0-beta.1');
+    expect(InternalBetaBuildInfo.buildNumber, '22');
     expect(InternalBetaBuildInfo.apiHost, 'api.taxy.pt');
   });
 

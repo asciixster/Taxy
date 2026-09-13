@@ -9,6 +9,7 @@ import '../l10n/taxy_formatters.dart';
 import '../product/product_models.dart';
 import '../state/providers.dart';
 import '../modules/dm3irs/domain/historical_tax_evidence.dart';
+import '../modules/dm3irs/infrastructure/dm3irs_history_bridge.dart';
 import '../modules/dm3irs/screens/irs_history_prefill_screen.dart';
 import '../tax_engine/tax_engine.dart';
 import 'tax_interview_engine.dart';
@@ -425,7 +426,7 @@ final class _GuidedTaxScreenState extends ConsumerState<GuidedTaxScreen> {
           );
         }),
         onOpenDocuments: _openDocumentEvidence,
-        onOpenIrsHistory: _openIrsHistory,
+        onOpenIrsHistory: dm3IrsOnlineHistoryEnabled ? _openIrsHistory : null,
       );
     }
     final result = _engine.result(_interview!);

@@ -4,6 +4,11 @@ import 'package:flutter/services.dart';
 
 import '../domain/historical_tax_evidence.dart';
 
+// The online historical IRS service is not sufficiently reliable for Beta 1.
+// Keep the reviewed parser and bridge available for later validation, but do
+// not expose a user entry point in this release.
+const bool dm3IrsOnlineHistoryEnabled = false;
+
 enum Dm3IrsFailureKind {
   notConfigured,
   authentication,

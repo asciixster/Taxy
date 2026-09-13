@@ -19,6 +19,7 @@ import 'modules/efatura/infrastructure/efatura_screen_protection.dart';
 import 'modules/efatura/infrastructure/efatura_session_token_store.dart';
 import 'modules/efatura/screens/efatura_screen.dart';
 import 'modules/dm3irs/domain/historical_tax_evidence.dart';
+import 'modules/dm3irs/infrastructure/dm3irs_history_bridge.dart';
 import 'modules/dm3irs/screens/irs_history_prefill_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'guided_tax/guided_tax_screen.dart';
@@ -324,9 +325,11 @@ Future<void> _openGuidedReview(
       onOpenEfatura: EfaturaFeatureFlags.experimental
           ? () => _openEfatura(reviewContext, ref, taxYear)
           : null,
-      onOpenIrsHistory: () async {
-        await _openIrsHistory(reviewContext, ref, taxYear);
-      },
+      onOpenIrsHistory: dm3IrsOnlineHistoryEnabled
+          ? () async {
+              await _openIrsHistory(reviewContext, ref, taxYear);
+            }
+          : null,
     ),
   ),
 );

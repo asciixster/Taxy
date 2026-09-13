@@ -12,6 +12,10 @@ import 'package:taxy_pt/modules/dm3irs/infrastructure/historical_tax_confirmatio
 import 'package:taxy_pt/modules/dm3irs/screens/irs_history_prefill_screen.dart';
 
 void main() {
+  test('online historical IRS retrieval is disabled for Beta 1', () {
+    expect(dm3IrsOnlineHistoryEnabled, isFalse);
+  });
+
   const native = <Object?, Object?>{
     'available': true,
     'taxYear': 2024,
@@ -104,6 +108,33 @@ void main() {
         confirmations: [confirmation],
       ),
       isEmpty,
+    );
+  });
+
+  test('historical confirmation cannot replace a current-year answer', () {
+    final confirmation = HistoricalTaxConfirmation(
+      field: HistoricalSuggestionField.categoryB,
+      value: true,
+      sourceYear: 2024,
+      targetYear: 2026,
+      userConfirmedAt: DateTime.utc(2026, 9, 10),
+      templateFingerprint: 'known-fingerprint',
+    );
+    final after = applyHistoricalConfirmations(
+      current: const {
+        'selfEmploymentIncome': TaxAnswer(
+          questionId: 'selfEmploymentIncome',
+          value: false,
+          provenance: TaxFactProvenance.userEntered,
+        ),
+      },
+      targetYear: 2026,
+      confirmations: [confirmation],
+    );
+    expect(after['selfEmploymentIncome']?.value, isFalse);
+    expect(
+      after['selfEmploymentIncome']?.provenance,
+      TaxFactProvenance.userEntered,
     );
   });
 
