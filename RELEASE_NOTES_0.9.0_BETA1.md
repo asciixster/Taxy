@@ -7,8 +7,8 @@ Esta beta reúne a experiência principal da Taxy numa aplicação instalável:
 - explicação do que entrou no cálculo, do que falta e da próxima ação;
 - importação de documentos com leitura no dispositivo e confirmação obrigatória;
 - consulta e-Fatura apenas de leitura, quando disponível;
-- utilização confirmada de informação do IRS de 2024 para reduzir trabalho
-  repetido, sem assumir que o passado continua válido.
+- entrevista manual e importação revista de documentos, sem depender da consulta
+  online do IRS anterior, que permanece desativada nesta beta.
 
 A Taxy calcula atualmente os cenários de rendimentos de trabalho dependente que
 passam todas as validações do âmbito suportado, incluindo os fluxos standard de

@@ -12,6 +12,10 @@ import 'package:taxy_pt/modules/dm3irs/infrastructure/historical_tax_confirmatio
 import 'package:taxy_pt/modules/dm3irs/screens/irs_history_prefill_screen.dart';
 
 void main() {
+  test('online historical IRS retrieval is disabled for Beta 1', () {
+    expect(dm3IrsOnlineHistoryEnabled, isFalse);
+  });
+
   const native = <Object?, Object?>{
     'available': true,
     'taxYear': 2024,

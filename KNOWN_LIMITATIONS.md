@@ -9,8 +9,9 @@
   estrangeiros ainda não entram no cálculo.
 - Casos familiares especiais, residência parcial e algumas regras regionais de
   2025 permanecem fora do âmbito documentado.
-- A ajuda baseada no IRS anterior reconhece apenas a declaração de 2024 e o
-  formato validado. Os dados históricos só são usados depois de confirmação.
+- A consulta online do IRS anterior está desativada nesta beta por não ter
+  estabilidade suficiente. A entrevista manual e a importação de documentos
+  continuam disponíveis.
 - O campo histórico de pagamentos por conta não é apresentado nesta versão.
 - Alguns valores e-Fatura, incluindo benefício provisório/setores quando a fonte
   não é semanticamente equivalente, podem aparecer como “não disponível”. Isto
