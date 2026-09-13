@@ -242,6 +242,9 @@ Map<String, TaxAnswer> applyHistoricalConfirmations({
     }
     final questionId = confirmation.targetQuestionId;
     if (questionId == null) continue;
+    // Historical evidence is confirmation-first assistance, never an override
+    // for information already supplied for the current tax year.
+    if (updated.containsKey(questionId)) continue;
     updated[questionId] = TaxAnswer(
       questionId: questionId,
       value: confirmation.value,

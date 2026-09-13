@@ -37,7 +37,8 @@ candidate.
   `api.taxy.pt`, with opaque session handling and no fiscal response cache.
 - e-Fatura: read-only backend path; no direct FactIntWS normal-flow fallback.
 - Historical IRS: three-operation read allowlist, 2024 template only, in-memory
-  PDF parsing, no silent current-year import.
+  PDF parsing, no silent current-year import and no replacement of an existing
+  current-year answer.
 - Distribution signing: fail-closed. A signed release artifact requires the
   four `TAXY_ANDROID_*` secrets outside Git; debug signing is never substituted.
 

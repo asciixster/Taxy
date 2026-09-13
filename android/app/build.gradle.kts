@@ -62,6 +62,7 @@ android {
 
     buildTypes {
         release {
+            isDebuggable = false
             signingConfig = if (releaseSigningConfigured) {
                 signingConfigs.getByName("production")
             } else {

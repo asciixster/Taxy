@@ -34,6 +34,27 @@ void main() {
     expect(activity, contains('FLAG_SECURE'));
   });
 
+  test('Android release configuration is fail-closed and hardened', () {
+    final gradle = File(
+      'android/app/build.gradle.kts',
+    ).readAsStringSync();
+    final manifest = File(
+      'android/app/src/main/AndroidManifest.xml',
+    ).readAsStringSync();
+    for (final variable in <String>[
+      'TAXY_ANDROID_KEYSTORE_PATH',
+      'TAXY_ANDROID_KEYSTORE_PASSWORD',
+      'TAXY_ANDROID_KEY_ALIAS',
+      'TAXY_ANDROID_KEY_PASSWORD',
+    ]) {
+      expect(gradle, contains(variable));
+    }
+    expect(gradle, contains('isDebuggable = false'));
+    expect(gradle, contains('Production signing is not configured'));
+    expect(manifest, contains('android:allowBackup="false"'));
+    expect(manifest, contains('android:usesCleartextTraffic="false"'));
+  });
+
   test('normal Flutter path is api.taxy.pt-only and read-only', () {
     final sources = <String>[
       'lib/main.dart',

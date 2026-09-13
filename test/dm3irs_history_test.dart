@@ -107,6 +107,33 @@ void main() {
     );
   });
 
+  test('historical confirmation cannot replace a current-year answer', () {
+    final confirmation = HistoricalTaxConfirmation(
+      field: HistoricalSuggestionField.categoryB,
+      value: true,
+      sourceYear: 2024,
+      targetYear: 2026,
+      userConfirmedAt: DateTime.utc(2026, 9, 10),
+      templateFingerprint: 'known-fingerprint',
+    );
+    final after = applyHistoricalConfirmations(
+      current: const {
+        'selfEmploymentIncome': TaxAnswer(
+          questionId: 'selfEmploymentIncome',
+          value: false,
+          provenance: TaxFactProvenance.userEntered,
+        ),
+      },
+      targetYear: 2026,
+      confirmations: [confirmation],
+    );
+    expect(after['selfEmploymentIncome']?.value, isFalse);
+    expect(
+      after['selfEmploymentIncome']?.provenance,
+      TaxFactProvenance.userEntered,
+    );
+  });
+
   test('persisted confirmation contains no raw PDF XML or identifiers', () {
     final confirmation = HistoricalTaxConfirmation(
       field: HistoricalSuggestionField.withholding,

@@ -30,6 +30,7 @@
 - [ ] Debug/release-candidate APK builds and installs.
 - [ ] Signed release AAB builds with external signing secrets.
 - [ ] Release artifact signature is verified privately.
+- [x] Missing signing credentials have a fail-closed handoff document.
 
 ## Privacy and security
 

@@ -9,24 +9,30 @@
 - Debug APK size: 197,152,320 bytes (about 188 MiB)
 - Android native unit tests: PASS
 - Flutter analyzer: PASS
-- Flutter tests: 609/609 PASS
+- Flutter tests: 611/611 PASS
 - AT connector tests: 139 PASS, 4 credential-dependent skips, 0 FAIL
 - Official comparison: 13/13 compared fields, zero-cent tolerance, PASS
 
 ## Distribution gate
 
-The signed release AAB was not generated because none of the four external
-`TAXY_ANDROID_*` signing variables is provisioned in this environment. The
-Gradle configuration failed closed before compilation and did not substitute a
-debug key. This is an operational release gate, not an application-code
-failure.
+Neither the signed release AAB nor a release APK was generated because none of
+the four external `TAXY_ANDROID_*` signing variables is provisioned in this
+environment. Both Gradle release tasks fail closed before compilation and do
+not emit an unsigned intermediary or substitute a debug key. This is an
+operational release gate, not an application-code failure. Provisioning is
+documented in `SIGNING_SETUP_REQUIRED.md`.
+
+The distribution command explicitly enables the read-only e-Fatura product
+module. Its default remains fail-closed/hidden in ordinary builds, and the
+enabled UI still constructs only the `api.taxy.pt` backend bridge.
 
 ## Artifact inspection
 
 The generated debug APK declares API 24 minimum, API 35 target,
 `android.permission.INTERNET` and `android.permission.ACCESS_NETWORK_STATE`.
-It declares no camera or broad-storage permission, has `allowBackup=false`, and
-its document FileProvider is non-exported. No private-key container, raw PDF,
+It declares no camera or broad-storage permission, has `allowBackup=false`,
+explicitly disables cleartext traffic, and its document FileProvider is
+non-exported. No private-key container, raw PDF,
 known token form, Cloudflare key material or obsolete backend hostname was
 found in the artifact.
 
