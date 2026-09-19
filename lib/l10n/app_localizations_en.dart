@@ -1731,4 +1731,63 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get irsHistoryFallback =>
       'We could not check your previous IRS return. The manual interview remains available.';
+
+  @override
+  String get officialPrefillTitle => 'Import from AT';
+
+  @override
+  String get officialPrefillHeading =>
+      'Save time with official data from your IRS return';
+
+  @override
+  String get officialPrefillPrivacy =>
+      'Taxy reads your prefilled return in read-only mode. Your credentials are used only for this request and are not returned to the app.';
+
+  @override
+  String get officialPrefillAction => 'Check official data';
+
+  @override
+  String get officialPrefillLoading => 'Checking AT…';
+
+  @override
+  String get officialPrefillContinueManual => 'Continue manually';
+
+  @override
+  String get officialPrefillFound => 'We found this official data';
+
+  @override
+  String get officialPrefillAnnex => 'Annex';
+
+  @override
+  String get officialPrefillCategoryBUnsupported =>
+      'Detected — not yet included in the estimate';
+
+  @override
+  String get officialPrefillConfirmationNotice =>
+      'Nothing enters the calculation until you select and confirm it. Confirmation replaces the current value for that field.';
+
+  @override
+  String get officialPrefillConfirm => 'Confirm selected data';
+
+  @override
+  String get officialPrefillUseAnotherLogin => 'Use another login';
+
+  @override
+  String get officialPrefillAuthenticationError =>
+      'We could not sign in to Portal das Finanças.';
+
+  @override
+  String get officialPrefillNetworkError => 'We could not connect to AT.';
+
+  @override
+  String get officialPrefillParsingError =>
+      'AT returned data we cannot interpret safely yet.';
+
+  @override
+  String get officialPrefillUnavailable =>
+      'The official query is currently unavailable. You can continue manually.';
+
+  @override
+  String get officialPrefillCardSubtitle =>
+      'Income, withholding and tax context directly from the official prefilled return';
 }

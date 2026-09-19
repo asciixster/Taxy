@@ -21,6 +21,9 @@ import 'modules/efatura/screens/efatura_screen.dart';
 import 'modules/dm3irs/domain/historical_tax_evidence.dart';
 import 'modules/dm3irs/infrastructure/dm3irs_history_bridge.dart';
 import 'modules/dm3irs/screens/irs_history_prefill_screen.dart';
+import 'modules/at_prefill/domain/official_prefill_confirmation.dart';
+import 'modules/at_prefill/infrastructure/official_prefill_backend_bridge.dart';
+import 'modules/at_prefill/screens/official_prefill_screen.dart';
 import 'question_engine/question_engine.dart';
 import 'guided_tax/guided_tax_screen.dart';
 import 'guided_tax/guided_tax_review_screen.dart';
@@ -310,6 +313,53 @@ Future<void> _openIrsHistory(
   ref.invalidate(productStateProvider);
   ref.invalidate(taxInterviewForYearProvider(targetYear));
   ref.invalidate(historicalTaxConfirmationsForYearProvider(targetYear));
+}
+
+Future<void> _openOfficialPrefill(
+  BuildContext context,
+  WidgetRef ref,
+  int activeTaxYear,
+) async {
+  final importYear = activeTaxYear > 2025 ? 2025 : activeTaxYear;
+  if (importYear != 2024 && importYear != 2025) return;
+  final confirmation = await Navigator.push<OfficialPrefillConfirmation>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => OfficialPrefillScreen(
+        taxYear: importYear,
+        gateway: BackendOfficialPrefillGateway(
+          baseUri: Uri.parse('https://api.taxy.pt/'),
+        ),
+      ),
+    ),
+  );
+  if (confirmation == null || confirmation.fields.isEmpty) return;
+  final stored = await ref
+      .read(taxInterviewRepositoryProvider)
+      .load(importYear);
+  final interview =
+      stored ?? TaxInterview(taxYear: importYear, answers: const {});
+  final updated = interview.copyWith(
+    answers: applyOfficialPrefillConfirmation(
+      current: interview.answers,
+      taxYear: importYear,
+      confirmation: confirmation,
+    ),
+  );
+  final product = await ref.read(productStateProvider.future);
+  final baseProfile = product.profile.copyWith(activeTaxYear: importYear);
+  await ref
+      .read(productRepositoryProvider)
+      .save(
+        product.copyWith(profile: profileFromInterview(updated, baseProfile)),
+      );
+  await ref.read(taxInterviewRepositoryProvider).save(updated);
+  ref.invalidate(productStateProvider);
+  ref.invalidate(taxInterviewForYearProvider(importYear));
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(AppLocalizations.of(context).officialPrefillFound)),
+  );
 }
 
 Future<void> _openGuidedReview(
@@ -603,6 +653,15 @@ final class _FiscalCompanionCard extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 14),
+              if (officialAtPrefillEnabled) ...[
+                OutlinedButton.icon(
+                  key: const Key('official-prefill-entry'),
+                  onPressed: () => _openOfficialPrefill(context, ref, taxYear),
+                  icon: const Icon(Icons.cloud_download_outlined),
+                  label: Text(l10n.officialPrefillTitle),
+                ),
+                const SizedBox(height: 8),
+              ],
               FilledButton.tonalIcon(
                 onPressed:
                     consolidated.nextAction ==

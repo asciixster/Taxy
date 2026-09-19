@@ -1745,6 +1745,66 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get irsHistoryFallback =>
       'Não foi possível consultar o IRS anterior. A entrevista manual continua disponível.';
+
+  @override
+  String get officialPrefillTitle => 'Importar da AT';
+
+  @override
+  String get officialPrefillHeading =>
+      'Poupa tempo com os dados oficiais do teu IRS';
+
+  @override
+  String get officialPrefillPrivacy =>
+      'A Taxy consulta a declaração pré-preenchida em modo de leitura. As credenciais são usadas apenas nesta consulta e não regressam à app.';
+
+  @override
+  String get officialPrefillAction => 'Consultar dados oficiais';
+
+  @override
+  String get officialPrefillLoading => 'A consultar a AT…';
+
+  @override
+  String get officialPrefillContinueManual => 'Continuar manualmente';
+
+  @override
+  String get officialPrefillFound => 'Encontrámos estes dados oficiais';
+
+  @override
+  String get officialPrefillAnnex => 'Anexo';
+
+  @override
+  String get officialPrefillCategoryBUnsupported =>
+      'Detetado — ainda não entra na estimativa';
+
+  @override
+  String get officialPrefillConfirmationNotice =>
+      'Nada entra no cálculo sem selecionares e confirmares. A confirmação substitui o valor atual desse campo.';
+
+  @override
+  String get officialPrefillConfirm => 'Confirmar dados selecionados';
+
+  @override
+  String get officialPrefillUseAnotherLogin => 'Usar outro login';
+
+  @override
+  String get officialPrefillAuthenticationError =>
+      'Não foi possível autenticar no Portal das Finanças.';
+
+  @override
+  String get officialPrefillNetworkError =>
+      'Não foi possível estabelecer ligação à AT.';
+
+  @override
+  String get officialPrefillParsingError =>
+      'A AT devolveu dados que ainda não conseguimos interpretar com segurança.';
+
+  @override
+  String get officialPrefillUnavailable =>
+      'A consulta oficial não está disponível de momento. Podes continuar manualmente.';
+
+  @override
+  String get officialPrefillCardSubtitle =>
+      'Rendimentos, retenções e situação fiscal diretamente da declaração pré-preenchida';
 }
 
 /// The translations for Portuguese, as used in Portugal (`pt_PT`).
@@ -3487,4 +3547,64 @@ class AppLocalizationsPtPt extends AppLocalizationsPt {
   @override
   String get irsHistoryFallback =>
       'Não foi possível consultar o IRS anterior. A entrevista manual continua disponível.';
+
+  @override
+  String get officialPrefillTitle => 'Importar da AT';
+
+  @override
+  String get officialPrefillHeading =>
+      'Poupa tempo com os dados oficiais do teu IRS';
+
+  @override
+  String get officialPrefillPrivacy =>
+      'A Taxy consulta a declaração pré-preenchida em modo de leitura. As credenciais são usadas apenas nesta consulta e não regressam à app.';
+
+  @override
+  String get officialPrefillAction => 'Consultar dados oficiais';
+
+  @override
+  String get officialPrefillLoading => 'A consultar a AT…';
+
+  @override
+  String get officialPrefillContinueManual => 'Continuar manualmente';
+
+  @override
+  String get officialPrefillFound => 'Encontrámos estes dados oficiais';
+
+  @override
+  String get officialPrefillAnnex => 'Anexo';
+
+  @override
+  String get officialPrefillCategoryBUnsupported =>
+      'Detetado — ainda não entra na estimativa';
+
+  @override
+  String get officialPrefillConfirmationNotice =>
+      'Nada entra no cálculo sem selecionares e confirmares. A confirmação substitui o valor atual desse campo.';
+
+  @override
+  String get officialPrefillConfirm => 'Confirmar dados selecionados';
+
+  @override
+  String get officialPrefillUseAnotherLogin => 'Usar outro login';
+
+  @override
+  String get officialPrefillAuthenticationError =>
+      'Não foi possível autenticar no Portal das Finanças.';
+
+  @override
+  String get officialPrefillNetworkError =>
+      'Não foi possível estabelecer ligação à AT.';
+
+  @override
+  String get officialPrefillParsingError =>
+      'A AT devolveu dados que ainda não conseguimos interpretar com segurança.';
+
+  @override
+  String get officialPrefillUnavailable =>
+      'A consulta oficial não está disponível de momento. Podes continuar manualmente.';
+
+  @override
+  String get officialPrefillCardSubtitle =>
+      'Rendimentos, retenções e situação fiscal diretamente da declaração pré-preenchida';
 }
