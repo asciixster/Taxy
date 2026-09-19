@@ -1,102 +1,116 @@
-# Taxy — product reinvention
+# Taxy — connector-first reinvention
 
 ## Decision
 
-Taxy continues, but it no longer presents direct AT connectivity as its core
-product promise. The product must remain useful when every AT connector is
-unavailable.
+Taxy only continues as an automated fiscal-data product. OCR, photographs and
+manual document ingestion are not the core proposition and cannot be used to
+claim that Taxy imports a taxpayer's fiscal situation.
 
-The new promise is:
+The product promise is:
 
-> Give Taxy your fiscal documents once. Taxy structures and reconciles the
-> evidence, asks only for what is missing, and explains what can and cannot be
-> calculated safely.
+> With the taxpayer's explicit authorization, Taxy reads the fiscal data that
+> already exists in official systems, normalizes it, explains what it means and
+> asks only for information that is genuinely unavailable.
 
-## Primary journey
+## Accepted source classes
 
-1. Import an official IRS declaration, annual income statement, withholding
-   proof, Social Security proof, or supported image/PDF.
-2. Extract candidates locally where supported.
-3. Show every candidate for explicit confirmation or correction.
-4. Reconcile confirmed evidence with current answers without silent overwrite.
-5. Ask only the unresolved questions required by the supported calculation.
-6. Present included, excluded, conflicted, and missing information together.
-7. Produce an estimate only for a supported and sufficiently complete scenario.
+1. Documented official read-only API authorized for Taxy.
+2. Official read-only API with an explicit third-party entitlement.
+3. Legitimate taxpayer-authenticated Portal session, mediated by api.taxy.pt,
+   using read-only web/JSON flows and without bypassing access controls.
+4. Public official datasets for non-personal reference data.
 
-## Product hierarchy
+Official-app private identities, extracted private certificates, AT writes and
+authorization bypasses are not product paths.
 
-### Core — must work without AT connectivity
+## Required automated dataset
 
-- guided interview and resume;
-- local document capture and reviewed extraction;
-- local import of a supported official IRS PDF;
-- provenance, conflict resolution, and year isolation;
-- Category A and other validated calculations;
-- explicit unsupported handling;
-- guided review and next action.
+The first useful connector must retrieve a meaningful subset of:
 
-### Accelerators — optional and degradable
+- taxpayer and fiscal-year context;
+- household composition;
+- Category A income;
+- IRS withholding;
+- mandatory Social Security contributions;
+- Category B income and payments on account when present;
+- e-Fatura expenses and pending invoices;
+- submitted declaration status;
+- assessment, refund or amount payable when available.
 
-- e-Fatura read-only consultation;
-- authorized official-data imports;
-- historical IRS online retrieval.
+An endpoint being reachable is not success. Success requires populated data for
+the authenticated taxpayer, stable field semantics and repeatable runtime
+results.
 
-An accelerator failure must never block the core journey or show a fake zero.
+## Product flow
 
-### Research — never exposed as a product promise
+1. The user authorizes a read-only connection.
+2. The backend opens a short-lived official session or calls an entitled API.
+3. The connector fetches only the minimum required fields.
+4. Taxy normalizes every field with official provenance and tax-year isolation.
+5. Conflicts are shown; official data never silently overwrites a user decision.
+6. The interview asks only for fields not supplied by the official source.
+7. The estimate is shown only when the supported scenario is complete.
 
-- official-app-private DM3IRS contracts without third-party entitlement;
-- FactIntWS populations that differ by client identity;
-- Category B calculation before the official validation gate;
-- any AT write operation.
+## Architecture
 
-## Automation contract
+```text
+Flutter
+  -> api.taxy.pt short-lived session
+  -> isolated AT connector
+  -> official API or authenticated Portal read flow
+  -> normalized fiscal model
+  -> confirmation/reconciliation
+  -> supported IRS engine
+```
 
-Taxy reports automation coverage using required fiscal facts, not an arbitrary
-percentage. Every relevant fact is one of:
+AT-specific parsing and credentials must not be spread through the Flutter app.
+Credentials must not return to Flutter after authentication, and raw upstream
+payloads must not be retained.
 
-- confirmed;
-- needs confirmation;
-- missing;
-- conflicted;
-- unsupported;
-- not relevant.
+## Existing evidence
 
-Historical data can suggest a current answer but never becomes a current-year
-TaxFact without confirmation. Extracted values never become TaxFacts directly.
+- Portal/e-Fatura read flows have previously returned received invoices,
+  pending items and deduction categories, but the current release path needs a
+  repeatable end-to-end confirmation.
+- FactIntWS accepted the Taxy transport and operations but returned populations
+  inconsistent with the official client, so it is not a usable source.
+- DM3IRS accepted the legitimate Taxy identity for historical delivery,
+  receipt and declaration retrieval, but did not provide the required current
+  structured prefill.
+- No runtime-confirmed Taxy route currently provides current income,
+  withholding, Social Security and household data together.
 
-## Immediate product changes
+## Proof-of-viability gate
 
-1. Make **Import documents** the primary shortcut after onboarding.
-2. Present **Connect e-Fatura** as an optional time-saver, not the main route.
-3. Promote local official-IRS-PDF import; keep unstable online retrieval hidden.
-4. Add a single coverage view: what Taxy knows, what needs confirmation, what is
-   missing, what is excluded, and the next useful action.
-5. Remove language implying that Taxy imports all AT-held information.
-6. Keep Category B identification and explanation, but fail closed on its final
-   estimate until the validation gate passes.
+Before further consumer-product work, one legitimate connector must prove all
+of the following in a controlled read-only run:
 
-## Success criteria
+- authenticates as the taxpayer without an official-app private identity;
+- returns populated current or relevant fiscal-year data;
+- provides at least income plus withholding, or an equivalently valuable
+  official dataset;
+- exposes deterministic fields that can be normalized and tested;
+- performs zero write operations;
+- can be used by Taxy under a defensible authorization/terms path;
+- succeeds repeatedly without endpoint or parameter guessing.
 
-For a supported employee scenario, a user can reach a reviewed estimate by
-importing an annual statement or entering only the missing values. The user can
-always answer these questions:
+## Continue/stop rule
 
-- What did Taxy find?
-- Where did it come from?
-- What did I confirm?
-- What is still missing or unsupported?
-- What entered the estimate?
-- What should I do next?
+If the proof-of-viability gate passes, Taxy continues as a connector-first
+product and the guided experience is rebuilt around official prefill.
 
-The journey remains usable with all AT connectors disabled.
+If no authorized API or legitimate Portal read flow can pass the gate, the
+consumer Taxy project is stopped. OCR, photographs and additional manual forms
+must not be used as a substitute for the promised automation.
 
-## Kill gate
+## Immediate scope
 
-If this document-first journey cannot demonstrate a meaningful reduction in
-manual entry for supported users, the consumer product should be stopped rather
-than returning to unsupported private-endpoint experimentation.
+Until the gate passes:
 
-Direct comprehensive AT prefill remains a separate entitlement-dependent track.
-It may re-enter the product only after an authorized route and reliable runtime
-data are both confirmed.
+- no new OCR or camera work;
+- no new tax-category implementation;
+- no UI expansion;
+- no claim of comprehensive AT integration;
+- no release presented as the intended automated Taxy product;
+- concentrate exclusively on one authorized read connector and its normalized
+  field coverage.
