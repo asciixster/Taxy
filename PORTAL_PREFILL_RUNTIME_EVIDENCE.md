@@ -29,3 +29,24 @@ Connector-first automation is technically viable for the central IRS use case.
 Production integration still requires a backend session boundary, strict field
 normalization, explicit user confirmation, fail-closed parsing, and regression
 tests. This evidence does not authorize submission or any other AT write.
+
+## Public Taxy bridge confirmation
+
+The production Taxy bridge was subsequently exercised through
+`POST https://api.taxy.pt/v1/irs/prefill` with the legitimate taxpayer login.
+
+- HTTP result: 200
+- Tax year: 2025
+- Annexes: A, C and H
+- Household members reported: 1
+- Category A rows: 2
+- Category A row totals equal the official summary: yes
+- Category B: present, organized accounting
+- Category B withholding field: present
+- Review candidates: 7; all require user confirmation
+- Returned NIF, password, token, cookie or IBAN fields: none
+- AT writes: 0
+
+The first deployed attempt exposed a navigation race. The worker now waits for
+the exact `/app/prePreencher` response and the resulting official declaration
+model instead of relying on a fixed delay.

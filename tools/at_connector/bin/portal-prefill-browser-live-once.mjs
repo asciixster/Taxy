@@ -7,6 +7,10 @@ import {
   parseLoginBootstrap,
   PORTAL_IRS_START,
 } from '../src/portal_prefill.mjs';
+import {
+  normalizePortalPrefillModel,
+  summarizeNormalizedPrefill,
+} from '../src/portal_prefill_normalizer.mjs';
 
 const envPath = process.argv[2];
 if (envPath) {
@@ -124,9 +128,24 @@ try {
 
   record('prefill-form-ready', { taxYear: 2025 });
   const continueButton = page.getByRole('button', { name: /Continuar/i }).last();
+  const prefillResponse = page.waitForResponse((response) => {
+    try {
+      return new URL(response.url()).pathname.endsWith('/app/prePreencher') &&
+        response.request().method() === 'POST';
+    } catch {
+      return false;
+    }
+  }, { timeout: 60000 });
+  const declarationNavigation = page.waitForNavigation({
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  }).catch(() => null);
   await continueButton.click();
-  await page.waitForLoadState('domcontentloaded', { timeout: 60000 }).catch(() => {});
-  await page.waitForTimeout(4000);
+  const officialResponse = await prefillResponse;
+  if (officialResponse.status() >= 400) {
+    throw new Error('PREFILL_UPSTREAM_REJECTED');
+  }
+  await declarationNavigation;
   if (new URL(page.url()).hostname.endsWith('acesso.gov.pt')) {
     throw new Error('PREFILL_SESSION_NOT_PROPAGATED');
   }
@@ -164,17 +183,31 @@ try {
     let populatedScalarFields = 0;
     let tableRows = 0;
     const groups = {};
+    const fieldPaths = [];
+    const tableShapes = {};
     const seen = new Set();
     const walk = (value, path = '', depth = 0) => {
       if (depth > 20 || value == null || typeof value !== 'object' || seen.has(value)) return;
       seen.add(value);
-      if (Array.isArray(value)) tableRows += value.length;
+      if (Array.isArray(value)) {
+        tableRows += value.length;
+        if (value.length > 0) {
+          const keys = new Set();
+          for (const row of value.slice(0, 20)) {
+            if (row && typeof row === 'object') {
+              for (const key of Object.keys(row)) keys.add(key);
+            }
+          }
+          tableShapes[path] = [...keys].sort();
+        }
+      }
       for (const [key, child] of Object.entries(value)) {
         const next = path ? `${path}.${key}` : key;
         if (child && typeof child === 'object') {
           walk(child, next, depth + 1);
         } else {
           scalarFields += 1;
+          fieldPaths.push(next);
           if (child !== null && child !== undefined && child !== '') populatedScalarFields += 1;
           const group = next.split('.')[0];
           groups[group] = (groups[group] || 0) + 1;
@@ -190,16 +223,39 @@ try {
       populatedScalarFields,
       tableRows,
       groups,
+      fieldPaths: fieldPaths.sort(),
+      tableShapes,
       hasCategoryA: annexes.includes('A'),
       hasCategoryB: annexes.includes('B') || annexes.includes('C'),
       hasHousehold: Boolean(model?.rosto?.quadro06),
     };
   });
+  const rawModel = await page.evaluate(() => {
+    const angularApi = globalThis.angular;
+    const roots = [document.body, document.querySelector('[ng-app]')].filter(Boolean);
+    let injector;
+    for (const root of roots) {
+      try {
+        injector = angularApi?.element(root).injector();
+        if (injector) break;
+      } catch {}
+    }
+    if (!injector) throw new Error('INJECTOR_NOT_FOUND');
+    const model = injector.get('lfAppService').getModel();
+    return JSON.parse(angularApi.toJson(model));
+  });
+  const normalized = normalizePortalPrefillModel(rawModel, { taxYear: 2025 });
+  const normalizedSummary = summarizeNormalizedPrefill(normalized);
   record('prefill-loaded', {
     host: new URL(page.url()).hostname,
     path: new URL(page.url()).pathname,
   });
-  process.stdout.write(`${JSON.stringify({ ok: true, stages, shape }, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify({
+    ok: true,
+    stages,
+    shape,
+    normalizedSummary,
+  }, null, 2)}\n`);
 } catch (error) {
   process.stdout.write(`${JSON.stringify({
     ok: false,
