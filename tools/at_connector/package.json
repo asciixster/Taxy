@@ -18,6 +18,11 @@
     "factintws:framing-live": "node bin/factintws-framing-live.mjs",
     "factintws:current-config-live": "node bin/factintws-current-config-live.mjs",
     "factintws:recovery-sequence-live": "node bin/factintws-recovery-sequence-live.mjs",
-    "factintws:invoices-live": "node bin/factintws-invoices-live.mjs"
+    "factintws:invoices-live": "node bin/factintws-invoices-live.mjs",
+    "portal:prefill-live-once": "node bin/portal-prefill-live-once.mjs",
+    "portal:prefill-browser-live-once": "node bin/portal-prefill-browser-live-once.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.0"
   }
 }
