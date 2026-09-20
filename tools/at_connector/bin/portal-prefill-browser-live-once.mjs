@@ -13,6 +13,7 @@ import {
 } from '../src/portal_prefill_normalizer.mjs';
 
 const envPath = process.argv[2];
+const taxYear = Number(process.argv[3] || 2025);
 if (envPath) {
   for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
     const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
@@ -28,6 +29,10 @@ const nif = String(process.env.AT_USERNAME || '').replace(/\s/g, '');
 const password = String(process.env.AT_PASSWORD || '');
 if (!/^\d{9}$/.test(nif) || !password) {
   process.stdout.write('{"error":"CREDENTIALS_REQUIRED"}\n');
+  process.exit(1);
+}
+if (![2024, 2025].includes(taxYear)) {
+  process.stdout.write('{"error":"SUPPORTED_TAX_YEAR_REQUIRED"}\n');
   process.exit(1);
 }
 
@@ -102,8 +107,8 @@ try {
   for (let index = 0; index < yearCount; index += 1) {
     const select = yearSelects.nth(index);
     const options = await select.locator('option').allTextContents();
-    if (options.some((text) => /^\s*2025\s*$/.test(text))) {
-      await select.selectOption({ label: '2025' });
+    if (options.some((text) => new RegExp(`^\\s*${taxYear}\\s*$`).test(text))) {
+      await select.selectOption({ label: String(taxYear) });
       selectedYear = true;
       break;
     }
@@ -126,7 +131,7 @@ try {
   }
   if (!nifFilled) throw new Error('PREFILL_NIF_CONTROL_NOT_FOUND');
 
-  record('prefill-form-ready', { taxYear: 2025 });
+  record('prefill-form-ready', { taxYear });
   const continueButton = page.getByRole('button', { name: /Continuar/i }).last();
   const prefillResponse = page.waitForResponse((response) => {
     try {
@@ -244,7 +249,7 @@ try {
     const model = injector.get('lfAppService').getModel();
     return JSON.parse(angularApi.toJson(model));
   });
-  const normalized = normalizePortalPrefillModel(rawModel, { taxYear: 2025 });
+  const normalized = normalizePortalPrefillModel(rawModel, { taxYear });
   const normalizedSummary = summarizeNormalizedPrefill(normalized);
   record('prefill-loaded', {
     host: new URL(page.url()).hostname,

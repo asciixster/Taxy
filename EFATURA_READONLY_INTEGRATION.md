@@ -7,14 +7,20 @@ It can be compiled in with `--dart-define=TAXY_EFATURA_EXPERIMENTAL=true`.
 
 ## Runtime status (2026-09-20)
 
-The public Taxy endpoint reached the authenticated official e-Fatura JSON
-operation. The latest controlled call was refused by the upstream with HTTP
-429 at `/json/obterDocumentosAdquirente.action`; this is a temporary AT rate
-limit, not a certificate, TLS or Taxy backend outage.
+The public Taxy endpoint reaches two independent authenticated official
+e-Fatura JSON operations. The invoice-list operation can return HTTP 429 at
+`/json/obterDocumentosAdquirente.action`, while the personal-deductions
+operation `/json/obterDocumentosIRSAdquirente.action` remains available.
 
-The backend now preserves HTTP 429 as `RATE_LIMITED`, so the app displays the
-existing actionable rate-limit state instead of the misleading generic
-“service unavailable” message. No automatic retry is performed.
+The backend now preserves invoice HTTP 429 as partial availability. Login and
+overview continue with official personal-deduction totals, while the pending
+invoice counter remains `unavailable` and the invoice list retains the
+actionable rate-limit state. No automatic retry is performed.
+
+Controlled runtime confirmation for 2026 returned HTTP 201 from the public
+session endpoint, six official sector groups (`C01`, `C03`, `C05`, `C06`,
+`C09`, `C99`) and an available provisional benefit. The session was then
+deleted successfully (HTTP 200). No amount or invoice payload was persisted.
 The app wiring now uses a concrete Android platform bridge. Portal credentials
 are saved through an Android Keystore-backed store and are never returned to
 Flutter after save. The native module owns NTP, crypto, mTLS, SOAP and parsing;
