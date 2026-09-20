@@ -54,3 +54,20 @@ The tested 2026 e-Fatura sectors were `C01`, `C03`, `C05`, `C06`, `C09` and
 
 No capability above may silently overwrite current-year `TaxFact` values.
 
+## Normalized Taxy API status
+
+The backend now exposes three one-shot, no-store, read-only routes. Credentials
+are forwarded only to the isolated worker and are not returned to the client.
+
+| Taxy endpoint | Runtime result | Normalized output |
+|---|---|---|
+| `POST /v1/at/profile` | HTTP 200 | four activity rows observed: CAE primary, CIRS secondary and two CAE secondary rows; code/description present; confirmation required |
+| `POST /v1/at/fiscal-overview` | HTTP 200 | debt/fine counts and debt total availability; no active items on the tested account |
+| `POST /v1/at/irs/history` | HTTP 502 in the first public smoke | Portal year control was not deterministically available in that session; endpoint remains beta and is not wired into the app |
+
+The e-Fatura session endpoint was also revalidated after the partial-availability
+fix: HTTP 201, six sectors and official provisional benefit available; logout
+HTTP 200. Invoice-level access can still be rate limited independently.
+
+Backend commits: `faac32c` (e-Fatura partial availability) and `c38d7b6`
+(normalized AT read endpoints). AT writes remained zero.
