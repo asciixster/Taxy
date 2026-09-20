@@ -17,7 +17,15 @@ A fonte estruturada é `at_read_discovery/catalog.json`: **16 endpoints/deployme
 | VIES | Comissão Europeia `checkVatService` | prod | SOAP/REST público | validar VAT number | READ_ONLY; SCHEMA_CONFIRMED |
 | Portal e-Fatura | `consultarDocumentosAdquirente.action` | prod | HTTPS HTML + sessão Portal | abrir consulta | READ_ONLY; RUNTIME_READ_CONFIRMED; fragile |
 | Portal e-Fatura JSON | `json/obterDocumentosAdquirente.action` | prod | HTTPS JSON + sessão/contexto | obter documentos adquiridos | READ_ONLY; RUNTIME_READ_CONFIRMED; fragile |
+| Portal e-Fatura deductions JSON | `json/obterDocumentosIRSAdquirente.action` | prod | HTTPS JSON + Portal session | personal deduction rows and sector benefit totals | READ_ONLY; RUNTIME_READ_CONFIRMED; fragile |
+| IRS prefill | `irs.portaldasfinancas.gov.pt/app/prePreencher` | prod | HTTPS HTML/JSON + Portal session | structured declaration prefill for 2024–2025 | READ_ONLY; RUNTIME_READ_CONFIRMED; fragile |
+| IRS history | `irs.portaldasfinancas.gov.pt/app/consulta`, `POST /app/consulta/pesquisa` | prod | HTTPS HTML/JSON + Portal session | list submitted declarations for 2015–2025 | READ_ONLY; RUNTIME_READ_CONFIRMED; fragile |
+| Integrated tax profile | `sitfiscal.portaldasfinancas.gov.pt/integrada/presentation` | prod | HTTPS HTML + Portal session | activity codes/start date and tax regimes | READ_ONLY; RUNTIME_READ_CONFIRMED; fragile |
+| Fiscal dashboard | `GET /geral/dashboard/agendaFiscal`, `/avisos`, `/mensagens`, `/servicosFrequentes`, `/geral/dividas`, `/geral/coimas` | prod | HTTPS JSON + Portal session | obligations, notices, debt/fine aggregates | READ_ONLY; RUNTIME_READ_CONFIRMED; fragile |
 
-## Endpoints deliberadamente não inferidos
+## Endpoints deliberately not inferred
 
-Não foram inventadas rotas para atividade/CAE/CIRS, rendimentos comunicados, Modelo 3, liquidações, pagamentos, dívida ou obrigações. A existência dessas páginas no Portal/ATGo não revela uma API pública. O endereço interno/localhost de um WSDL também não é promovido a endpoint operacional.
+No route is promoted solely because a feature exists in ATGo or another
+official app. Liquidation details and an activity-profile JSON contract remain
+unconfirmed. The runtime-confirmed Portal routes above are authenticated web
+flows, not claimed as public or stable third-party APIs.

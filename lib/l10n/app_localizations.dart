@@ -3122,6 +3122,108 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Não foi possível consultar o IRS anterior. A entrevista manual continua disponível.'**
   String get irsHistoryFallback;
+
+  /// No description provided for @officialPrefillTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Importar da AT'**
+  String get officialPrefillTitle;
+
+  /// No description provided for @officialPrefillHeading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Poupa tempo com os dados oficiais do teu IRS'**
+  String get officialPrefillHeading;
+
+  /// No description provided for @officialPrefillPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Taxy consulta a declaração pré-preenchida em modo de leitura. As credenciais são usadas apenas nesta consulta e não regressam à app.'**
+  String get officialPrefillPrivacy;
+
+  /// No description provided for @officialPrefillAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Consultar dados oficiais'**
+  String get officialPrefillAction;
+
+  /// No description provided for @officialPrefillLoading.
+  ///
+  /// In pt, this message translates to:
+  /// **'A consultar a AT…'**
+  String get officialPrefillLoading;
+
+  /// No description provided for @officialPrefillContinueManual.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar manualmente'**
+  String get officialPrefillContinueManual;
+
+  /// No description provided for @officialPrefillFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrámos estes dados oficiais'**
+  String get officialPrefillFound;
+
+  /// No description provided for @officialPrefillAnnex.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anexo'**
+  String get officialPrefillAnnex;
+
+  /// No description provided for @officialPrefillCategoryBUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Detetado — ainda não entra na estimativa'**
+  String get officialPrefillCategoryBUnsupported;
+
+  /// No description provided for @officialPrefillConfirmationNotice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada entra no cálculo sem selecionares e confirmares. A confirmação substitui o valor atual desse campo.'**
+  String get officialPrefillConfirmationNotice;
+
+  /// No description provided for @officialPrefillConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar dados selecionados'**
+  String get officialPrefillConfirm;
+
+  /// No description provided for @officialPrefillUseAnotherLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar outro login'**
+  String get officialPrefillUseAnotherLogin;
+
+  /// No description provided for @officialPrefillAuthenticationError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível autenticar no Portal das Finanças.'**
+  String get officialPrefillAuthenticationError;
+
+  /// No description provided for @officialPrefillNetworkError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível estabelecer ligação à AT.'**
+  String get officialPrefillNetworkError;
+
+  /// No description provided for @officialPrefillParsingError.
+  ///
+  /// In pt, this message translates to:
+  /// **'A AT devolveu dados que ainda não conseguimos interpretar com segurança.'**
+  String get officialPrefillParsingError;
+
+  /// No description provided for @officialPrefillUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'A consulta oficial não está disponível de momento. Podes continuar manualmente.'**
+  String get officialPrefillUnavailable;
+
+  /// No description provided for @officialPrefillCardSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rendimentos, retenções e situação fiscal diretamente da declaração pré-preenchida'**
+  String get officialPrefillCardSubtitle;
 }
 
 class _AppLocalizationsDelegate

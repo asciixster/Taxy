@@ -61,6 +61,7 @@ tools/at_connector/.env.*
 !tools/at_connector/.env.example
 tools/at_connector/local/
 tools/at_connector/output/
+tools/at_connector/node_modules/
 
 # Local GitHub CLI credentials used by isolated Codex sessions
 .gh-auth-*/
